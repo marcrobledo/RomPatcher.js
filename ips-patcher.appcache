@@ -1,7 +1,11 @@
 CACHE MANIFEST
-# last update 2017-03-14
+# last update 2017-03-14b
 # these belong to the CACHE block
 index.html
 ips-patcher.css
 ips-patcher.js
 ips-patcher.png
+
+# force these files to be loaded in network
+NETWORK:
+*
