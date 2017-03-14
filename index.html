@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html manifest="ips-patcher.appcache">
+<head>
+	<title>IPS Patcher</title>
+	<meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
+	<meta name="description" content="This small web app allows you to apply IPS patches to any ROM file."/>
+	<meta name="keywords" content="ips,patcher,html5,rom,patch,hack,translation"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+	<link rel="shortcut icon" href="./ips-patcher.png"/>
+	<link type="text/css" rel="stylesheet" href="../_webapps/webapps.css" media="all"/>
+	<style type="text/css"><!--
+h1:before{background-image:url(ips-patcher.png)}
+	--></style>
+	<script type="text/javascript" src="./ips-patcher.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+	<h1>IPS Patcher</h1>
+	<h2>
+		by <a href="/" class="author">Marc Robledo</a>
+		<a href="https://github.com/marcrobledo/ips-patcher/" target="_blank" class="button"><span class="sprite github"></span> See on GitHub</a>
+		<a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow" class="donate button"><span class="sprite heart"></span> Donate</a>
+	</h2>
+</div>
+
+
+
+<div id="cards">
+	<div class="card card-notice text-center">
+		This small web app allows you to apply a IPS patch to your favorite retro games.
+	</div>
+
+
+
+
+
+	<div class="card card-red">
+		<h3>Apply IPS patch</h3>
+		<div class="row">
+			<div class="three columns"><label for="input-file-rom">ROM file:</label></div>
+			<div class="six columns end">
+				<input type="file" id="input-file-rom" onchange="openROM(this)"/>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="three columns"><label for="input-file-ips">IPS file:</label></div>
+			<div class="six columns end">
+				<input type="file" id="input-file-ips" onchange="openIPS(this)"/>
+			</div>
+		</div>
+
+		<div class="buttons">
+			<button class="with-icon icon9" onclick="ipsFile.applyOnROM(romFile)">Apply IPS patch</button>
+		</div>
+
+	</div>
+
+
+
+
+
+	<div class="card card-green">
+		<h3>Create IPS patch</h3>
+		<div class="row">
+			<div class="three columns"><label for="input-file-rom1">Original ROM:</label></div>
+			<div class="six columns end">
+				<input type="file" id="input-file-rom1" onchange="openROM1(this)"/>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="three columns"><label for="input-file-rom2">Modified ROM:</label></div>
+			<div class="six columns end">
+				<input type="file" id="input-file-rom2" onchange="openROM2(this)"/>
+			</div>
+		</div>
+
+		<div class="buttons">
+			<button class="with-icon icon9" onclick="createIPS(romFile1, romFile2)">Create IPS patch</button>
+		</div>
+
+	</div>
+</div>
+
+
+
+
+</body></html>
