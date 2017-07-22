@@ -13,10 +13,11 @@ addEvent(window,'load',function(){
 	el('input-file-patch').value='';
 	el('input-file-rom1').value='';
 	el('input-file-rom2').value='';
+	el('input-file-flip').value='';
 
 	addEvent(el('input-file-rom'), 'change', function(){
 		romFile=new MarcBinFile(this, function(){
-			el('rom-info').value='';
+			el('rom-info').innerHTML='';
 			sha1(romFile);
 			romHashes.crc32=crc32(romFile);
 			romHashes.md5=md5(romFile);
@@ -24,8 +25,8 @@ addEvent(window,'load',function(){
 			var crc32str=romHashes.crc32.toString(16);
 			while(crc32str.length<8)
 				crc32str='0'+crc32str;
-			el('rom-info').value+='CRC32: '+crc32str+'\n';
-			el('rom-info').value+='MD5:   '+romHashes.md5+'\n';
+			el('rom-info').innerHTML+='CRC32: '+crc32str+'<br/>';
+			el('rom-info').innerHTML+='MD5:   '+romHashes.md5+'<br/>';
 		});
 	});
 	addEvent(el('input-file-patch'), 'change', function(){
@@ -57,9 +58,13 @@ function _readPatchFile(){
 }
 function openPatchFile(f){tempFile=new MarcBinFile(f, _readPatchFile)}
 function applyPatchFile(p,r){
-	var patchedROM=p.apply(r);
-	patchedROM.fileName=r.fileName.replace(/\.(.*?)$/, ' (patched).$1');
-	patchedROM.save()
+	if(p && r){
+		var patchedROM=p.apply(r);
+		patchedROM.fileName=r.fileName.replace(/\.(.*?)$/, ' (patched).$1');
+		patchedROM.save()
+	}else{
+		MarcDialogs.alert('No ROM/patch selected');
+	}
 }
 
 
@@ -71,11 +76,22 @@ function createPatchFile(){
 		if(el('radio-'+MODES[i]).checked)
 			mode=MODES[i];
 
-	if(mode==='ips'){
-		createIPSFromFiles(romFile1, romFile2).export().save();
-	}else if(mode==='ups'){
-		createUPSFromFiles(romFile1, romFile2).export().save();
+	if(!romFile1 || !romFile2){
+		MarcDialogs.alert('No original/modified ROM file specified');
+		return false;
+	}else if(mode==='ips' && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
+		MarcDialogs.alert('Files are too big for IPS format');
+		return false;
 	}
+
+
+	var newPatch;
+	if(mode==='ips'){
+		newPatch=createIPSFromFiles(romFile1, romFile2);
+	}else if(mode==='ups'){
+		newPatch=createUPSFromFiles(romFile1, romFile2);
+	}
+	newPatch.export().save();
 }
 
 
@@ -101,7 +117,7 @@ function sha1(file){
 				else
 					hexString+=bytes[i].toString(16);
 			romHashes.sha1=hexString;
-			el('rom-info').value+='SHA-1: '+romHashes.sha1+'\n';
+			el('rom-info').innerHTML+='SHA-1: '+romHashes.sha1+'<br/>';
 		}).catch(function(error){
 			console.error(error);
 		});
@@ -168,6 +184,8 @@ function crc32(file,ignoreLast4Bytes){
 }
 
 
+/* MarcDialogs.js */
+MarcDialogs=function(){function e(e,t,n){a?e.attachEvent("on"+t,n):e.addEventListener(t,n,!1)}function t(){s&&(o?history.go(-1):(c.className="dialog-overlay",s.className=s.className.replace(/ active/g,""),s=null))}function n(e){for(var t=0;t<s.dialogElements.length;t++){var n=s.dialogElements[t];if("INPUT"===n.nodeName&&"hidden"!==n.type||"INPUT"!==n.nodeName)return n.focus(),!0}return!1}function l(){s&&(s.style.marginLeft="-"+s.offsetWidth/2+"px",s.style.marginTop="-"+s.offsetHeight/2-30+"px")}var a=/MSIE 8/.test(navigator.userAgent),o=navigator.userAgent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i)&&"function"==typeof history.pushState,i=["Cancel","Accept"],s=null,c=document.createElement("div");c.className="dialog-overlay",c.style.position="fixed",c.style.top="0",c.style.left="0",c.style.width="100%",c.style.height="100%",c.style.zIndex=8e3,e(c,"click",t),e(window,"load",function(){document.body.appendChild(c),o&&history.replaceState({myDialog:!1},null,null)}),e(window,"resize",l),o&&e(window,"popstate",function(e){e.state.myDialog?(s=e.state.myDialog,MarcDialogs.open(e.state.myDialog)):e.state.myDialog===!1&&s&&(c.className="dialog-overlay",s.className=s.className.replace(/ active/g,""),s=null)}),e(document,"keydown",function(e){s&&(27==e.keyCode?(e.preventDefault?e.preventDefault():e.returnValue=!1,t()):9==e.keyCode&&s.dialogElements[s.dialogElements.length-1]==document.activeElement&&(e.preventDefault?e.preventDefault():e.returnValue=!1,n()))});var d=null,u=null,m=null;return{open:function(e){s&&(s.className=s.className.replace(/ active/g,"")),o&&(s?history.replaceState({myDialog:e},null,null):(console.log("a"),history.pushState({myDialog:e},null,null))),c.className="dialog-overlay active",s="string"==typeof e?document.getElementById("dialog-"+e):e,s.className+=" active",s.style.position="fixed",s.style.top="50%",s.style.left="50%",s.style.zIndex=8001,s.dialogElements||(s.dialogElements=s.querySelectorAll("input,textarea,select")),n(),l(s),l(s)},close:t,alert:function(t){if(!d){d=document.createElement("div"),d.id="dialog-quick-alert",d.className="dialog",d.msg=document.createElement("div"),d.msg.style.textAlign="center",d.appendChild(d.msg),d.buttons=document.createElement("div"),d.buttons.className="buttons";var n=document.createElement("button");n.type="button",n.className="colored",n.innerHTML=i[1],e(n,"click",this.close),d.buttons.appendChild(n),d.appendChild(d.buttons),document.body.appendChild(d)}d.msg.innerHTML=t,MarcDialogs.open("quick-alert")},confirm:function(t,n){if(!u){u=document.createElement("div"),u.id="dialog-quick-confirm",u.className="dialog",u.msg=document.createElement("div"),u.msg.style.textAlign="center",u.appendChild(u.msg),u.buttons=document.createElement("div"),u.buttons.className="buttons";var l=document.createElement("button");l.type="button",l.innerHTML=i[1],e(l,"click",function(){m()}),u.buttons.appendChild(l);var a=document.createElement("button");a.type="button",a.innerHTML=i[0],e(a,"click",this.close),u.buttons.appendChild(a),u.appendChild(u.buttons),document.body.appendChild(u)}m=n,u.msg.innerHTML=t,MarcDialogs.open("quick-confirm")}}}();
 /* MarcBinFile.js v20190703 - Marc Robledo 2014-2016 - http://www.marcrobledo.com/license */
 function MarcBinFile(a,b){if("function"!=typeof window.FileReader)throw console.error("MarcBinFile.js: Browser doesn't support FileReader."),"Invalid browser";if("object"==typeof a&&a.name&&a.size)this.file=a,this.fileName=this.file.name,this.fileSize=this.file.size,this.fileType=a.type;else if("object"==typeof a&&a.files){if(1!=a.files.length){for(var c=[],d=a.files.length,e=function(){d--,0==d&&b&&b.call()},f=0;f<a.files.length;f++)c.push(new MarcBinFile(a.files[f],e));return c}this.file=a.files[0],this.fileName=this.file.name,this.fileSize=this.file.size,this.fileType=this.file.type}else{if("number"!=typeof a)throw console.error("MarcBinFile.js: Invalid type of file."),"Invalid file.";this.file=!1,this.fileName="newfile.hex",this.fileSize=a,this.fileType="application/octet-stream"}this.littleEndian=function(){var a=new ArrayBuffer(2);return new DataView(a).setInt16(0,256,!0),256===new Int16Array(a)[0]}(),this.file?(this.fileReader=new FileReader,this.fileReader.addEventListener("load",function(){this.dataView=new DataView(this.result)},!1),b&&this.fileReader.addEventListener("load",b,!1),this.fileReader.readAsArrayBuffer(this.file)):(this.fileReader=new ArrayBuffer(this.fileSize),this.fileReader.dataView=new DataView(this.fileReader),b&&b.call())}var saveAs=saveAs||function(a){"use strict";if("undefined"==typeof navigator||!/MSIE [1-9]\./.test(navigator.userAgent)){var b=a.document,c=function(){return a.URL||a.webkitURL||a},d=b.createElementNS("http://www.w3.org/1999/xhtml","a"),e="download"in d,f=function(a){var b=new MouseEvent("click");a.dispatchEvent(b)},g=/Version\/[\d\.]+.*Safari/.test(navigator.userAgent),h=a.webkitRequestFileSystem,i=a.requestFileSystem||h||a.mozRequestFileSystem,j=function(b){(a.setImmediate||a.setTimeout)(function(){throw b},0)},k="application/octet-stream",l=0,m=500,n=function(b){var d=function(){"string"==typeof b?c().revokeObjectURL(b):b.remove()};a.chrome?d():setTimeout(d,m)},o=function(a,b,c){b=[].concat(b);for(var d=b.length;d--;){var e=a["on"+b[d]];if("function"==typeof e)try{e.call(a,c||a)}catch(a){j(a)}}},p=function(a){return/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\ufeff",a],{type:a.type}):a},q=function(b,j,m){m||(b=p(b));var t,u,z,q=this,r=b.type,s=!1,v=function(){o(q,"writestart progress write writeend".split(" "))},w=function(){if(u&&g&&"undefined"!=typeof FileReader){var d=new FileReader;return d.onloadend=function(){var a=d.result;u.location.href="data:attachment/file"+a.slice(a.search(/[,;]/)),q.readyState=q.DONE,v()},d.readAsDataURL(b),void(q.readyState=q.INIT)}if(!s&&t||(t=c().createObjectURL(b)),u)u.location.href=t;else{var e=a.open(t,"_blank");void 0==e&&g&&(a.location.href=t)}q.readyState=q.DONE,v(),n(t)},x=function(a){return function(){if(q.readyState!==q.DONE)return a.apply(this,arguments)}},y={create:!0,exclusive:!1};return q.readyState=q.INIT,j||(j="download"),e?(t=c().createObjectURL(b),void setTimeout(function(){d.href=t,d.download=j,f(d),v(),n(t),q.readyState=q.DONE})):(a.chrome&&r&&r!==k&&(z=b.slice||b.webkitSlice,b=z.call(b,0,b.size,k),s=!0),h&&"download"!==j&&(j+=".download"),(r===k||h)&&(u=a),i?(l+=b.size,void i(a.TEMPORARY,l,x(function(a){a.root.getDirectory("saved",y,x(function(a){var c=function(){a.getFile(j,y,x(function(a){a.createWriter(x(function(c){c.onwriteend=function(b){u.location.href=a.toURL(),q.readyState=q.DONE,o(q,"writeend",b),n(a)},c.onerror=function(){var a=c.error;a.code!==a.ABORT_ERR&&w()},"writestart progress write abort".split(" ").forEach(function(a){c["on"+a]=q["on"+a]}),c.write(b),q.abort=function(){c.abort(),q.readyState=q.DONE},q.readyState=q.WRITING}),w)}),w)};a.getFile(j,{create:!1},x(function(a){a.remove(),c()}),x(function(a){a.code===a.NOT_FOUND_ERR?c():w()}))}),w)}),w)):void w())},r=q.prototype,s=function(a,b,c){return new q(a,b,c)};return"undefined"!=typeof navigator&&navigator.msSaveOrOpenBlob?function(a,b,c){return c||(a=p(a)),navigator.msSaveOrOpenBlob(a,b||"download")}:(r.abort=function(){var a=this;a.readyState=a.DONE,o(a,"abort")},r.readyState=r.INIT=0,r.WRITING=1,r.DONE=2,r.error=r.onwritestart=r.onprogress=r.onwrite=r.onabort=r.onerror=r.onwriteend=null,s)}}("undefined"!=typeof self&&self||"undefined"!=typeof window&&window||this.content);"undefined"!=typeof module&&module.exports?module.exports.saveAs=saveAs:"undefined"!=typeof define&&null!==define&&null!=define.amd&&define([],function(){return saveAs}),MarcBinFile.prototype.isReady=function(){return 2==this.fileReader.readyState},MarcBinFile.prototype.save=function(){var a=new Blob([this.fileReader.dataView],{type:this.fileType});saveAs(a,this.fileName)},MarcBinFile.prototype.readByte=function(a){return this.fileReader.dataView.getUint8(a)},MarcBinFile.prototype.readByteSigned=function(a){return this.fileReader.dataView.getInt8(a)},MarcBinFile.prototype.readBytes=function(a,b){for(var c=new Array(b),d=0;d<b;d++)c[d]=this.readByte(a+d);return c},MarcBinFile.prototype.readShort=function(a){return this.fileReader.dataView.getUint16(a,this.littleEndian)},MarcBinFile.prototype.readShortSigned=function(a){return this.fileReader.dataView.getInt16(a,this.littleEndian)},MarcBinFile.prototype.readInt=function(a){return this.fileReader.dataView.getUint32(a,this.littleEndian)},MarcBinFile.prototype.readIntSigned=function(a){return this.fileReader.dataView.getInt32(a,this.littleEndian)},MarcBinFile.prototype.readFloat32=function(a){return this.fileReader.dataView.getFloat32(a,this.littleEndian)},MarcBinFile.prototype.readFloat64=function(a){return this.fileReader.dataView.getFloat64(a,this.littleEndian)},MarcBinFile.prototype.readString=function(a,b){for(var c=this.readBytes(a,b),d="",e=0;e<b&&c[e]>0;e++)d+=String.fromCharCode(c[e]);return d},MarcBinFile.prototype.writeByte=function(a,b){this.fileReader.dataView.setUint8(a,b,this.littleEndian)},MarcBinFile.prototype.writeByteSigned=function(a,b){this.fileReader.dataView.setInt8(a,b,this.littleEndian)},MarcBinFile.prototype.writeBytes=function(a,b){for(var c=0;c<b.length;c++)this.writeByte(a+c,b[c])},MarcBinFile.prototype.writeShort=function(a,b){this.fileReader.dataView.setUint16(a,b,this.littleEndian)},MarcBinFile.prototype.writeShortSigned=function(a,b){this.fileReader.dataView.setInt16(a,b,this.littleEndian)},MarcBinFile.prototype.writeInt=function(a,b){this.fileReader.dataView.setUint32(a,b,this.littleEndian)},MarcBinFile.prototype.writeIntSigned=function(a,b){this.fileReader.dataView.setInt32(a,b,this.littleEndian)},MarcBinFile.prototype.writeFloat32=function(a,b){this.fileReader.dataView.setFloat32(a,b,this.littleEndian)},MarcBinFile.prototype.writeFloat64=function(a,b){this.fileReader.dataView.setFloat64(a,b,this.littleEndian)},MarcBinFile.prototype.writeString=function(a,b,c){for(var d=0;d<c;d++)this.writeByte(a+d,0);for(var d=0;d<b.length&&d<c;d++)this.writeByte(a+d,b.charCodeAt(d))};
 /* Implement 3-byte reader/writer in MarcBinFile */

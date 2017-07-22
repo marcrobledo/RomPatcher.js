@@ -1,85 +1,82 @@
 <!DOCTYPE html>
 <html manifest="manifest.appcache">
 <head>
-	<title>ROMPatcher.js</title>
+	<title>RomPatcher.js</title>
 	<meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
-	<meta name="description" content="This small web app allows you to apply IPS/UPS patches to your ROM dump files."/>
+	<meta name="description" content="A web-based IPS/UPS ROM patcher."/>
 	<meta name="keywords" content="ips,ups,patcher,online,html5,rom,patch,hack,translation"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
-	<link rel="shortcut icon" href="./RomPatcher.png"/>
+	<link rel="shortcut icon" href="./favicon.png"/>
 	<link type="text/css" rel="stylesheet" href="./RomPatcher.css" media="all"/>
 	<script type="text/javascript" src="./RomPatcher.js"></script>
 	<script type="text/javascript" src="./ips.js"></script>
 	<script type="text/javascript" src="./ups.js"></script>
+	<script type="text/javascript" src="./ByteFlipper.js"></script>
 </head>
 <body>
 
+
 <!-- HEADER -->
 <div id="header">
-	<h1>RomPatcher.js</h1>
-	<h2>
-		by <a href="/" class="author">Marc Robledo</a>
-		<a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank" class="button"><span class="sprite github"></span> See on GitHub</a>
-		<a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow" class="donate button"><span class="sprite heart"></span> Donate</a>
-	</h2>
+	<div id="header-top">
+		<div class="row wrapper">
+			<h1 class="six columns text-left"><img src="logo.png" /><span class="hidden">RomPatcher.js</span></h1>
+			<div class="six columns header-buttons text-right">
+				by <a href="/">Marc Robledo</a>
+				<i class="icon github"></i> <a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank">See on GitHub</a>
+				<i class="icon heart"></i> <a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow">Donate</a>
+			</div>
+		</div>
+	</div>
+</div>
 </div>
 
-
-
-<div id="cards">
-	<div class="card card-notice text-center">
-		This small web app allows you to apply a IPS/UPS patch to your favorite retro games.
-	</div>
-
-
-
-
-
-	<div class="card card-red">
-		<h3>Apply patch</h3>
+<!-- APP -->
+<div class="wrapper" id="the-app">
+	<h3 class="red">Apply patch</h3>
+	<div class="container-description">Apply an IPS/UPS patch to your ROM</div>
+	<div class="container">
 		<div class="row">
-			<div class="three columns"><label for="input-file-rom">ROM file:</label></div>
-			<div class="nine columns">
+			<div class="six columns text-right"><label for="input-file-rom">ROM file:</label></div>
+			<div class="six columns">
 				<input type="file" id="input-file-rom" />
-				<textarea disabled id="rom-info" rows="3" style="width:100%"></textarea>
+				<div id="rom-info" class="mono" style="font-size:12px"></div>
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="three columns"><label for="input-file-patch">Patch file (IPS/UPS):</label></div>
-			<div class="nine columns">
+			<div class="six columns text-right"><label for="input-file-patch">Patch file (IPS/UPS):</label></div>
+			<div class="six columns">
 				<input type="file" id="input-file-patch" />
 			</div>
 		</div>
 
 		<div class="buttons">
-			<button class="with-icon icon9" onclick="applyPatchFile(patch, romFile)">Apply patch</button>
+			<button class="with-icon icon9" onclick="applyPatchFile(patch, romFile)"><i class="icon check"></i> Apply patch</button>
 		</div>
-
 	</div>
 
 
 
-
-
-	<div class="card card-green">
-		<h3>Create patch</h3>
+	<h3 class="blue">Create patch</h3>
+	<div class="container-description">Create an IPS/UPS patch from two different ROMs </div>
+	<div class="container">
 		<div class="row">
-			<div class="three columns"><label for="input-file-rom1">Original ROM:</label></div>
+			<div class="six columns text-right"><label for="input-file-rom1">Original ROM:</label></div>
 			<div class="six columns end">
 				<input type="file" id="input-file-rom1" />
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="three columns"><label for="input-file-rom2">Modified ROM:</label></div>
+			<div class="six columns text-right"><label for="input-file-rom2">Modified ROM:</label></div>
 			<div class="six columns end">
 				<input type="file" id="input-file-rom2" />
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="three columns">Patch type</div>
+			<div class="six columns text-right">Patch type</div>
 			<div class="six columns end">
 				<input type="radio" id="radio-ips" name="patch-type" checked /><label for="radio-ips">IPS</label>
 				<input type="radio" id="radio-ups" name="patch-type" /><label for="radio-ups">UPS</label>
@@ -87,12 +84,31 @@
 		</div>
 
 		<div class="buttons">
-			<button class="with-icon icon9" onclick="createPatchFile()">Create patch</button>
+			<button class="with-icon icon9" onclick="createPatchFile()"><i class="icon settings"></i> Create patch</button>
 		</div>
+	</div>
 
+
+
+	<h3 class="green">Byte flipper</h3>
+	<div class="container-description">This tool can flip bytes on a file in order to change its endianness</div>
+	<div class="container">
+		<div class="row">
+			<div class="six columns text-right"><label for="input-file-flip">File</label></div>
+			<div class="six columns"><input type="file" id="input-file-flip" /></div>
+		</div>
+		<div class="row">
+			<div class="six columns text-right">Bytes to flip</div>
+			<div class="six columns">
+				<input type="radio" value="4" id="radio4" name="radio-bytes" checked /><label for="radio4">4 <small>(N64 ROMs and savegames)</small></label>
+				<input type="radio" value="8" id="radio8" name="radio-bytes" /><label for="radio8">8 <small>(old GBA flashcards)</small></label>
+			</div>
+		</div>
+		<div class="buttons">
+			<button onclick="flipBytesInFile()" id="button-save"><i class="icon settings"></i> Flip bytes</button>
+		</div>		
 	</div>
 </div>
-
 
 
 

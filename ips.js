@@ -1,5 +1,6 @@
-/* IPS module for RomPatcher.js v20170721 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
+/* IPS module for RomPatcher.js v20170722 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
+
 var MAX_IPS_SIZE=16777216;
 var RECORD_RLE=0x0000;
 var RECORD_SIMPLE=1;
@@ -79,12 +80,12 @@ IPS.prototype.apply=function(romFile){
 		var rec=this.records[i];
 		if(rec.type===RECORD_RLE){
 			if(rec.offset+rec.length>romFile.fileSize){
-				alert('Invalid ROM file (too big?).');
+				MarcDialogs.alert('Invalid ROM file (too big?).');
 				return false;
 			}
 		}else{
 			if(rec.offset+rec.data.length>romFile.fileSize){
-				alert('Invalid ROM file (too big?).');
+				MarcDialogs.alert('Invalid ROM file (too big?).');
 				return false;
 			}
 		}
