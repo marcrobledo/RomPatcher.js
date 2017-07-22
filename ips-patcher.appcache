@@ -1,10 +1,13 @@
 CACHE MANIFEST
-# last update 2017-03-14b
-# these belong to the CACHE block
+#v20170722
+# WARNING: THIS FILE WILL BE DEPRECATED
+#CACHE:
 index.html
-ips-patcher.css
-ips-patcher.js
-ips-patcher.png
+RomPatcher.css
+RomPatcher.js
+RomPatcher.png
+ips.js
+ups.js
 
 # force these files to be loaded in network
 NETWORK:
