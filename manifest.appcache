@@ -1,0 +1,13 @@
+CACHE MANIFEST
+#v20170722
+#CACHE:
+index.html
+RomPatcher.css
+RomPatcher.js
+RomPatcher.png
+ips.js
+ups.js
+
+# force these files to be loaded in network
+NETWORK:
+*
