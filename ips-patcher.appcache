@@ -1,13 +1,15 @@
 CACHE MANIFEST
-#v20170722
+#v20170722b
 # WARNING: THIS FILE WILL BE DEPRECATED
 #CACHE:
 index.html
 RomPatcher.css
 RomPatcher.js
-RomPatcher.png
+favicon.png
+logo.png
 ips.js
 ups.js
+ByteFlipper.js
 
 # force these files to be loaded in network
 NETWORK:
