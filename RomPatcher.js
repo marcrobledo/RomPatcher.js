@@ -52,8 +52,12 @@ function _readPatchFile(){
 		patch=readIPSFile(tempFile);
 	}else if(tempFile.readString(0,4)===UPS_MAGIC){
 		patch=readUPSFile(tempFile);
-	}else{
-		MarcDialogs.alert('Invalid IPS/UPS file');
+	}else if(tempFile.readString(0,5)===APS_MAGIC){
+		patch=readAPSFile(tempFile);
+	}/*else if(tempFile.readString(0,4)===APSGBA_MAGIC){
+		patch=readAPSGBAFile(tempFile);
+	}*/else {
+		MarcDialogs.alert('Invalid IPS/UPS/APS file');
 	}
 }
 function openPatchFile(f){tempFile=new MarcBinFile(f, _readPatchFile)}
@@ -70,7 +74,7 @@ function applyPatchFile(p,r){
 
 
 function createPatchFile(){
-	var MODES=['ips','ups'];
+	var MODES=['ips','ups','aps','apsn64'/*,'apsgba'*/];
 	var mode=0;
 	for(var i=0; i<MODES.length && !mode; i++)
 		if(el('radio-'+MODES[i]).checked)
@@ -90,6 +94,12 @@ function createPatchFile(){
 		newPatch=createIPSFromFiles(romFile1, romFile2);
 	}else if(mode==='ups'){
 		newPatch=createUPSFromFiles(romFile1, romFile2);
+	}else if(mode==='aps'){
+		newPatch=createAPSFromFiles(romFile1, romFile2, false);
+	}else if(mode==='apsn64'){
+		newPatch=createAPSFromFiles(romFile1, romFile2, true);
+	}else if(mode==='apsgba'){
+		newPatch=createAPSGBAFromFiles(romFile1, romFile2);
 	}
 	newPatch.export().save();
 }
