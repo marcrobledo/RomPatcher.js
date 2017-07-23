@@ -1,4 +1,4 @@
-/* UPS module for RomPatcher.js v20170721 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
+/* UPS module for RomPatcher.js v20170723 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 var UPS_MAGIC='UPS1';
@@ -9,7 +9,6 @@ function UPS(){
 	this.sizeOutput=0;
 	this.checksumInput=0;
 	this.checksumOutput=0;
-	this.checksumPatch=0;
 }
 UPS.prototype.addRecord=function(o, d){
 	this.records.push({offset:o, XORdata:d})
@@ -20,7 +19,6 @@ UPS.prototype.toString=function(){
 	s+='\nOutput file size: '+this.sizeOutput;
 	s+='\nInput file checksum: '+this.checksumInput;
 	s+='\nOutput file checksum: '+this.checksumOutput;
-	s+='\nPatch file checksum: '+this.checksumPatch;
 	return s
 }
 UPS.prototype.export=function(){
@@ -58,7 +56,7 @@ UPS.prototype.export=function(){
 	tempFile.littleEndian=true;
 	tempFile.writeInt(seek, this.checksumInput);
 	tempFile.writeInt(seek+4, this.checksumOutput);
-	tempFile.writeInt(seek+8, this.checksumPatch);
+	tempFile.writeInt(seek+8, crc32(tempFile, true));
 
 	return tempFile
 }
@@ -159,9 +157,8 @@ function readUPSFile(file){
 	file.littleEndian=true;
 	patchFile.checksumInput=tempFile.readInt(seek);
 	patchFile.checksumOutput=tempFile.readInt(seek+4);
-	patchFile.checksumPatch=tempFile.readInt(seek+8);
 
-	if(patchFile.checksumPatch!==crc32(file, true)){
+	if(tempFile.readInt(seek+8)!==crc32(file, true)){
 		MarcDialogs.alert('Invalid patch checksum');
 	}
 	return patchFile;
@@ -203,6 +200,5 @@ function createUPSFromFiles(original, modified){
 
 	tempFile.checksumInput=crc32(original);
 	tempFile.checksumOutput=crc32(modified);
-	//tempFile.checksumPatch=crc32(tempFile.export(), true);
 	return tempFile
 }
