@@ -12,6 +12,8 @@
 	<script type="text/javascript" src="./ips.js"></script>
 	<script type="text/javascript" src="./ups.js"></script>
 	<script type="text/javascript" src="./aps.js"></script>
+	<!-- <script type="text/javascript" src="./apsgba.js"></script> -->
+	<script type="text/javascript" src="./bps.js"></script>
 	<script type="text/javascript" src="./ByteFlipper.js"></script>
 </head>
 <body>
@@ -35,7 +37,7 @@
 <!-- APP -->
 <div class="wrapper" id="the-app">
 	<h3 class="red">Apply patch</h3>
-	<div class="container-description">Apply an IPS/UPS patch to your ROM</div>
+	<div class="container-description">Apply a patch to your ROM</div>
 	<div class="container">
 		<div class="row">
 			<div class="six columns text-right"><label for="input-file-rom">ROM file:</label></div>
@@ -46,7 +48,7 @@
 		</div>
 
 		<div class="row">
-			<div class="six columns text-right"><label for="input-file-patch">Patch file (IPS/UPS/APS):</label></div>
+			<div class="six columns text-right"><label for="input-file-patch">Patch file <small>(IPS/UPS/APS/BPS)</small>:</label></div>
 			<div class="six columns">
 				<input type="file" id="input-file-patch" />
 			</div>
@@ -60,7 +62,7 @@
 
 
 	<h3 class="blue">Create patch</h3>
-	<div class="container-description">Create an IPS/UPS/APS patch from two different ROMs </div>
+	<div class="container-description">Create a patch from two different ROMs </div>
 	<div class="container">
 		<div class="row">
 			<div class="six columns text-right"><label for="input-file-rom1">Original ROM:</label></div>
@@ -83,6 +85,7 @@
 				<input type="radio" id="radio-ups" name="patch-type" /><label for="radio-ups">UPS</label>
 				<input type="radio" id="radio-aps" name="patch-type" /><label for="radio-aps">APS</label>
 				<input type="radio" id="radio-apsn64" name="patch-type" /><label for="radio-apsn64">APS (N64)</label>
+				<!-- <input type="radio" id="radio-bps" name="patch-type" /><label for="radio-bps">BPS</label> -->
 			</div>
 		</div>
 
@@ -94,7 +97,7 @@
 
 
 	<h3 class="green">Byte flipper</h3>
-	<div class="container-description">This tool can flip bytes on a file in order to change its endianness</div>
+	<div class="container-description">This tool flips bytes in a file in order to change its endianness</div>
 	<div class="container">
 		<div class="row">
 			<div class="six columns text-right"><label for="input-file-flip">File</label></div>

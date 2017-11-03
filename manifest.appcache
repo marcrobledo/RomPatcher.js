@@ -1,5 +1,5 @@
 CACHE MANIFEST
-#v20171021
+#v20171103
 #CACHE:
 index.html
 RomPatcher.css
@@ -9,6 +9,7 @@ logo.png
 ips.js
 ups.js
 aps.js
+bps.js
 ByteFlipper.js
 
 # force these files to be loaded in network

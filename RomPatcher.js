@@ -1,4 +1,4 @@
-/* ips-patcher.js v20170722 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20171102 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
 var romFile, patch, romFile1, romFile2, tempFile, romHashes={};
 /* Shortcuts */
@@ -54,10 +54,12 @@ function _readPatchFile(){
 		patch=readUPSFile(tempFile);
 	}else if(tempFile.readString(0,5)===APS_MAGIC){
 		patch=readAPSFile(tempFile);
+	}else if(tempFile.readString(0,4)===BPS_MAGIC){
+		patch=readBPSFile(tempFile);
 	}/*else if(tempFile.readString(0,4)===APSGBA_MAGIC){
 		patch=readAPSGBAFile(tempFile);
 	}*/else {
-		MarcDialogs.alert('Invalid IPS/UPS/APS file');
+		MarcDialogs.alert('Invalid IPS/UPS/APS/BPS file');
 	}
 }
 function openPatchFile(f){tempFile=new MarcBinFile(f, _readPatchFile)}
@@ -74,7 +76,7 @@ function applyPatchFile(p,r){
 
 
 function createPatchFile(){
-	var MODES=['ips','ups','aps','apsn64'/*,'apsgba'*/];
+	var MODES=['ips','ups','aps','apsn64'/*,'apsgba','bps'*/];
 	var mode=0;
 	for(var i=0; i<MODES.length && !mode; i++)
 		if(el('radio-'+MODES[i]).checked)
@@ -100,6 +102,8 @@ function createPatchFile(){
 		newPatch=createAPSFromFiles(romFile1, romFile2, true);
 	}else if(mode==='apsgba'){
 		newPatch=createAPSGBAFromFiles(romFile1, romFile2);
+	}else if(mode==='bps'){
+		newPatch=createBPSFromFiles(romFile1, romFile2);
 	}
 	newPatch.export().save();
 }
