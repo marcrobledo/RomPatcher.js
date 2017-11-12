@@ -9,5 +9,5 @@ A ROM patcher made in HTML5.
    * BPS
 * can patch and create patches
 * shows ROM CRC32, MD5 and SHA-1 before patching
-* easily scalable to other formats
+* can remove SNES headers before patching
 * made in Vanilla JS
