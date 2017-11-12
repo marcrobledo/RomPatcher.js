@@ -1,4 +1,4 @@
-/* UPS module for RomPatcher.js v20170723 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
+/* UPS module for RomPatcher.js v20171112 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 var UPS_MAGIC='UPS1';
@@ -62,7 +62,7 @@ UPS.prototype.export=function(){
 }
 UPS.prototype.apply=function(romFile){
 	if(crc32(romFile)!==this.checksumInput){
-		MarcDialogs.alert('Invalid input ROM');
+		MarcDialogs.alert('Error: invalid input ROM checksum');
 		return false;
 	}
 
@@ -83,8 +83,7 @@ UPS.prototype.apply=function(romFile){
 	}
 
 	if(crc32(tempFile)!==this.checksumOutput){
-		MarcDialogs.alert('Invalid output ROM');
-		return false;
+		MarcDialogs.alert('Warning: invalid output ROM checksum');
 	}
 
 	return tempFile
@@ -159,7 +158,7 @@ function readUPSFile(file){
 	patchFile.checksumOutput=tempFile.readInt(seek+4);
 
 	if(tempFile.readInt(seek+8)!==crc32(file, true)){
-		MarcDialogs.alert('Invalid patch checksum');
+		MarcDialogs.alert('Warning: invalid patch checksum');
 	}
 	return patchFile;
 }

@@ -1,6 +1,16 @@
-/* RomPatcher.js v20171102 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
-var MAX_ROM_SIZE=33554432;
-var romFile, patch, romFile1, romFile2, tempFile, romHashes={};
+/* RomPatcher.js v20171107 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
+var MAX_ROM_SIZE=33554432;var SNES_HEADERED_ROMS_SIZE=[
+	262144+512,
+	524288+512,
+	1048576+512,
+	2097152+512,
+	4194304+512,
+	8388608+512,
+	16777216+512,
+	33554432+512,
+	50331648+512
+];
+var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
 function el(e){return document.getElementById(e)}
@@ -17,16 +27,16 @@ addEvent(window,'load',function(){
 
 	addEvent(el('input-file-rom'), 'change', function(){
 		romFile=new MarcBinFile(this, function(){
-			el('rom-info').innerHTML='';
-			sha1(romFile);
-			romHashes.crc32=crc32(romFile);
-			romHashes.md5=md5(romFile);
+			el('checkbox-removeheader').checked=false;
+			unheaderedRomFile=null;
 
-			var crc32str=romHashes.crc32.toString(16);
-			while(crc32str.length<8)
-				crc32str='0'+crc32str;
-			el('rom-info').innerHTML+='CRC32: '+crc32str+'<br/>';
-			el('rom-info').innerHTML+='MD5:   '+romHashes.md5+'<br/>';
+			if(SNES_HEADERED_ROMS_SIZE.indexOf(romFile.fileSize)>=0){
+				el('row-removeheader').style.display='flex';
+			}else{
+				el('row-removeheader').style.display='none';
+			}
+	
+			updateChecksums(romFile);
 		});
 	});
 	addEvent(el('input-file-patch'), 'change', function(){
@@ -38,10 +48,36 @@ addEvent(window,'load',function(){
 	addEvent(el('input-file-rom2'), 'change', function(){
 		romFile2=new MarcBinFile(this);
 	});
+
+	addEvent(el('checkbox-removeheader'), 'change', function(){
+		if(!unheaderedRomFile){
+			headeredRomFile=romFile;
+			unheaderedRomFile=new MarcBinFile(headeredRomFile.fileSize-512);
+			unheaderedRomFile.writeBytes(0, headeredRomFile.readBytes(512, headeredRomFile.fileSize-512));
+			unheaderedRomFile.fileName=headeredRomFile.fileName;
+		}
+
+		if(this.checked)
+			romFile=unheaderedRomFile;
+		else
+			romFile=headeredRomFile;
+
+
+		updateChecksums(romFile);
+	});
 });
 
 
+function updateChecksums(file){
+	el('rom-info').style.display='block';
+	sha1(file);
 
+	var crc32str=crc32(file).toString(16);
+	while(crc32str.length<8)
+		crc32str='0'+crc32str;
+	el('crc32').innerHTML=crc32str;
+	el('md5').innerHTML=md5(file);
+}
 
 
 
@@ -130,8 +166,7 @@ function sha1(file){
 					hexString+='0'+bytes[i].toString(16);
 				else
 					hexString+=bytes[i].toString(16);
-			romHashes.sha1=hexString;
-			el('rom-info').innerHTML+='SHA-1: '+romHashes.sha1+'<br/>';
+			el('sha1').innerHTML=hexString;
 		}).catch(function(error){
 			console.error(error);
 		});

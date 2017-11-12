@@ -1,4 +1,4 @@
-/* BPS module for RomPatcher.js v20171103	 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
+/* BPS module for RomPatcher.js v20171112	 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
 var BPS_MAGIC='BPS1';
@@ -30,7 +30,8 @@ BPS.prototype.toString=function(){
 }*/
 BPS.prototype.apply=function(romFile){
 	if(this.sourceChecksum!==crc32(romFile,false)){
-		MarcDialogs.alert('Warning: invalid source ROM checksum');
+		MarcDialogs.alert('Error: invalid source ROM checksum');
+		return false;
 	}
 	
 	

@@ -1,4 +1,4 @@
-/* APS (N64) module for RomPatcher.js v20170723 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
+/* APS (N64) module for RomPatcher.js v20171112 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
 /* File format specification: https://github.com/btimofeev/UniPatcher/wiki/APS-(N64) */
 
 var RECORD_RLE=0x0000;
@@ -90,7 +90,7 @@ APS.prototype.export=function(){
 APS.prototype.apply=function(romFile){
 	if(this.headerType===1){
 		if(romFile.readString(0x3c, 3)!==this.header.cartId){
-			MarcDialogs.alert('Invalid ROM cart id');
+			MarcDialogs.alert('Error: invalid ROM cart id');
 			return false;
 		}
 		var crc=romFile.readBytes(0x10, 8);
@@ -100,7 +100,7 @@ APS.prototype.apply=function(romFile){
 				crcOk=false;
 		}
 		if(!crcOk){
-			MarcDialogs.alert('Invalid ROM checksum');
+			MarcDialogs.alert('Error: invalid ROM checksum');
 			return false;
 		}
 	}
