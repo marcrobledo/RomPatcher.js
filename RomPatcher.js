@@ -1,15 +1,5 @@
-/* RomPatcher.js v20171107 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
-var MAX_ROM_SIZE=33554432;var SNES_HEADERED_ROMS_SIZE=[
-	262144+512,
-	524288+512,
-	1048576+512,
-	2097152+512,
-	4194304+512,
-	8388608+512,
-	16777216+512,
-	33554432+512,
-	50331648+512
-];
+/* RomPatcher.js v20180423 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+var MAX_ROM_SIZE=33554432;
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
@@ -19,6 +9,11 @@ function el(e){return document.getElementById(e)}
 
 /* initialize app */
 addEvent(window,'load',function(){
+	/* service worker */
+	if('serviceWorker' in navigator)
+		navigator.serviceWorker.register('_cache_service_worker.js');
+
+
 	el('input-file-rom').value='';
 	el('input-file-patch').value='';
 	el('input-file-rom1').value='';
@@ -27,12 +22,20 @@ addEvent(window,'load',function(){
 
 	addEvent(el('input-file-rom'), 'change', function(){
 		romFile=new MarcBinFile(this, function(){
+			el('checkbox-addheader').checked=false;
 			el('checkbox-removeheader').checked=false;
-			unheaderedRomFile=null;
 
-			if(SNES_HEADERED_ROMS_SIZE.indexOf(romFile.fileSize)>=0){
+			unheaderedRomFile=null;
+			headeredRomFile=null;
+
+			if(isSnesRom(romFile.fileName) && isPowerOfTwo(romFile.fileSize)){
+				el('row-addheader').style.display='flex';
+				el('row-removeheader').style.display='none';
+			}else if(isSnesRom(romFile.fileName) && isHeadered(romFile.fileSize, 512)){
+				el('row-addheader').style.display='none';
 				el('row-removeheader').style.display='flex';
 			}else{
+				el('row-addheader').style.display='none';
 				el('row-removeheader').style.display='none';
 			}
 	
@@ -65,7 +68,26 @@ addEvent(window,'load',function(){
 
 		updateChecksums(romFile);
 	});
+
+	addEvent(el('checkbox-addheader'), 'change', function(){
+		if(!headeredRomFile){
+			unheaderedRomFile=romFile;
+			headeredRomFile=new MarcBinFile(unheaderedRomFile.fileSize+512);
+			headeredRomFile.writeBytes(512, unheaderedRomFile.readBytes(0, unheaderedRomFile.fileSize));
+			headeredRomFile.fileName=unheaderedRomFile.fileName;
+		}
+
+		if(this.checked)
+			romFile=headeredRomFile;
+		else
+			romFile=unheaderedRomFile;
+
+	});
 });
+
+function isSnesRom(fileName){return /\.(smc|sfc|fig|swc)$/.test(fileName)}
+function isPowerOfTwo(fileSize){return (fileSize & (fileSize-1))===0}
+function isHeadered(fileSize,headerSize){return isPowerOfTwo(fileSize-headerSize)}
 
 
 function updateChecksums(file){
@@ -103,7 +125,14 @@ function applyPatchFile(p,r){
 	if(p && r){
 		var patchedROM=p.apply(r);
 		patchedROM.fileName=r.fileName.replace(/\.(.*?)$/, ' (patched).$1');
-		patchedROM.save()
+		if(el('checkbox-addheader').checked){
+			var unheaderedPatchedROM=new MarcBinFile(patchedROM.fileSize-512);
+			unheaderedPatchedROM.fileName=patchedROM.fileName;
+			unheaderedPatchedROM.writeBytes(0, patchedROM.readBytes(512, patchedROM.fileSize-512));
+			unheaderedPatchedROM.save();
+		}else{
+			patchedROM.save();
+		}
 	}else{
 		MarcDialogs.alert('No ROM/patch selected');
 	}

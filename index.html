@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html manifest="manifest.appcache">
+<html>
 <head>
 	<title>RomPatcher.js</title>
 	<meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
@@ -51,9 +51,15 @@
 			</div>
 		</div>
 		<div class="row" id="row-removeheader" style="display:none">
-			<div class="six columns text-right"><label for="checkbox-removeheader">Remove header:</label></div>
+			<div class="six columns text-right"><label for="checkbox-removeheader">Remove header before patching:</label></div>
 			<div class="six columns">
 				<input type="checkbox" id="checkbox-removeheader" />
+			</div>
+		</div>
+		<div class="row" id="row-addheader" style="display:none">
+			<div class="six columns text-right"><label for="checkbox-addheader">Patch needs a headered ROM:</label></div>
+			<div class="six columns">
+				<input type="checkbox" id="checkbox-addheader" />
 			</div>
 		</div>
 
