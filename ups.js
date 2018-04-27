@@ -1,4 +1,4 @@
-/* UPS module for RomPatcher.js v20171112 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
+/* UPS module for RomPatcher.js v20180427 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 var UPS_MAGIC='UPS1';
@@ -77,7 +77,7 @@ UPS.prototype.apply=function(romFile){
 		var nextDifference=this.records[i];
 		nextOffset+=nextDifference.offset;
 		for(var j=0; j<nextDifference.XORdata.length; j++){
-			tempFile.writeByte(nextOffset+j, romFile.readByte(nextOffset+j) ^ nextDifference.XORdata[j]);
+			tempFile.writeByte(nextOffset+j, ((nextOffset+j)<romFile.fileSize?romFile.readByte(nextOffset+j):0x00) ^ nextDifference.XORdata[j]);
 		}
 		nextOffset+=nextDifference.XORdata.length+1;
 	}
@@ -173,7 +173,7 @@ function createUPSFromFiles(original, modified){
 	var seek=0;
 	var previousSeek=0;
 	while(seek<modified.fileSize){
-		var b1=seek>original.fileSize?0x00:original.readByte(seek);
+		var b1=seek>=original.fileSize?0x00:original.readByte(seek);
 		var b2=modified.readByte(seek);
 
 		if(b1!==b2){
@@ -183,7 +183,9 @@ function createUPSFromFiles(original, modified){
 			while(b1!==b2){
 				differentBytes.push(b1 ^ b2);
 				seek++;
-				b1=seek>original.fileSize?0x00:original.readByte(seek);
+				if(seek===modified.fileSize)
+					break;
+				b1=seek>=original.fileSize?0x00:original.readByte(seek);
 				b2=modified.readByte(seek);
 			}
 

@@ -1,4 +1,4 @@
-/* APS (N64) module for RomPatcher.js v20171112 - Marc Robledo 2017 - http://www.marcrobledo.com/license */
+/* APS (N64) module for RomPatcher.js v20180427 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://github.com/btimofeev/UniPatcher/wiki/APS-(N64) */
 
 var RECORD_RLE=0x0000;
@@ -181,7 +181,7 @@ function createAPSFromFiles(original, modified, N64header){
 
 	var seek=0;
 	while(seek<modified.fileSize){
-		var b1=original.readByte(seek);
+		var b1=seek>=original.fileSize?0x00:original.readByte(seek);
 		var b2=modified.readByte(seek);
 
 		if(b1!==b2){
@@ -194,7 +194,9 @@ function createAPSFromFiles(original, modified, N64header){
 				if(b2!==differentBytes[0])
 					RLERecord=false;
 				seek++;
-				b1=seek>original.fileSize?0x00:original.readByte(seek);
+				if(seek===modified.fileSize)
+					break;
+				b1=seek>=original.fileSize?0x00:original.readByte(seek);
 				b2=modified.readByte(seek);
 			}
 

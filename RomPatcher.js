@@ -1,4 +1,4 @@
-/* RomPatcher.js v20180423 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20180427 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
@@ -141,35 +141,29 @@ function applyPatchFile(p,r){
 
 
 function createPatchFile(){
-	var MODES=['ips','ups','aps','apsn64'/*,'apsgba','bps'*/];
-	var mode=0;
-	for(var i=0; i<MODES.length && !mode; i++)
-		if(el('radio-'+MODES[i]).checked)
-			mode=MODES[i];
-
 	if(!romFile1 || !romFile2){
 		MarcDialogs.alert('No original/modified ROM file specified');
 		return false;
-	}else if(mode==='ips' && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
+	}else if(el('radio-ips').checked && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
 		MarcDialogs.alert('Files are too big for IPS format');
 		return false;
 	}
 
 
 	var newPatch;
-	if(mode==='ips'){
+	if(el('radio-ips').checked){
 		newPatch=createIPSFromFiles(romFile1, romFile2);
-	}else if(mode==='ups'){
+	}else if(el('radio-ups').checked){
 		newPatch=createUPSFromFiles(romFile1, romFile2);
-	}else if(mode==='aps'){
+	}else if(el('radio-aps').checked){
 		newPatch=createAPSFromFiles(romFile1, romFile2, false);
-	}else if(mode==='apsn64'){
+	}else if(el('radio-apsn64').checked){
 		newPatch=createAPSFromFiles(romFile1, romFile2, true);
-	}else if(mode==='apsgba'){
+	}/*else if(el('radio-apsgba').checked){
 		newPatch=createAPSGBAFromFiles(romFile1, romFile2);
-	}else if(mode==='bps'){
+	}else if(el('radio-bps').checked){
 		newPatch=createBPSFromFiles(romFile1, romFile2);
-	}
+	}*/
 	newPatch.export().save();
 }
 

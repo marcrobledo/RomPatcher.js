@@ -1,4 +1,4 @@
-/* IPS module for RomPatcher.js v20171022 - Marc Robledo 2016-2017 - http://www.marcrobledo.com/license */
+/* IPS module for RomPatcher.js v20180427 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 var MAX_IPS_SIZE=16777216;
@@ -146,8 +146,13 @@ function readIPSFile(file){
 function createIPSFromFiles(original, modified){
 	tempFile=new IPS();
 
-	if(modified.fileSize<original.fileSize)
+	if(modified.fileSize<original.fileSize){
 		tempFile.truncate=modified.fileSize;
+	}else if(modified.fileSize>original.fileSize){
+		var originalTemp=new MarcBinFile(modified.fileSize);
+		originalTemp.writeBytes(0, original.readBytes(0, original.fileSize));
+		original=originalTemp;
+	}
 
 	var seek=0;
 	while(seek<modified.fileSize){
@@ -162,11 +167,14 @@ function createIPSFromFiles(original, modified){
 			/* find difference in next 6 bytes (in order to save space) */
 			var nearbyDifference=true;
 			while(nearbyDifference){
-				var seekStart=6;
-				while(seek+seekStart>modified.fileSize){
-					seekStart--;
+				if(seek+6>modified.fileSize){
+					var finalSeek=modified.fileSize-seek-1;
+					length+=finalSeek;
+					seek+=finalSeek;
+					break;
 				}
-				for(var i=seekStart;i>0 && nearbyDifference;i--){
+
+				for(var i=6;i>0 && nearbyDifference;i--){
 					var bc1=original.readByte(seek+i);
 					var bc2=modified.readByte(seek+i);
 
