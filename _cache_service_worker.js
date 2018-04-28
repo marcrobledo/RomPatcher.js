@@ -12,13 +12,13 @@ limitations under the License.
 mod by marcrobledo, original from: https://github.com/GoogleChrome/samples/blob/gh-pages/service-worker/basic/service-worker.js
 */
 
-const PRECACHE_ID='v20180428';
+const PRECACHE_ID='v20180428c';
 const PRECACHE_FILES=[
 'index.html','./',
 'RomPatcher.css',
 'RomPatcher.js',
 'favicon.png',
-'logo.png',
+'logo192.png',
 'ips.js',
 'ups.js',
 'aps.js',
