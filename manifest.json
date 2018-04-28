@@ -1,0 +1,17 @@
+{
+	"short_name":"Rom Patcher JS",
+	"name":"Rom Patcher JS",
+	"icons":[
+		{
+			"src": "logo192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"density": "1.0"
+		}
+	],
+	"start_url": "index.html",
+	"display": "standalone",
+	"orientation": "portrait",
+	"theme_color": "#31343a",
+	"background_color": "#31343a"
+}

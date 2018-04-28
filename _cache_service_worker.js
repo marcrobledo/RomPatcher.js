@@ -12,7 +12,7 @@ limitations under the License.
 mod by marcrobledo, original from: https://github.com/GoogleChrome/samples/blob/gh-pages/service-worker/basic/service-worker.js
 */
 
-const PRECACHE_ID='v20180427b';
+const PRECACHE_ID='v20180428';
 const PRECACHE_FILES=[
 'index.html','./',
 'RomPatcher.css',
@@ -22,8 +22,7 @@ const PRECACHE_FILES=[
 'ips.js',
 'ups.js',
 'aps.js',
-'bps.js',
-'ByteFlipper.js'
+'bps.js'
 ];
 
 

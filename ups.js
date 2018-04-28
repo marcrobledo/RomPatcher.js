@@ -1,4 +1,4 @@
-/* UPS module for RomPatcher.js v20180427 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
+/* UPS module for RomPatcher.js v20180428 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 var UPS_MAGIC='UPS1';
@@ -21,7 +21,7 @@ UPS.prototype.toString=function(){
 	s+='\nOutput file checksum: '+this.checksumOutput;
 	return s
 }
-UPS.prototype.export=function(){
+UPS.prototype.export=function(fileName){
 	var encodedSizeInput=encodeVLV(this.sizeInput);
 	var encodedSizeOutput=encodeVLV(this.sizeOutput);
 	var encodedRecords=[];
@@ -38,7 +38,7 @@ UPS.prototype.export=function(){
 
 	tempFile=new MarcBinFile(binFileSize);
 	tempFile.littleEndian=false;
-	tempFile.fileName='patch.ups';
+	tempFile.fileName=fileName+'.ups';
 	tempFile.writeString(0, UPS_MAGIC, UPS_MAGIC.length);
 
 	tempFile.writeBytes(4, encodedSizeInput);
@@ -60,8 +60,9 @@ UPS.prototype.export=function(){
 
 	return tempFile
 }
+UPS.prototype.validateSource=function(romFile){return crc32(romFile)===this.checksumInput}
 UPS.prototype.apply=function(romFile){
-	if(crc32(romFile)!==this.checksumInput){
+	if(!this.validateSource(romFile)){
 		MarcDialogs.alert('Error: invalid input ROM checksum');
 		return false;
 	}

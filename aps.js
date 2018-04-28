@@ -1,4 +1,4 @@
-/* APS (N64) module for RomPatcher.js v20180427 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
+/* APS (N64) module for RomPatcher.js v20180428 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://github.com/btimofeev/UniPatcher/wiki/APS-(N64) */
 
 var RECORD_RLE=0x0000;
@@ -38,7 +38,7 @@ APS.prototype.toString=function(){
 	s+='\nHeader: '+JSON.stringify(this.header);
 	return s
 }
-APS.prototype.export=function(){
+APS.prototype.export=function(fileName){
 	var patchFileSize=(this.headerType===1)?78:61;
 
 	for(var i=0; i<this.records.length; i++){
@@ -50,7 +50,7 @@ APS.prototype.export=function(){
 
 	tempFile=new MarcBinFile(patchFileSize);
 	tempFile.littleEndian=true;
-	tempFile.fileName='patch.aps';
+	tempFile.fileName=fileName+'.aps';
 	tempFile.writeString(0, APS_MAGIC, APS_MAGIC.length);
 	tempFile.writeByte(5, this.headerType);
 	tempFile.writeByte(6, this.encodingMethod);

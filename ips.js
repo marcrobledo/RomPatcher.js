@@ -1,4 +1,4 @@
-/* IPS module for RomPatcher.js v20180427 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* IPS module for RomPatcher.js v20180428 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 var MAX_IPS_SIZE=16777216;
@@ -33,7 +33,7 @@ IPS.prototype.toString=function(){
 		s+='\nTruncate at: 0x'+this.truncate.toString(16);
 	return s
 }
-IPS.prototype.export=function(){
+IPS.prototype.export=function(fileName){
 	var binFileSize=0;
 	binFileSize+=5; //PATCH string
 	for(var i=0; i<this.records.length; i++){
@@ -48,7 +48,7 @@ IPS.prototype.export=function(){
 
 	tempFile=new MarcBinFile(binFileSize);
 	tempFile.littleEndian=false;
-	tempFile.fileName='patch.ips';
+	tempFile.fileName=fileName+'.ips';
 	tempFile.writeString(0, 'PATCH', 5);
 	var seek=5;
 	for(var i=0; i<this.records.length; i++){
@@ -75,6 +75,7 @@ IPS.prototype.export=function(){
 
 	return tempFile
 }
+IPS.prototype.validateInput=function(romFile){return '?'}
 IPS.prototype.apply=function(romFile){
 	var newFileSize=romFile.fileSize;
 	for(var i=0; i<this.records.length; i++){

@@ -1,4 +1,4 @@
-# RomPatcher.js
+# Rom Patcher JS
 A ROM patcher made in HTML5.
 
 **Features:**
@@ -11,3 +11,4 @@ A ROM patcher made in HTML5.
 * shows ROM CRC32, MD5 and SHA-1 before patching
 * can remove SNES headers before patching
 * made in Vanilla JS
+* can be run in any modern web browser, including mobile

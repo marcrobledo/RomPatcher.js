@@ -1,4 +1,4 @@
-/* RomPatcher.js v20180427 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20180428 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
@@ -18,7 +18,6 @@ addEvent(window,'load',function(){
 	el('input-file-patch').value='';
 	el('input-file-rom1').value='';
 	el('input-file-rom2').value='';
-	el('input-file-flip').value='';
 
 	addEvent(el('input-file-rom'), 'change', function(){
 		romFile=new MarcBinFile(this, function(){
@@ -40,6 +39,7 @@ addEvent(window,'load',function(){
 			}
 	
 			updateChecksums(romFile);
+			validateSource();
 		});
 	});
 	addEvent(el('input-file-patch'), 'change', function(){
@@ -67,6 +67,7 @@ addEvent(window,'load',function(){
 
 
 		updateChecksums(romFile);
+		validateSource();
 	});
 
 	addEvent(el('checkbox-addheader'), 'change', function(){
@@ -82,7 +83,10 @@ addEvent(window,'load',function(){
 		else
 			romFile=unheaderedRomFile;
 
+		validateSource();
 	});
+
+	setTab(1);
 });
 
 function isSnesRom(fileName){return /\.(smc|sfc|fig|swc)$/.test(fileName)}
@@ -91,7 +95,7 @@ function isHeadered(fileSize,headerSize){return isPowerOfTwo(fileSize-headerSize
 
 
 function updateChecksums(file){
-	el('rom-info').style.display='block';
+	el('rom-info').style.display='flex';
 	sha1(file);
 
 	var crc32str=crc32(file).toString(16);
@@ -101,6 +105,13 @@ function updateChecksums(file){
 	el('md5').innerHTML=md5(file);
 }
 
+function validateSource(){
+	if(patch && romFile && typeof patch.validateSource !== 'undefined'){
+		el('crc32').className=patch.validateSource(romFile)?'valid':'invalid';
+	}else{
+		el('crc32').className='';
+	}
+}
 
 
 function _readPatchFile(){
@@ -119,6 +130,7 @@ function _readPatchFile(){
 	}*/else {
 		MarcDialogs.alert('Invalid IPS/UPS/APS/BPS file');
 	}
+	validateSource();
 }
 function openPatchFile(f){tempFile=new MarcBinFile(f, _readPatchFile)}
 function applyPatchFile(p,r){
@@ -141,33 +153,48 @@ function applyPatchFile(p,r){
 
 
 function createPatchFile(){
+	var mode=el('patch-type').value;
 	if(!romFile1 || !romFile2){
 		MarcDialogs.alert('No original/modified ROM file specified');
 		return false;
-	}else if(el('radio-ips').checked && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
+	}else if(mode==='ips' && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
 		MarcDialogs.alert('Files are too big for IPS format');
 		return false;
 	}
 
 
 	var newPatch;
-	if(el('radio-ips').checked){
+	if(mode==='ips'){
 		newPatch=createIPSFromFiles(romFile1, romFile2);
-	}else if(el('radio-ups').checked){
+	}else if(mode==='ups'){
 		newPatch=createUPSFromFiles(romFile1, romFile2);
-	}else if(el('radio-aps').checked){
+	}else if(mode==='aps'){
 		newPatch=createAPSFromFiles(romFile1, romFile2, false);
-	}else if(el('radio-apsn64').checked){
+	}else if(mode==='apsn64'){
 		newPatch=createAPSFromFiles(romFile1, romFile2, true);
 	}/*else if(el('radio-apsgba').checked){
 		newPatch=createAPSGBAFromFiles(romFile1, romFile2);
 	}else if(el('radio-bps').checked){
 		newPatch=createBPSFromFiles(romFile1, romFile2);
 	}*/
-	newPatch.export().save();
+	newPatch.export(romFile2.fileName.replace(/\.[^\.]+$/,'')).save();
 }
 
 
+
+
+
+function setTab(tab){
+	for(var i=0; i<2; i++){
+		if(i===tab){
+			el('tab'+i).style.display='block';
+			el('tabs').children[i].className='selected';
+		}else{
+			el('tab'+i).style.display=i===tab?'block':'none';
+			el('tabs').children[i].className='clickable'
+		}
+	}
+}
 
 
 
