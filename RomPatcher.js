@@ -86,7 +86,7 @@ addEvent(window,'load',function(){
 		validateSource();
 	});
 
-	setTab(1);
+	//setTab(1);
 });
 
 function isSnesRom(fileName){return /\.(smc|sfc|fig|swc)$/.test(fileName)}
