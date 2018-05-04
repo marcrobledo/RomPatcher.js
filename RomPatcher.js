@@ -10,6 +10,8 @@ function el(e){return document.getElementById(e)}
 /* initialize app */
 addEvent(window,'load',function(){
 	/* service worker */
+	if(location.protocol==='http:')
+		location.href=window.location.href.replace('http:','https:');
 	if('serviceWorker' in navigator)
 		navigator.serviceWorker.register('_cache_service_worker.js');
 
@@ -95,7 +97,7 @@ function isHeadered(fileSize,headerSize){return isPowerOfTwo(fileSize-headerSize
 
 
 function updateChecksums(file){
-	el('rom-info').style.display='flex';
+	//el('rom-info').style.display='flex';
 	sha1(file);
 
 	var crc32str=crc32(file).toString(16);
