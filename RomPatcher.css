@@ -27,7 +27,7 @@ html, body{height:100%}
 	height: 100%;
 	flex-direction: column;
 }
-header{padding: 5% 0 8%}
+header{padding: 1% 0 4%}
 header h1{display:none}
 footer{padding: 50px 0 20px}
 #wrapper{flex-basis:100%}
@@ -195,10 +195,16 @@ button.no-text.with-icon:before{margin-right:0px}
 
 
 
-#rom-info{font-family:'Roboto Mono',monospace;color:#888;font-size:12px}
+#rom-info{font-family:'Roboto Mono',monospace;color:#888;font-size:12px;
+	-moz-user-select:text;
+	-webkit-user-select: text;
+	-ms-user-select:text;
+	-o-user-select:text;
+	user-select:text;
+	cursor:text;
+}
 #rom-info .rightcol{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #crc32.valid{color:green}
-/*#crc32.valid:after{content:" \002713"}*/
 #crc32.invalid{color: red}
 
 
@@ -210,6 +216,7 @@ button.no-text.with-icon:before{margin-right:0px}
 	background-position:-32px 0px;
 	content:"";
 	margin-left:4px;
+	/*content:" \002713"}*/
 }
 
 

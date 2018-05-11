@@ -1,4 +1,4 @@
-/* RomPatcher.js v20180428 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20180511 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
