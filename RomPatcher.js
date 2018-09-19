@@ -1,5 +1,9 @@
-/* RomPatcher.js v20180511 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20180920 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
+var MORE_SNES_SIZES_HEADERLESS=[786432,1310720,1572864,2621440,3145728,5242880,6291456];
+
+
+
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
@@ -29,10 +33,10 @@ addEvent(window,'load',function(){
 			unheaderedRomFile=null;
 			headeredRomFile=null;
 
-			if(isSnesRom(romFile.fileName) && isPowerOfTwo(romFile.fileSize)){
+			if(isSNESHeaderless(romFile)){
 				el('row-addheader').style.display='flex';
 				el('row-removeheader').style.display='none';
-			}else if(isSnesRom(romFile.fileName) && isHeadered(romFile.fileSize, 512)){
+			}else if(isSNESHeadered(romFile)){
 				el('row-addheader').style.display='none';
 				el('row-removeheader').style.display='flex';
 			}else{
@@ -91,9 +95,10 @@ addEvent(window,'load',function(){
 	//setTab(1);
 });
 
-function isSnesRom(fileName){return /\.(smc|sfc|fig|swc)$/.test(fileName)}
-function isPowerOfTwo(fileSize){return (fileSize & (fileSize-1))===0}
-function isHeadered(fileSize,headerSize){return isPowerOfTwo(fileSize-headerSize)}
+function isPowerOfTwo(romFile){return romFile.fileSize && (romFile.fileSize & (romFile.fileSize-1))===0}
+function isSNESExtension(romFile){return /\.(smc|sfc|fig|swc)$/.test(romFile.fileName)}
+function isSNESHeaderless(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize)>=0)}
+function isSNESHeadered(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile.fileSize-512) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize-512)>=0)}
 
 
 function updateChecksums(file){
@@ -127,8 +132,8 @@ function _readPatchFile(){
 		patch=readAPSFile(tempFile);
 	}else if(tempFile.readString(0,4)===BPS_MAGIC){
 		patch=readBPSFile(tempFile);
-	}/*else if(tempFile.readString(0,4)===APSGBA_MAGIC){
-		patch=readAPSGBAFile(tempFile);
+	}/*else if(tempFile.readInt(0)===XDELTA_MAGIC){
+		patch=readXDeltaFile(tempFile);
 	}*/else {
 		MarcDialogs.alert('Invalid IPS/UPS/APS/BPS file');
 	}
