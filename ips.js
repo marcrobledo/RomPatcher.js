@@ -1,4 +1,4 @@
-/* IPS module for RomPatcher.js v20180428 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* IPS module for RomPatcher.js v20180919 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 var MAX_IPS_SIZE=16777216;
@@ -166,8 +166,9 @@ function createIPSFromFiles(original, modified){
 			var length=1;
 
 			/* find difference in next 6 bytes (in order to save space) */
+			/* force length to be 0xffff-6 bytes to keep IPS standard */
 			var nearbyDifference=true;
-			while(nearbyDifference){
+			while(nearbyDifference && length<(0xffff-6)){
 				if(seek+6>modified.fileSize){
 					var finalSeek=modified.fileSize-seek-1;
 					length+=finalSeek;
@@ -176,10 +177,7 @@ function createIPSFromFiles(original, modified){
 				}
 
 				for(var i=6;i>0 && nearbyDifference;i--){
-					var bc1=original.readByte(seek+i);
-					var bc2=modified.readByte(seek+i);
-
-					if(bc1!=bc2){
+					if(original.readByte(seek+i)!==modified.readByte(seek+i)){
 						length+=i;
 						seek+=i;
 						break;
@@ -197,7 +195,12 @@ function createIPSFromFiles(original, modified){
 			}
 
 			if(RLERecord){
-				tempFile.addRLERecord(originalSeek, length, data[0]);
+				if(length<3){
+					tempFile.addSimpleRecord(originalSeek, data);
+				}else{
+					tempFile.addRLERecord(originalSeek, length, data[0]);
+				}
+				//tempFile.addRLERecord(originalSeek, length, data[0]);
 			}else{
 				tempFile.addSimpleRecord(originalSeek, data);
 			}
