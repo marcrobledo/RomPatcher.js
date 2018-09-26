@@ -1,4 +1,4 @@
-/* IPS module for RomPatcher.js v20180919 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* IPS module for RomPatcher.js v20180925 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 var MAX_IPS_SIZE=16777216;
@@ -169,7 +169,7 @@ function createIPSFromFiles(original, modified){
 			/* force length to be 0xffff-6 bytes to keep IPS standard */
 			var nearbyDifference=true;
 			while(nearbyDifference && length<(0xffff-6)){
-				if(seek+6>modified.fileSize){
+				if((seek+6)>=modified.fileSize){
 					var finalSeek=modified.fileSize-seek-1;
 					length+=finalSeek;
 					seek+=finalSeek;

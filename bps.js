@@ -1,4 +1,4 @@
-/* BPS module for RomPatcher.js v20180428 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* BPS module for RomPatcher.js v20180926 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
 var BPS_MAGIC='BPS1';
@@ -49,9 +49,12 @@ BPS.prototype.apply=function(romFile){
 			seek+=action.length;
 		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
 			seek+=decodeBPS(this.file, seek).length;
+		}else{
+			//console.log(action.type)
 		}
 	}
 	tempFile=new MarcBinFile(newFileSize);
+	//alert(newFileSize);
 
 
 	//patch
@@ -68,6 +71,7 @@ BPS.prototype.apply=function(romFile){
 		if(action.type===BPS_ACTION_SOURCE_READ){
 			tempFile.writeBytes(outputOffset, romFile.readBytes(outputOffset, action.length));
 			outputOffset+=action.length;
+			//seek+=action.length;
 
 		}else if(action.type===BPS_ACTION_TARGET_READ){
 			tempFile.writeBytes(outputOffset, this.file.readBytes(seek, action.length));
@@ -118,8 +122,10 @@ function readBPSFile(file){
 
 	var decodedMetaDataLength=decodeBPS(file, seek);
 	seek+=decodedMetaDataLength.length;
-	patchFile.metaData=file.readString(seek, decodedMetaDataLength.length);
-	seek+=patchFile.metaData.length;
+	if(decodedMetaDataLength.number){
+		patchFile.metaData=file.readString(seek, decodedMetaDataLength.number);
+		seek+=patchFile.metaData.number;
+	}
 
 	patchFile.actionsOffset=seek;
 	patchFile.file=file;

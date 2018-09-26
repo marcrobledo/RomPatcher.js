@@ -1,8 +1,9 @@
-/* RomPatcher.js v20180920 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* RomPatcher.js v20180924 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 var MAX_ROM_SIZE=33554432;
-var MORE_SNES_SIZES_HEADERLESS=[786432,1310720,1572864,2621440,3145728,5242880,6291456];
+var MORE_SNES_SIZES_HEADERLESS=[393216,786432,1310720,1572864,2621440,3145728,5242880,6291456]; //note: 393216 is a PCE file size
 
 
+var DEBUG_CREATE_UNHEADERED_PATCH=false;
 
 var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
 /* Shortcuts */
@@ -96,7 +97,7 @@ addEvent(window,'load',function(){
 });
 
 function isPowerOfTwo(romFile){return romFile.fileSize && (romFile.fileSize & (romFile.fileSize-1))===0}
-function isSNESExtension(romFile){return /\.(smc|sfc|fig|swc)$/.test(romFile.fileName)}
+function isSNESExtension(romFile){return /\.(smc|sfc|fig|swc|pce)$/.test(romFile.fileName)}
 function isSNESHeaderless(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize)>=0)}
 function isSNESHeadered(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile.fileSize-512) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize-512)>=0)}
 
@@ -149,6 +150,13 @@ function applyPatchFile(p,r){
 			unheaderedPatchedROM.fileName=patchedROM.fileName;
 			unheaderedPatchedROM.writeBytes(0, patchedROM.readBytes(512, patchedROM.fileSize-512));
 			unheaderedPatchedROM.save();
+
+			if(DEBUG_CREATE_UNHEADERED_PATCH){
+				romFile1=unheaderedRomFile;
+				romFile2=unheaderedPatchedROM;
+				unheaderedPatchedROM.fileName=unheaderedPatchedROM.fileName.replace(' (patched)','');
+				createPatchFile();
+			}
 		}else{
 			patchedROM.save();
 		}
