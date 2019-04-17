@@ -1,106 +1,71 @@
-/* BPS module for RomPatcher.js v20180926 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* BPS module for Rom Patcher JS v20180930 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
-var BPS_MAGIC='BPS1';
-var BPS_ACTION_SOURCE_READ=0;
-var BPS_ACTION_TARGET_READ=1;
-var BPS_ACTION_SOURCE_COPY=2;
-var BPS_ACTION_TARGET_COPY=3;
+const BPS_MAGIC='BPS1';
+const BPS_ACTION_SOURCE_READ=0;
+const BPS_ACTION_TARGET_READ=1;
+const BPS_ACTION_SOURCE_COPY=2;
+const BPS_ACTION_TARGET_COPY=3;
 
 
 function BPS(){
 	this.sourceSize=0;
 	this.targetSize=0;
 	this.metaData='';
-	this.actionsOffset=0;
-	this.file=null;
+	this.actions=[];
 	this.sourceChecksum=0;
 	this.targetChecksum=0;
 	this.patchChecksum=0;
 }
 BPS.prototype.toString=function(){
 	var s='Source size: '+this.sourceSize;
-	s+='\Target size: '+this.targetSize;
+	s+='\nTarget size: '+this.targetSize;
 	s+='\nMetadata: '+this.metaData;
-	s+='\nActions offset: '+this.actionsOffset;
+	s+='\n#Actions: '+this.actions.length;
 	return s
 }
-/*BPS.prototype.export=function(){
-
-}*/
-BPS.prototype.validateSource=function(romFile){return this.sourceChecksum===crc32(romFile,false)}
-BPS.prototype.apply=function(romFile){
-	if(!this.validateSource(romFile)){
-		MarcDialogs.alert('Error: invalid source ROM checksum');
-		return false;
+BPS.prototype.validateSource=function(romFile,headerSize){return this.sourceChecksum===crc32(romFile, headerSize)}
+BPS.prototype.apply=function(romFile, validate){
+	if(validate && !this.validateSource(romFile)){
+		throw new Error('error_crc_input');
 	}
 	
-	
-	// first we determine target file size
-	var newFileSize=0;
-	var seek=this.actionsOffset;
-	while(seek<(this.file.fileSize-12)){
-		var data=decodeBPS(this.file, seek);
-		var action={type: data.number & 3, length: (data.number >> 2)+1};
-		seek+=data.length;
 
-		newFileSize+=action.length;
-		if(action.type===BPS_ACTION_TARGET_READ){
-			seek+=action.length;
-		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
-			seek+=decodeBPS(this.file, seek).length;
-		}else{
-			//console.log(action.type)
-		}
-	}
-	tempFile=new MarcBinFile(newFileSize);
-	//alert(newFileSize);
+	tempFile=new MarcFile(this.targetSize);
 
 
 	//patch
-	var outputOffset=0;
 	var sourceRelativeOffset=0;
 	var targetRelativeOffset=0;
-	seek=this.actionsOffset;
-	while(seek<(this.file.fileSize-12)){
-		var data=decodeBPS(this.file, seek);
-		var action={type: data.number & 3, length: (data.number >> 2)+1};
-		//console.log('0x'+seek.toString(16)+' - action: '+action.type+':'+action.length);
-		seek+=data.length;
+	for(var i=0; i<this.actions.length; i++){
+		var action=this.actions[i];
 
 		if(action.type===BPS_ACTION_SOURCE_READ){
-			tempFile.writeBytes(outputOffset, romFile.readBytes(outputOffset, action.length));
-			outputOffset+=action.length;
-			//seek+=action.length;
+			romFile.copyToFile(tempFile, tempFile.offset, action.length);
+			tempFile.skip(action.length);
 
 		}else if(action.type===BPS_ACTION_TARGET_READ){
-			tempFile.writeBytes(outputOffset, this.file.readBytes(seek, action.length));
-			outputOffset+=action.length;
-			seek+=action.length;
+			tempFile.writeBytes(action.bytes);
 
 		}else if(action.type===BPS_ACTION_SOURCE_COPY){
-			var data2=decodeBPS(this.file, seek);
-			seek+=data2.length;
-			sourceRelativeOffset+=(data2.number & 1 ? -1 : +1) * (data2.number >> 1);
-			while(action.length--){
-				tempFile.writeByte(outputOffset, romFile.readByte(sourceRelativeOffset));
-				outputOffset++;
+			sourceRelativeOffset+=action.relativeOffset;
+			var actionLength=action.length;
+			while(actionLength--){
+				tempFile.writeU8(romFile._u8array[sourceRelativeOffset]);
 				sourceRelativeOffset++;
 			}
 		}else if(action.type===BPS_ACTION_TARGET_COPY){
-			var data2=decodeBPS(this.file, seek);
-			seek+=data2.length;
-			targetRelativeOffset += (data2.number & 1 ? -1 : +1) * (data2.number >> 1);
-			while(action.length--) {
-				tempFile.writeByte(outputOffset, tempFile.readByte(targetRelativeOffset));
-				outputOffset++;
+			targetRelativeOffset+=action.relativeOffset;
+			var actionLength=action.length;
+			while(actionLength--) {
+				tempFile.writeU8(tempFile._u8array[targetRelativeOffset]);
 				targetRelativeOffset++;
 			}
 		}
 	}
 
-	if(this.targetChecksum!==crc32(tempFile,false)){
-		MarcDialogs.alert('Warning: invalid target ROM checksum');
+	if(validate && this.targetChecksum!==crc32(tempFile)){
+		throw new Error('error_crc_output');
 	}
 
 	return tempFile
@@ -108,73 +73,381 @@ BPS.prototype.apply=function(romFile){
 
 
 
-function readBPSFile(file){
+function parseBPSFile(file){
+	file.readVLV=BPS_readVLV;
+
 	file.littleEndian=true;
-	var patchFile=new BPS();
+	var patch=new BPS();
 
-	var seek=4; //skip BPS1
-	var decodedSourceSize=decodeBPS(file, seek);
-	patchFile.sourceSize=decodedSourceSize.number;
-	seek+=decodedSourceSize.length;
-	var decodedTargetSize=decodeBPS(file, seek);
-	patchFile.targetSize=decodedTargetSize.number;
-	seek+=decodedTargetSize.length;
+	
+	file.seek(4); //skip BPS1
+	
+	patch.sourceSize=file.readVLV();
+	patch.targetSize=file.readVLV();
 
-	var decodedMetaDataLength=decodeBPS(file, seek);
-	seek+=decodedMetaDataLength.length;
-	if(decodedMetaDataLength.number){
-		patchFile.metaData=file.readString(seek, decodedMetaDataLength.number);
-		seek+=patchFile.metaData.number;
+	var metaDataLength=file.readVLV();
+	if(metaDataLength){
+		patch.metaData=file.readString(metaDataLength);
 	}
 
-	patchFile.actionsOffset=seek;
-	patchFile.file=file;
 
-	patchFile.sourceChecksum=file.readInt(file.fileSize-12);
-	patchFile.targetChecksum=file.readInt(file.fileSize-8);
-	patchFile.patchChecksum=file.readInt(file.fileSize-4);
+	var endActionsOffset=file.fileSize-12;
+	while(file.offset<endActionsOffset){
+		var data=file.readVLV();
+		var action={type: data & 3, length: (data >> 2)+1};
 
-	if(patchFile.patchChecksum!==crc32(file,true)){
-		MarcDialogs.alert('Warning: invalid patch checksum');
+		if(action.type===BPS_ACTION_TARGET_READ){
+			action.bytes=file.readBytes(action.length);
+
+		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
+			var relativeOffset=file.readVLV();
+			action.relativeOffset=(relativeOffset & 1? -1 : +1) * (relativeOffset >> 1)
+		}
+
+		patch.actions.push(action);
 	}
 
+	//file.seek(endActionsOffset);
+	patch.sourceChecksum=file.readU32();
+	patch.targetChecksum=file.readU32();
+	patch.patchChecksum=file.readU32();
+
+	if(patch.patchChecksum!==crc32(file, 0, true)){
+		throw new Error('error_crc_patch');
+	}
+
+
+	return patch;
+}
+
+
+
+function BPS_readVLV(){
+	var data=0, shift=1;
+	while(true){
+		var x = this.readU8();
+		data += (x & 0x7f) * shift;
+		if(x & 0x80)
+			break;
+		shift <<= 7;
+		data += shift;
+	}
+
+	this._lastRead=data;
+	return data;
+}
+function BPS_writeVLV(data){
+	while(true){
+		var x = data & 0x7f;
+		data >>= 7;
+		if(data === 0){
+			this.writeU8(0x80 | x);
+			break;
+		}
+		this.writeU8(x);
+		data--;
+	}
+}
+function BPS_getVLVLen(data){
+	var len=0;
+	while(true){
+		var x = data & 0x7f;
+		data >>= 7;
+		if(data === 0){
+			len++;
+			break;
+		}
+		len++;
+		data--;
+	}
+	return len;
+}
+
+
+BPS.prototype.export=function(fileName){
+	var patchFileSize=BPS_MAGIC.length;	
+	patchFileSize+=BPS_getVLVLen(this.sourceSize);
+	patchFileSize+=BPS_getVLVLen(this.targetSize);
+	patchFileSize+=BPS_getVLVLen(this.metaData.length);
+	patchFileSize+=this.metaData.length;
+	for(var i=0; i<this.actions.length; i++){
+		var action=this.actions[i];
+		patchFileSize+=BPS_getVLVLen(((action.length-1)<<2) + action.type);
+	
+		if(action.type===BPS_ACTION_TARGET_READ){
+			patchFileSize+=action.length;
+		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
+			patchFileSize+=BPS_getVLVLen((Math.abs(action.relativeOffset)<<1)+(action.relativeOffset<0?1:0));
+		}
+	}
+	patchFileSize+=12;
+
+	var patchFile=new MarcFile(patchFileSize);
+	patchFile.fileName=fileName+'.bps';
+	patchFile.littleEndian=true;
+	patchFile.writeVLV=BPS_writeVLV;
+
+	patchFile.writeString(BPS_MAGIC);
+	patchFile.writeVLV(this.sourceSize);
+	patchFile.writeVLV(this.targetSize);
+	patchFile.writeVLV(this.metaData.length);
+	patchFile.writeString(this.metaData, this.metaData.length);
+
+	for(var i=0; i<this.actions.length; i++){
+		var action=this.actions[i];
+		patchFile.writeVLV(((action.length-1)<<2) + action.type);
+	
+		if(action.type===BPS_ACTION_TARGET_READ){
+			patchFile.writeBytes(action.bytes);
+		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
+			patchFile.writeVLV((Math.abs(action.relativeOffset)<<1)+(action.relativeOffset<0?1:0));
+		}
+	}
+	patchFile.writeU32(this.sourceChecksum);
+	patchFile.writeU32(this.targetChecksum);
+	patchFile.writeU32(this.patchChecksum);
 
 	return patchFile;
 }
 
+function BPS_Node(){
+	this.offset=0;
+	this.next=null;
+};
+BPS_Node.prototype.delete=function(){
+	if(this.next)
+		delete this.next;
+}
+function createBPSFromFiles(original, modified, deltaMode){
+	var patch=new BPS();
+	patch.sourceSize=original.fileSize;
+	patch.targetSize=modified.fileSize;
 
-/*function createBPSFromFiles(original, modified){
-	
-}*/
+	if(deltaMode){
+		patch.actions=createBPSFromFilesDelta(original, modified);
+	}else{
+		patch.actions=createBPSFromFilesLinear(original, modified);
+	}
+
+	patch.sourceChecksum=crc32(original);
+	patch.targetChecksum=crc32(modified);
+	patch.patchChecksum=crc32(patch.export(), 0, true);
+	return patch;
+}
 
 
-/*function encodeBPS(number){
-	number=number>>>0;
-	var dataBytes=[];
-	while(true){
-		var x = number & 0x7f;
-		number >>= 7;
-		if(number == 0){
-			dataBytes.push(0x80 | x);
-			break;
+/* delta implementation from https://github.com/chiya/beat/blob/master/nall/beat/linear.hpp */
+function createBPSFromFilesLinear(original, modified){
+	var patchActions=[];
+
+	/* references to match original beat code */
+	var sourceData=original._u8array;
+	var targetData=modified._u8array;
+	var sourceSize=original.fileSize;
+	var targetSize=modified.fileSize;
+	var Granularity=1;
+
+
+
+	var targetRelativeOffset=0;
+	var outputOffset=0;
+	var targetReadLength=0;
+
+	function targetReadFlush(){
+		if(targetReadLength){
+			//encode(TargetRead | ((targetReadLength - 1) << 2));
+			var action={type:BPS_ACTION_TARGET_READ, length:targetReadLength, bytes:[]};
+			patchActions.push(action);
+			var offset = outputOffset - targetReadLength;
+			while(targetReadLength){
+				//write(targetData[offset++]);
+				action.bytes.push(targetData[offset++]);
+				targetReadLength--;
+			}
 		}
-		dataBytes.push(x);
-		number--;
+	};
+
+	while(outputOffset < targetSize) {
+		var sourceLength = 0;
+		for(var n = 0; outputOffset + n < Math.min(sourceSize, targetSize); n++) {
+			if(sourceData[outputOffset + n] != targetData[outputOffset + n]) break;
+			sourceLength++;
+		}
+
+		var rleLength = 0;
+		for(var n = 1; outputOffset + n < targetSize; n++) {
+			if(targetData[outputOffset] != targetData[outputOffset + n]) break;
+			rleLength++;
+		}
+
+		if(rleLength >= 4) {
+			//write byte to repeat
+			targetReadLength++;
+			outputOffset++;
+			targetReadFlush();
+
+			//copy starting from repetition byte
+			//encode(TargetCopy | ((rleLength - 1) << 2));
+			var relativeOffset = (outputOffset - 1) - targetRelativeOffset;
+			//encode(relativeOffset << 1);
+			patchActions.push({type:BPS_ACTION_TARGET_COPY, length:rleLength, relativeOffset:relativeOffset});
+			outputOffset += rleLength;
+			targetRelativeOffset = outputOffset - 1;
+		} else if(sourceLength >= 4) {
+			targetReadFlush();
+			//encode(SourceRead | ((sourceLength - 1) << 2));
+			patchActions.push({type:BPS_ACTION_SOURCE_READ, length:sourceLength});
+			outputOffset += sourceLength;
+		} else {
+			targetReadLength += Granularity;
+			outputOffset += Granularity;
+		}
 	}
-	return dataBytes;
-}*/
-function decodeBPS(dataBytes, i){
-	var number = 0, shift = 1;
-	var len=0;
-	while(true){
-		var x = dataBytes.readByte(i);
-		i++;
-		len++;
-		number += (x & 0x7f) * shift;
-		if(x & 0x80)
-			break;
-		shift <<= 7;
-		number += shift;
+
+	targetReadFlush();
+
+
+
+	return patchActions;
+}
+
+/* delta implementation from https://github.com/chiya/beat/blob/master/nall/beat/delta.hpp */
+function createBPSFromFilesDelta(original, modified){
+	var patchActions=[];
+
+
+	/* references to match original beat code */
+	var sourceData=original._u8array;
+	var targetData=modified._u8array;
+	var sourceSize=original.fileSize;
+	var targetSize=modified.fileSize;
+	var Granularity=1;
+
+
+
+	var sourceRelativeOffset=0;
+	var targetRelativeOffset=0;
+	var outputOffset=0;
+
+
+
+	var sourceTree=new Array(65536);
+	var targetTree=new Array(65536);
+	for(var n=0; n<65536; n++){
+		sourceTree[n]=null;
+		targetTree[n]=null;
 	}
-	return {number:number,length:len};
+
+
+
+	//source tree creation
+	for(var offset=0; offset<sourceSize; offset++) {
+		var symbol = sourceData[offset + 0];
+		//sourceChecksum = crc32_adjust(sourceChecksum, symbol);
+		if(offset < sourceSize - 1)
+			symbol |= sourceData[offset + 1] << 8;
+		var node=new BPS_Node();
+		node.offset=offset;
+		node.next=sourceTree[symbol];
+		sourceTree[symbol] = node;
+	}
+
+	var targetReadLength=0;
+
+	function targetReadFlush(){
+		if(targetReadLength) {
+			//encode(TargetRead | ((targetReadLength - 1) << 2));
+			var action={type:BPS_ACTION_TARGET_READ, length:targetReadLength, bytes:[]};
+			patchActions.push(action);
+			var offset = outputOffset - targetReadLength;
+			while(targetReadLength){
+				//write(targetData[offset++]);
+				action.bytes.push(targetData[offset++]);
+				targetReadLength--;
+			}
+		}
+	};
+
+	while(outputOffset<modified.fileSize){
+		var maxLength = 0, maxOffset = 0, mode = BPS_ACTION_TARGET_READ;
+		
+		var symbol = targetData[outputOffset + 0];
+		if(outputOffset < targetSize - 1) symbol |= targetData[outputOffset + 1] << 8;
+
+		{ //source read
+			var length = 0, offset = outputOffset;
+			while(offset < sourceSize && offset < targetSize && sourceData[offset] == targetData[offset]) {
+				length++;
+				offset++;
+			}
+			if(length > maxLength) maxLength = length, mode = BPS_ACTION_SOURCE_READ;
+		}
+
+		{ //source copy
+			var node = sourceTree[symbol];
+			while(node) {
+				var length = 0, x = node.offset, y = outputOffset;
+				while(x < sourceSize && y < targetSize && sourceData[x++] == targetData[y++]) length++;
+				if(length > maxLength) maxLength = length, maxOffset = node.offset, mode = BPS_ACTION_SOURCE_COPY;
+				node = node.next;
+			}
+		}
+
+		{ //target copy
+			var node = targetTree[symbol];
+			while(node) {
+				var length = 0, x = node.offset, y = outputOffset;
+				while(y < targetSize && targetData[x++] == targetData[y++]) length++;
+				if(length > maxLength) maxLength = length, maxOffset = node.offset, mode = BPS_ACTION_TARGET_COPY;
+				node = node.next;
+			}
+
+			//target tree append
+			node = new BPS_Node();
+			node.offset = outputOffset;
+			node.next = targetTree[symbol];
+			targetTree[symbol] = node;
+		}
+
+		{ //target read
+			if(maxLength < 4) {
+				maxLength = Math.min(Granularity, targetSize - outputOffset);
+				mode = BPS_ACTION_TARGET_READ;
+			}
+		}
+
+		if(mode != BPS_ACTION_TARGET_READ) targetReadFlush();
+
+		switch(mode) {
+			case BPS_ACTION_SOURCE_READ:
+				//encode(BPS_ACTION_SOURCE_READ | ((maxLength - 1) << 2));
+				patchActions.push({type:BPS_ACTION_SOURCE_READ, length:maxLength});
+				break;
+			case BPS_ACTION_TARGET_READ:
+				//delay write to group sequential TargetRead commands into one
+				targetReadLength += maxLength;
+				break;
+			case BPS_ACTION_SOURCE_COPY:
+			case BPS_ACTION_TARGET_COPY:
+				//encode(mode | ((maxLength - 1) << 2));
+				var relativeOffset;
+				if(mode == BPS_ACTION_SOURCE_COPY) {
+					relativeOffset = maxOffset - sourceRelativeOffset;
+					sourceRelativeOffset = maxOffset + maxLength;
+				} else {
+					relativeOffset = maxOffset - targetRelativeOffset;
+					targetRelativeOffset = maxOffset + maxLength;
+				}
+				//encode((relativeOffset < 0) | (abs(relativeOffset) << 1));
+				patchActions.push({type:mode, length:maxLength, relativeOffset:relativeOffset});
+				break;
+		}
+
+		outputOffset += maxLength;
+	}
+	
+	targetReadFlush();
+
+
+	return patchActions;
 }

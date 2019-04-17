@@ -1,32 +1,33 @@
-/* IPS module for RomPatcher.js v20180925 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* IPS module for Rom Patcher JS v20180930 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
-var MAX_IPS_SIZE=16777216;
-var RECORD_RLE=0x0000;
-var RECORD_SIMPLE=1;
-var IPS_MAGIC='PATCH';
+
+
+const IPS_MAGIC='PATCH';
+const IPS_MAX_SIZE=0x1000000; //16 megabytes
+const IPS_RECORD_RLE=0x0000;
+const IPS_RECORD_SIMPLE=0x01;
 
 function IPS(){
 	this.records=[];
 	this.truncate=false;
 }
 IPS.prototype.addSimpleRecord=function(o, d){
-	this.records.push({offset:o, type:RECORD_SIMPLE, data:d})
+	this.records.push({offset:o, type:IPS_RECORD_SIMPLE, length:d.length, data:d})
 }
 IPS.prototype.addRLERecord=function(o, l, b){
-	this.records.push({offset:o, type:RECORD_RLE, length:l, byte:b})
+	this.records.push({offset:o, type:IPS_RECORD_RLE, length:l, byte:b})
 }
 IPS.prototype.toString=function(){
 	nSimpleRecords=0;
 	nRLERecords=0;
 	for(var i=0; i<this.records.length; i++){
-		if(this.records[i].type===RECORD_RLE)
+		if(this.records[i].type===IPS_RECORD_RLE)
 			nRLERecords++;
 		else
 			nSimpleRecords++;
 	}
-	var s='';
-	s+='\Simple records: '+nSimpleRecords;
+	var s='Simple records: '+nSimpleRecords;
 	s+='\nRLE records: '+nRLERecords;
 	s+='\nTotal records: '+this.records.length;
 	if(this.truncate)
@@ -34,77 +35,77 @@ IPS.prototype.toString=function(){
 	return s
 }
 IPS.prototype.export=function(fileName){
-	var binFileSize=0;
-	binFileSize+=5; //PATCH string
+	var patchFileSize=5; //PATCH string
 	for(var i=0; i<this.records.length; i++){
-		if(this.records[i].type===RECORD_RLE)
-			binFileSize+=(3+2+2+1); //offset+0x0000+length+RLE byte to be written
+		if(this.records[i].type===IPS_RECORD_RLE)
+			patchFileSize+=(3+2+2+1); //offset+0x0000+length+RLE byte to be written
 		else
-			binFileSize+=(3+2+this.records[i].data.length); //offset+length+data
+			patchFileSize+=(3+2+this.records[i].data.length); //offset+length+data
 	}
-	binFileSize+=3; //EOF string
+	patchFileSize+=3; //EOF string
 	if(this.truncate)
-		binFileSize+=3; //truncate
+		patchFileSize+=3; //truncate
 
-	tempFile=new MarcBinFile(binFileSize);
-	tempFile.littleEndian=false;
+	tempFile=new MarcFile(patchFileSize);
 	tempFile.fileName=fileName+'.ips';
-	tempFile.writeString(0, 'PATCH', 5);
-	var seek=5;
+	tempFile.writeString(IPS_MAGIC);
 	for(var i=0; i<this.records.length; i++){
 		var rec=this.records[i];
-		if(rec.type===RECORD_RLE){
-			tempFile.writeThreeBytes(seek, rec.offset);
-			tempFile.writeShort(seek+3, 0x0000);
-			tempFile.writeShort(seek+5, rec.length);
-			tempFile.writeByte(seek+7, rec.byte);
-			seek+=3+2+2+1;
+		tempFile.writeU24(rec.offset);
+		if(rec.type===IPS_RECORD_RLE){
+			tempFile.writeU16(0x0000);
+			tempFile.writeU16(rec.length);
+			tempFile.writeU8(rec.byte);
 		}else{
-			tempFile.writeThreeBytes(seek, rec.offset);
-			tempFile.writeShort(seek+3, rec.data.length);
-			tempFile.writeBytes(seek+5, rec.data);
-			seek+=3+2+rec.data.length;
+			tempFile.writeU16(rec.data.length);
+			tempFile.writeBytes(rec.data);
 		}
 	}
 
-	tempFile.writeString(seek, 'EOF', 3);
-	seek+=3;
-	if(rec.truncate){
-		tempFile.writeThreeBytes(seek, rec.truncate);
-	}
+	tempFile.writeString('EOF');
+	if(rec.truncate)
+		tempFile.writeU24(rec.truncate);
+
 
 	return tempFile
 }
-IPS.prototype.validateInput=function(romFile){return '?'}
 IPS.prototype.apply=function(romFile){
-	var newFileSize=romFile.fileSize;
-	for(var i=0; i<this.records.length; i++){
-		var rec=this.records[i];
-		if(rec.type===RECORD_RLE){
-			if(rec.offset+rec.length>newFileSize){
-				newFileSize=rec.offset+rec.length;
+	if(this.truncate){
+		tempFile=romFile.slice(0, this.truncate);
+	}else{
+
+		var newFileSize=romFile.fileSize;
+		for(var i=0; i<this.records.length; i++){
+			var rec=this.records[i];
+			if(rec.type===IPS_RECORD_RLE){
+				if(rec.offset+rec.length>newFileSize){
+					newFileSize=rec.offset+rec.length;
+				}
+			}else{
+				if(rec.offset+rec.data.length>newFileSize){
+					newFileSize=rec.offset+rec.data.length;
+				}
 			}
+		}
+
+		if(newFileSize===romFile.fileSize){
+			tempFile=romFile.slice(0, romFile.fileSize);
 		}else{
-			if(rec.offset+rec.data.length>newFileSize){
-				newFileSize=rec.offset+rec.data.length;
-			}
+			tempFile=new MarcFile(newFileSize);
+			romFile.copyToFile(tempFile,0);
 		}
 	}
 
-	tempFile=new MarcBinFile(newFileSize);
 
-	var clonedFileSize=this.truncate || romFile.fileSize;
-	for(var i=0; i<romFile.fileSize; i++)
-		tempFile.writeByte(i, romFile.readByte(i));
+	romFile.seek(0);
 
 	for(var i=0; i<this.records.length; i++){
-		var rec=this.records[i];
-		if(rec.type===RECORD_RLE){
-			for(var j=0; j<rec.length; j++)
-				tempFile.writeByte(rec.offset+j, rec.byte);
+		tempFile.seek(this.records[i].offset);
+		if(this.records[i].type===IPS_RECORD_RLE){
+			for(var j=0; j<this.records[i].length; j++)
+				tempFile.writeU8(this.records[i].byte);
 		}else{
-			for(var j=0; j<rec.data.length; j++)
-				tempFile.writeByte(rec.offset+j, rec.data[j]);
+			tempFile.writeBytes(this.records[i].data);
 		} 
 	}
 
@@ -114,30 +115,28 @@ IPS.prototype.apply=function(romFile){
 
 
 
-function readIPSFile(file){
+function parseIPSFile(file){
 	var patchFile=new IPS();
-	var EOF=false;
-	var seek=5;
+	file.seek(5);
 
-	while(seek<file.fileSize){
-		var address=file.readThreeBytes(seek);
-		seek+=3;
+	while(!file.isEOF()){
+		var offset=file.readU24();
 
-		if(!EOF && address===0x454f46){ /* EOF */
-			EOF=true;
-		}else if(EOF){
-			patchFile.truncate=address;
-		}else{
-			var length=file.readShort(seek);
-			seek+=2;
-
-			if(length==RECORD_RLE){
-				patchFile.addRLERecord(address, file.readShort(seek), file.readByte(seek+2));
-				seek+=3;
-			}else{
-				patchFile.addSimpleRecord(address, file.readBytes(seek, length));
-				seek+=length;
+		if(offset===0x454f46){ /* EOF */
+			if(file.isEOF()){
+				break;
+			}else if((file.offset+3)===file.fileSize){
+				patchFile.truncate=file.readU24();
+				break;
 			}
+		}
+
+		var length=file.readU16();
+
+		if(length===IPS_RECORD_RLE){
+			patchFile.addRLERecord(offset, file.readU16(), file.readU8());
+		}else{
+			patchFile.addSimpleRecord(offset, file.readBytes(length));
 		}
 	}
 	return patchFile;
@@ -145,70 +144,84 @@ function readIPSFile(file){
 
 
 function createIPSFromFiles(original, modified){
-	tempFile=new IPS();
+	if(original.fileSize>IPS_MAX_SIZE || modified.fileSize>IPS_MAX_SIZE){
+		throw new Error('files are too big for IPS format')
+	}
+
+
+	var patch=new IPS();
 
 	if(modified.fileSize<original.fileSize){
-		tempFile.truncate=modified.fileSize;
-	}else if(modified.fileSize>original.fileSize){
-		var originalTemp=new MarcBinFile(modified.fileSize);
-		originalTemp.writeBytes(0, original.readBytes(0, original.fileSize));
-		original=originalTemp;
+		patch.truncate=modified.fileSize;
 	}
 
-	var seek=0;
-	while(seek<modified.fileSize){
-		var b1=original.readByte(seek);
-		var b2=modified.readByte(seek);
+	//solucion: guardar startOffset y endOffset (ir mirando de 6 en 6 hacia atrás)
+	var previousRecord={type:0xdeadbeef,startOffset:0,length:0};
+	while(!modified.isEOF()){
+		var b1=original.isEOF()?0x00:original.readU8();
+		var b2=modified.readU8();
 
 		if(b1!==b2){
-			var RLERecord=true;
-			var originalSeek=seek;
-			var length=1;
+			var RLEmode=true;
+			var differentData=[];
+			var startOffset=modified.offset-1;
 
-			/* find difference in next 6 bytes (in order to save space) */
-			/* force length to be 0xffff-6 bytes to keep IPS standard */
-			var nearbyDifference=true;
-			while(nearbyDifference && length<(0xffff-6)){
-				if((seek+6)>=modified.fileSize){
-					var finalSeek=modified.fileSize-seek-1;
-					length+=finalSeek;
-					seek+=finalSeek;
+			while(b1!==b2 && differentData.length<0xffff){
+				differentData.push(b2);
+				if(b2!==differentData[0])
+					RLEmode=false;
+
+				if(modified.isEOF() || differentData.length===0xffff)
 					break;
-				}
 
-				for(var i=6;i>0 && nearbyDifference;i--){
-					if(original.readByte(seek+i)!==modified.readByte(seek+i)){
-						length+=i;
-						seek+=i;
-						break;
-					}else if(i==1){
-						nearbyDifference=false;
-					}
-				}
+				b1=original.isEOF()?0x00:original.readU8();
+				b2=modified.readU8();
 			}
 
-			var data=modified.readBytes(originalSeek, length);
-			/* check RLE record */
-			for(var i=1; i<length && RLERecord; i++){
-				if(data[i]!==data[0])
-					RLERecord=false;
-			}
 
-			if(RLERecord){
-				if(length<3){
-					tempFile.addSimpleRecord(originalSeek, data);
+			//check if this record is near the previous one
+			var distance=startOffset-(previousRecord.offset+previousRecord.length);
+			if(
+				previousRecord.type===IPS_RECORD_SIMPLE &&
+				distance<6 && (previousRecord.length+distance+differentData.length)<0xffff
+			){
+				if(RLEmode && differentData.length>6){
+					// separate a potential RLE record
+					original.seek(startOffset);
+					modified.seek(startOffset);
+					previousRecord={type:0xdeadbeef,startOffset:0,length:0};
 				}else{
-					tempFile.addRLERecord(originalSeek, length, data[0]);
+					// merge both records
+					while(distance--){
+						previousRecord.data.push(modified._u8array[previousRecord.offset+previousRecord.length]);
+						previousRecord.length++;
+					}
+					previousRecord.data=previousRecord.data.concat(differentData);
+					previousRecord.length=previousRecord.data.length;
 				}
-				//tempFile.addRLERecord(originalSeek, length, data[0]);
 			}else{
-				tempFile.addSimpleRecord(originalSeek, data);
+				if(RLEmode && differentData.length>2){
+					patch.addRLERecord(startOffset, differentData.length, differentData[0]);
+				}else{
+					patch.addSimpleRecord(startOffset, differentData);
+				}
+				previousRecord=patch.records[patch.records.length-1];
 			}
-
-			seek=originalSeek+length;
-		}else{
-			seek++;
 		}
 	}
-	return tempFile
+
+
+
+
+	if(modified.fileSize>original.fileSize){
+		var lastRecord=patch.records[patch.records.length-1];
+		var lastOffset=lastRecord.offset+lastRecord.length;
+
+		if(lastOffset<modified.fileSize){
+			patch.addSimpleRecord(modified.fileSize-1, [0x00]);
+		}
+	}
+
+
+	return patch
 }

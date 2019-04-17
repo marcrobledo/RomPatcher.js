@@ -1,212 +1,558 @@
-/* RomPatcher.js v20180924 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
-var MAX_ROM_SIZE=33554432;
-var MORE_SNES_SIZES_HEADERLESS=[393216,786432,1310720,1572864,2621440,3145728,5242880,6291456]; //note: 393216 is a PCE file size
+/* Rom Patcher JS v20190411 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+const TOO_BIG_ROM_SIZE=67108863;
+const HEADERS_INFO=[
+	[/\.nes$/, 16, 1024], //interNES
+	[/\.fds$/, 16, 65500], //fwNES
+	[/\.lnx$/, 64, 1024],
+	//[/\.rom$/, 8192, 1024], //jaguar
+	[/\.(pce|nes|gbc?|smc|sfc|fig|swc)$/, 512, 1024]
+];
 
 
-var DEBUG_CREATE_UNHEADERED_PATCH=false;
 
-var romFile, headeredRomFile, unheaderedRomFile, patch, romFile1, romFile2, tempFile;
+const FORCE_HTTPS=true;
+
+
+
+var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
+var fetchedPatches;
+var userLanguage;
+
+var CAN_USE_WEB_WORKERS=true;
+var webWorkerApply,webWorkerCreate,webWorkerCrc;
+try{
+	webWorkerApply=new Worker('./worker_apply.js');
+	webWorkerApply.onmessage = event => { // listen for events from the worker
+		//romFile._u8array=event.data.romFileU8Array;
+		//romFile._dataView=new DataView(romFile._u8array.buffer);
+		//patchFile._u8array=event.data.patchFileU8Array;
+		//patchFile._dataView=new DataView(patchFile._u8array.buffer);
+		//if(patch.file){
+		//	patch.file._u8array=patchFile._u8array;
+		//	patch.file._dataView=patchFile._dataView;
+		//}
+
+		preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
+
+		setTabApplyEnabled(true);
+	};
+	webWorkerApply.onerror = event => { // listen for events from the worker
+		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
+		setTabApplyEnabled(true);
+	};
+
+
+
+
+
+	webWorkerCreate=new Worker('./worker_create.js');
+	webWorkerCreate.onmessage = event => { // listen for events from the worker
+		//console.log('received_create');
+		//romFile1._u8array=event.data.sourceFileU8Array;
+		//romFile1._dataView=new DataView(romFile1._u8array.buffer);
+		//romFile2._u8array=event.data.modifiedFileU8Array;
+		//romFile2._dataView=new DataView(romFile2._u8array.buffer);
+
+
+		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
+		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
+		newPatchFile.save();
+
+		setMessage('create');
+		setTabCreateEnabled(true);
+	};
+	webWorkerCreate.onerror = event => { // listen for events from the worker
+		setMessage('create', _(event.message.replace('Error: ','')), 'error');
+		setTabCreateEnabled(true);
+	};
+
+
+
+
+
+	webWorkerCrc=new Worker('./worker_crc.js');
+	webWorkerCrc.onmessage = event => { // listen for events from the worker
+		//console.log('received_crc');
+		el('crc32').innerHTML=padZeroes(event.data.crc32, 4);
+		el('md5').innerHTML=padZeroes(event.data.md5, 16);
+		romFile._u8array=event.data.u8array;
+		romFile._dataView=new DataView(event.data.u8array.buffer);
+
+		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
+			sha1(romFile);
+		}
+
+		validateSource();
+		setTabApplyEnabled(true);
+	};
+	webWorkerCrc.onerror = event => { // listen for events from the worker
+		setMessage('apply', event.message.replace('Error: ',''), 'error');
+	};
+}catch(e){
+	CAN_USE_WEB_WORKERS=false;
+}
+
+
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
 function el(e){return document.getElementById(e)}
+function _(str){return userLanguage[str] || str}
+
+
+
+function selectFetchedPatch(i){
+	patchFile=fetchedPatches[i].slice(0);
+	_readPatchFile();
+}
+function fetchPredefinedPatch(i, doNotDisable){
+	if(!doNotDisable)
+		setTabApplyEnabled(false);
+
+	var patchFromUrl=PREDEFINED_PATCHES[i].patch;
+	setMessage('apply', _('downloading'), 'loading');
+
+
+	if(typeof window.fetch==='function'){
+		fetch(patchFromUrl)
+			.then(result => result.arrayBuffer()) // Gets the response and returns it as a blob
+			.then(arrayBuffer => {
+				fetchedPatches[i]=new MarcFile(arrayBuffer);
+				fetchedPatches[i].fileName=decodeURIComponent(patchFromUrl);
+
+				if(i===el('input-file-patch').selectedIndex)
+					selectFetchedPatch(i);
+			})
+			.catch(function(evt){
+				setMessage('apply', _('error_downloading'), 'error');
+				//setMessage('apply', evt.message, 'error');
+			});
+	}else{
+		var xhr=new XMLHttpRequest();
+		xhr.open('GET', patchFromUrl, true);
+		xhr.responseType='arraybuffer';
+
+		xhr.onload=function(evt){
+			if(this.status===200){
+				fetchedPatches[i]=new MarcFile(xhr.response);
+				fetchedPatches[i].fileName=decodeURIComponent(patchFromUrl);
+
+				if(i===el('input-file-patch').selectedIndex)
+					selectFetchedPatch(i);
+			}else{
+				setMessage('apply', _('error_downloading')+' ('+this.status+')', 'error');
+			}
+		};
+
+		xhr.onerror=function(evt){
+			setMessage('apply', _('error_downloading'), 'error');
+		};
+
+		xhr.send(null);
+	}
+}
 
 
 
 /* initialize app */
 addEvent(window,'load',function(){
 	/* service worker */
-	if(location.protocol==='http:')
+	if(FORCE_HTTPS && location.protocol==='http:')
 		location.href=window.location.href.replace('http:','https:');
-	if('serviceWorker' in navigator)
+	else if(location.protocol==='https:' && 'serviceWorker' in navigator)
 		navigator.serviceWorker.register('_cache_service_worker.js');
 
-
+	/* language */
+	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
+	if(typeof LOCALIZATION[langCode]==='object'){
+		userLanguage=LOCALIZATION[langCode];
+	}else{
+		userLanguage=LOCALIZATION.en;
+	}
+	var translatableElements=document.querySelectorAll('*[data-localize]');
+	for(var i=0; i<translatableElements.length; i++){
+		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
+	}
+	
+	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, xdelta';
+	
 	el('input-file-rom').value='';
 	el('input-file-patch').value='';
-	el('input-file-rom1').value='';
-	el('input-file-rom2').value='';
+	setTabApplyEnabled(true);
 
 	addEvent(el('input-file-rom'), 'change', function(){
-		romFile=new MarcBinFile(this, function(){
+		setTabApplyEnabled(false);
+		romFile=new MarcFile(this, function(){
 			el('checkbox-addheader').checked=false;
 			el('checkbox-removeheader').checked=false;
 
-			unheaderedRomFile=null;
-			headeredRomFile=null;
-
-			if(isSNESHeaderless(romFile)){
+			if(headerSize=canHaveFakeHeader(romFile)){
 				el('row-addheader').style.display='flex';
+				if(headerSize<1024){
+					el('headersize').innerHTML=headerSize+'b';
+				}else{
+					el('headersize').innerHTML=parseInt(headerSize/1024)+'kb';
+				}
 				el('row-removeheader').style.display='none';
-			}else if(isSNESHeadered(romFile)){
+			}else if(headerSize=hasHeader(romFile)){
 				el('row-addheader').style.display='none';
 				el('row-removeheader').style.display='flex';
 			}else{
 				el('row-addheader').style.display='none';
 				el('row-removeheader').style.display='none';
 			}
-	
-			updateChecksums(romFile);
-			validateSource();
+
+			updateChecksums(romFile, 0);
 		});
 	});
-	addEvent(el('input-file-patch'), 'change', function(){
-		openPatchFile(this);
-	});
-	addEvent(el('input-file-rom1'), 'change', function(){
-		romFile1=new MarcBinFile(this);
-	});
-	addEvent(el('input-file-rom2'), 'change', function(){
-		romFile2=new MarcBinFile(this);
-	});
+
+
+
+
+
+	if(typeof PREDEFINED_PATCHES!=='undefined'){
+		fetchedPatches=new Array(PREDEFINED_PATCHES.length);
+
+		var container=el('input-file-patch').parentElement;
+		container.removeChild(el('input-file-patch'));
+
+		var select=document.createElement('select');
+		select.id='input-file-patch';
+		for(var i=0; i<PREDEFINED_PATCHES.length; i++){
+			var option=document.createElement('option');
+			option.value=i;
+			option.innerHTML=PREDEFINED_PATCHES[i].name;
+			select.appendChild(option);
+		}
+		container.appendChild(select)
+		container.parentElement.title='';
+		addEvent(select,'change',function(){
+			if(fetchedPatches[this.selectedIndex])
+				selectFetchedPatch(this.selectedIndex);
+			else{
+				patch=null;
+				patchFile=null;
+				fetchPredefinedPatch(this.selectedIndex);
+			}
+		});
+		fetchPredefinedPatch(0, true);
+	}else{
+		setTabCreateEnabled(true);
+		el('input-file-rom1').value='';
+		el('input-file-rom2').value='';
+
+		el('switch-container').style.visibility='visible';
+
+		addEvent(el('input-file-patch'), 'change', function(){
+			setTabApplyEnabled(false);
+			patchFile=new MarcFile(this, _readPatchFile)
+		});
+		addEvent(el('input-file-rom1'), 'change', function(){
+			setTabCreateEnabled(false);
+			romFile1=new MarcFile(this, function(){setTabCreateEnabled(true)});
+		});
+		addEvent(el('input-file-rom2'), 'change', function(){
+			setTabCreateEnabled(false);
+			romFile2=new MarcFile(this, function(){setTabCreateEnabled(true)});
+		});
+	}
+
+
+
+
 
 	addEvent(el('checkbox-removeheader'), 'change', function(){
-		if(!unheaderedRomFile){
-			headeredRomFile=romFile;
-			unheaderedRomFile=new MarcBinFile(headeredRomFile.fileSize-512);
-			unheaderedRomFile.writeBytes(0, headeredRomFile.readBytes(512, headeredRomFile.fileSize-512));
-			unheaderedRomFile.fileName=headeredRomFile.fileName;
-		}
-
 		if(this.checked)
-			romFile=unheaderedRomFile;
+			updateChecksums(romFile, headerSize);
 		else
-			romFile=headeredRomFile;
-
-
-		updateChecksums(romFile);
-		validateSource();
+			updateChecksums(romFile, 0);
 	});
 
-	addEvent(el('checkbox-addheader'), 'change', function(){
-		if(!headeredRomFile){
-			unheaderedRomFile=romFile;
-			headeredRomFile=new MarcBinFile(unheaderedRomFile.fileSize+512);
-			headeredRomFile.writeBytes(512, unheaderedRomFile.readBytes(0, unheaderedRomFile.fileSize));
-			headeredRomFile.fileName=unheaderedRomFile.fileName;
-		}
-
-		if(this.checked)
-			romFile=headeredRomFile;
-		else
-			romFile=unheaderedRomFile;
-
-		validateSource();
-	});
-
-	//setTab(1);
+	//setCreatorMode(true);
 });
 
-function isPowerOfTwo(romFile){return romFile.fileSize && (romFile.fileSize & (romFile.fileSize-1))===0}
-function isSNESExtension(romFile){return /\.(smc|sfc|fig|swc|pce)$/.test(romFile.fileName)}
-function isSNESHeaderless(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize)>=0)}
-function isSNESHeadered(romFile){return isSNESExtension(romFile) && (isPowerOfTwo(romFile.fileSize-512) || MORE_SNES_SIZES_HEADERLESS.indexOf(romFile.fileSize-512)>=0)}
 
 
-function updateChecksums(file){
-	//el('rom-info').style.display='flex';
-	sha1(file);
+function canHaveFakeHeader(romFile){
+	if(romFile.fileSize<=0x600000){
+		for(var i=0; i<HEADERS_INFO.length; i++){
+			if(HEADERS_INFO[i][0].test(romFile.fileName) && (romFile.fileSize%HEADERS_INFO[i][2]===0)){
+				return HEADERS_INFO[i][1];
+			}
+		}
+	}
+	return 0;
+}
 
-	var crc32str=crc32(file).toString(16);
-	while(crc32str.length<8)
-		crc32str='0'+crc32str;
-	el('crc32').innerHTML=crc32str;
-	el('md5').innerHTML=md5(file);
+function hasHeader(romFile){
+	if(romFile.fileSize<=0x600200){
+		if(romFile.fileSize%1024===0)
+			return 0;
+
+		for(var i=0; i<HEADERS_INFO.length; i++){
+			if(HEADERS_INFO[i][0].test(romFile.fileName) && (romFile.fileSize-HEADERS_INFO[i][1])%HEADERS_INFO[i][1]===0){
+				return HEADERS_INFO[i][1];
+			}
+		}
+	} 
+	return 0;
+}
+
+
+
+
+
+function updateChecksums(file, startOffset, force){
+	if(file===romFile && file.fileSize>33554432 && !force){
+		el('crc32').innerHTML='File is too big. <span onclick=\"updateChecksums(romFile,'+startOffset+',true)\">Force calculate checksum</span>';
+		el('md5').innerHTML='';
+		el('sha1').innerHTML='';
+		setTabApplyEnabled(true);
+		return false;
+	}
+	el('crc32').innerHTML='Calculating...';
+	el('md5').innerHTML='Calculating...';
+
+	if(CAN_USE_WEB_WORKERS){
+		setTabApplyEnabled(false);
+		webWorkerCrc.postMessage({u8array:file._u8array, startOffset:startOffset}, [file._u8array.buffer]);
+
+		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
+			el('sha1').innerHTML='Calculating...';
+		}
+	}else{
+		window.setTimeout(function(){
+			el('crc32').innerHTML=padZeroes(crc32(file, startOffset), 4);
+			el('md5').innerHTML=padZeroes(md5(file, startOffset), 16);
+
+			validateSource();
+			setTabApplyEnabled(true);
+		}, 30);
+
+		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
+			el('sha1').innerHTML='Calculating...';
+			sha1(file);
+		}
+	}
 }
 
 function validateSource(){
 	if(patch && romFile && typeof patch.validateSource !== 'undefined'){
-		el('crc32').className=patch.validateSource(romFile)?'valid':'invalid';
+		if(patch.validateSource(romFile, el('checkbox-removeheader').checked && hasHeader(romFile))){
+			el('crc32').className='valid';
+			setMessage('apply');
+		}else{
+			el('crc32').className='invalid';
+			setMessage('apply', _('error_crc_input'), 'warning');
+		}
+	}else if(patch && romFile && typeof PREDEFINED_PATCHES!=='undefined' && PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc){
+		if(PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc===crc32(romFile, el('checkbox-removeheader').checked && hasHeader(romFile))){
+			el('crc32').className='valid';
+			setMessage('apply');
+		}else{
+			el('crc32').className='invalid';
+			setMessage('apply', _('error_crc_input'), 'warning');
+		}
 	}else{
 		el('crc32').className='';
+		setMessage('apply');
 	}
 }
+
 
 
 function _readPatchFile(){
-	tempFile.littleEndian=false;
+	setTabApplyEnabled(false);
+	patchFile.littleEndian=false;
 
-	if(tempFile.readString(0,5)===IPS_MAGIC){
-		patch=readIPSFile(tempFile);
-	}else if(tempFile.readString(0,4)===UPS_MAGIC){
-		patch=readUPSFile(tempFile);
-	}else if(tempFile.readString(0,5)===APS_MAGIC){
-		patch=readAPSFile(tempFile);
-	}else if(tempFile.readString(0,4)===BPS_MAGIC){
-		patch=readBPSFile(tempFile);
-	}/*else if(tempFile.readInt(0)===XDELTA_MAGIC){
-		patch=readXDeltaFile(tempFile);
-	}*/else {
-		MarcDialogs.alert('Invalid IPS/UPS/APS/BPS file');
-	}
-	validateSource();
-}
-function openPatchFile(f){tempFile=new MarcBinFile(f, _readPatchFile)}
-function applyPatchFile(p,r){
-	if(p && r){
-		var patchedROM=p.apply(r);
-		patchedROM.fileName=r.fileName.replace(/\.(.*?)$/, ' (patched).$1');
-		if(el('checkbox-addheader').checked){
-			var unheaderedPatchedROM=new MarcBinFile(patchedROM.fileSize-512);
-			unheaderedPatchedROM.fileName=patchedROM.fileName;
-			unheaderedPatchedROM.writeBytes(0, patchedROM.readBytes(512, patchedROM.fileSize-512));
-			unheaderedPatchedROM.save();
-
-			if(DEBUG_CREATE_UNHEADERED_PATCH){
-				romFile1=unheaderedRomFile;
-				romFile2=unheaderedPatchedROM;
-				unheaderedPatchedROM.fileName=unheaderedPatchedROM.fileName.replace(' (patched)','');
-				createPatchFile();
-			}
-		}else{
-			patchedROM.save();
-		}
+	var header=patchFile.readString(6);
+	if(header.startsWith(IPS_MAGIC)){
+		patch=parseIPSFile(patchFile);
+	}else if(header.startsWith(UPS_MAGIC)){
+		patch=parseUPSFile(patchFile);
+	}else if(header.startsWith(APS_MAGIC)){
+		patch=parseAPSFile(patchFile);
+	}else if(header.startsWith(BPS_MAGIC)){
+		patch=parseBPSFile(patchFile);
+	}else if(header.startsWith(RUP_MAGIC)){
+		patch=parseRUPFile(patchFile);
+	}else if(header.startsWith(PPF_MAGIC)){
+		patch=parsePPFFile(patchFile);
+	}else if(header.startsWith(VCDIFF_MAGIC)){
+		patch=parseVCDIFF(patchFile);
 	}else{
-		MarcDialogs.alert('No ROM/patch selected');
+		patch=null;
+		setMessage('apply', _('error_invalid_patch'), 'error');
 	}
+
+
+	validateSource();
+	setTabApplyEnabled(true);
 }
 
 
 
-function createPatchFile(){
-	var mode=el('patch-type').value;
-	if(!romFile1 || !romFile2){
-		MarcDialogs.alert('No original/modified ROM file specified');
-		return false;
-	}else if(mode==='ips' && (romFile1.fileSize>MAX_IPS_SIZE || romFile2.fileSize>MAX_IPS_SIZE)){
-		MarcDialogs.alert('Files are too big for IPS format');
-		return false;
+
+
+function preparePatchedRom(originalRom, patchedRom, headerSize){
+	patchedRom.fileName=originalRom.fileName.replace(/\.([^\.]*?)$/, ' (patched).$1');
+	patchedRom.fileType=originalRom.fileType;
+	if(headerSize){
+		if(el('checkbox-removeheader').checked){
+			var patchedRomWithOldHeader=new MarcFile(headerSize+patchedRom.fileSize);
+			oldHeader.copyToFile(patchedRomWithOldHeader, 0);
+			patchedRom.copyToFile(patchedRomWithOldHeader, 0, patchedRom.fileSize, headerSize);
+			patchedRomWithOldHeader.fileName=patchedRom.fileName;
+			patchedRomWithOldHeader.fileType=patchedRom.fileType;
+			patchedRom=patchedRomWithOldHeader;
+		}else if(el('checkbox-addheader').checked){
+			patchedRom=patchedRom.slice(headerSize);
+
+		}
 	}
 
-
-	var newPatch;
-	if(mode==='ips'){
-		newPatch=createIPSFromFiles(romFile1, romFile2);
-	}else if(mode==='ups'){
-		newPatch=createUPSFromFiles(romFile1, romFile2);
-	}else if(mode==='aps'){
-		newPatch=createAPSFromFiles(romFile1, romFile2, false);
-	}else if(mode==='apsn64'){
-		newPatch=createAPSFromFiles(romFile1, romFile2, true);
-	}/*else if(el('radio-apsgba').checked){
-		newPatch=createAPSGBAFromFiles(romFile1, romFile2);
-	}else if(el('radio-bps').checked){
-		newPatch=createBPSFromFiles(romFile1, romFile2);
+	setMessage('apply');
+	patchedRom.save();
+	
+	//debug: create unheadered patch
+	/*if(headerSize && el('checkbox-addheader').checked){
+		createPatch(romFile, patchedRom);
 	}*/
-	newPatch.export(romFile2.fileName.replace(/\.[^\.]+$/,'')).save();
+}
+
+
+/*function removeHeader(romFile){
+	//r._dataView=new DataView(r._dataView.buffer, headerSize);
+	oldHeader=romFile.slice(0,headerSize);
+	r=r.slice(headerSize);
+}*/
+function applyPatch(p,r,validateChecksums){
+	if(p && r){
+		if(headerSize){
+			if(el('checkbox-removeheader').checked){
+				//r._dataView=new DataView(r._dataView.buffer, headerSize);
+				oldHeader=r.slice(0,headerSize);
+				r=r.slice(headerSize);
+			}else if(el('checkbox-addheader').checked){
+				var romWithFakeHeader=new MarcFile(headerSize+r.fileSize);
+				romWithFakeHeader.fileName=r.fileName;
+				romWithFakeHeader.fileType=r.fileType;
+				r.copyToFile(romWithFakeHeader, 0, r.fileSize, headerSize);
+
+				//add FDS header
+				if(/\.fds$/.test(r.FileName) && r.fileSize%65500===0){
+					//romWithFakeHeader.seek(0);
+					romWithFakeHeader.writeBytes([0x46, 0x44, 0x53, 0x1a, r.fileSize/65500]);
+				}
+
+				r=romWithFakeHeader;
+			}
+		}
+
+		if(CAN_USE_WEB_WORKERS){
+			setMessage('apply', _('applying_patch'), 'loading');
+			setTabApplyEnabled(false);
+			webWorkerApply.postMessage(
+				{
+					romFileU8Array:r._u8array,
+					patchFileU8Array:patchFile._u8array,
+					validateChecksums:validateChecksums
+				},[
+					r._u8array.buffer,
+					patchFile._u8array.buffer
+				]
+			);
+
+
+			romFile=new MarcFile(el('input-file-rom'));
+			if(typeof PREDEFINED_PATCHES==='undefined'){
+				patchFile=new MarcFile(el('input-file-patch'));
+			}else{
+				patchFile=fetchedPatches[el('input-file-patch').selectedIndex].slice(0);
+			}
+			if(patch.file) //VCDiff does not parse patch file, it just keeps a copy of original patch, so we retrieve arraybuffer again
+				patch.file=patchFile;
+
+		}else{
+			setMessage('apply', _('applying_patch'), 'loading');
+
+			try{
+				preparePatchedRom(r, p.apply(r, validateChecksums), headerSize);
+
+			}catch(e){
+				setMessage('apply', 'Error: '+_(e.message), 'error');
+			}
+		}
+
+	}else{
+		setMessage('apply', 'No ROM/patch selected', 'error');
+	}
 }
 
 
 
 
 
-function setTab(tab){
-	for(var i=0; i<2; i++){
-		if(i===tab){
-			el('tab'+i).style.display='block';
-			el('tabs').children[i].className='selected';
-		}else{
-			el('tab'+i).style.display=i===tab?'block':'none';
-			el('tabs').children[i].className='clickable'
+
+
+function createPatch(sourceFile, modifiedFile, mode){
+	if(!sourceFile){
+		setMessage('create', 'No source ROM file specified.', 'error');
+		return false;
+	}else if(!modifiedFile){
+		setMessage('create', 'No modified ROM file specified.', 'error');
+		return false;
+	}
+
+
+	if(CAN_USE_WEB_WORKERS){
+		setMessage('create', _('creating_patch'), 'loading');
+		
+		setTabCreateEnabled(false);
+
+		webWorkerCreate.postMessage(
+			{
+				sourceFileU8Array:sourceFile._u8array,
+				modifiedFileU8Array:modifiedFile._u8array,
+				modifiedFileName:modifiedFile.fileName,
+				patchMode:mode
+			},[
+				sourceFile._u8array.buffer,
+				modifiedFile._u8array.buffer
+			]
+		);
+		
+		romFile1=new MarcFile(el('input-file-rom1'));
+		romFile2=new MarcFile(el('input-file-rom2'));
+	}else{
+
+		try{
+			sourceFile.seek(0);
+			modifiedFile.seek(0);
+
+			var newPatch;
+			if(mode==='ips'){
+				newPatch=createIPSFromFiles(sourceFile, modifiedFile);
+			}else if(mode==='bps'){
+				newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
+			}else if(mode==='ups'){
+				newPatch=createUPSFromFiles(sourceFile, modifiedFile);
+			}else if(mode==='aps'){
+				newPatch=createAPSFromFiles(sourceFile, modifiedFile);
+			}else if(mode==='rup'){
+				newPatch=createRUPFromFiles(sourceFile, modifiedFile);
+			}else{
+				setMessage('create', _('error_invalid_patch'), 'error');
+			}
+
+
+			if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
+				newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
+			}else{
+				setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
+			}
+
+		}catch(e){
+			setMessage('create', 'Error: '+_(e.message), 'error');
 		}
 	}
 }
@@ -214,97 +560,87 @@ function setTab(tab){
 
 
 
-/* CRC32/MD5/SHA-1 calculators */
-var HEX_CHR='0123456789abcdef'.split('');
-var CRC_TABLE=false;
-var CAN_USE_CRYPTO_API=(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest);
-/* SHA-1 using WebCryptoAPI */
-function sha1(file){
-	if(CAN_USE_CRYPTO_API && file.fileSize<=MAX_ROM_SIZE){
-
-		window.crypto.subtle.digest('SHA-1', file.fileReader.dataView.buffer).then(function(hash){
-			//console.log('SHA-1:'+);
-			var bytes=new Uint8Array(hash);
-			var hexString='';
-			for(var i=0;i<bytes.length;i++)
-				if(bytes[i]<16)
-					hexString+='0'+bytes[i].toString(16);
-				else
-					hexString+=bytes[i].toString(16);
-			el('sha1').innerHTML=hexString;
-		}).catch(function(error){
-			console.error(error);
-		});
+/* GUI functions */
+function setMessage(tab, msg, className){
+	var messageBox=el('message-'+tab);
+	if(msg){
+		if(className==='loading'){
+			messageBox.className='message';
+			messageBox.innerHTML='<span class="loading"></span> '+msg;
+		}else{
+			messageBox.className='message '+className;
+			if(className==='warning')
+				messageBox.innerHTML='&#9888; '+msg;
+			else if(className==='error')
+				messageBox.innerHTML='&#10007; '+msg;
+			else
+				messageBox.innerHTML=msg;
+		}
+		messageBox.style.display='inline';
+	}else{
+		messageBox.style.display='none';
 	}
 }
-/* MD5 - from Joseph's Myers - http://www.myersdaily.org/joseph/javascript/md5.js */
-function _add32(a,b){return (a+b)&0xffffffff}
-function _md5cycle(x,k){var a=x[0],b=x[1],c=x[2],d=x[3];a=ff(a,b,c,d,k[0],7,-680876936);d=ff(d,a,b,c,k[1],12,-389564586);c=ff(c,d,a,b,k[2],17,606105819);b=ff(b,c,d,a,k[3],22,-1044525330);a=ff(a,b,c,d,k[4],7,-176418897);d=ff(d,a,b,c,k[5],12,1200080426);c=ff(c,d,a,b,k[6],17,-1473231341);b=ff(b,c,d,a,k[7],22,-45705983);a=ff(a,b,c,d,k[8],7,1770035416);d=ff(d,a,b,c,k[9],12,-1958414417);c=ff(c,d,a,b,k[10],17,-42063);b=ff(b,c,d,a,k[11],22,-1990404162);a=ff(a,b,c,d,k[12],7,1804603682);d=ff(d,a,b,c,k[13],12,-40341101);c=ff(c,d,a,b,k[14],17,-1502002290);b=ff(b,c,d,a,k[15],22,1236535329);a=gg(a,b,c,d,k[1],5,-165796510);d=gg(d,a,b,c,k[6],9,-1069501632);c=gg(c,d,a,b,k[11],14,643717713);b=gg(b,c,d,a,k[0],20,-373897302);a=gg(a,b,c,d,k[5],5,-701558691);d=gg(d,a,b,c,k[10],9,38016083);c=gg(c,d,a,b,k[15],14,-660478335);b=gg(b,c,d,a,k[4],20,-405537848);a=gg(a,b,c,d,k[9],5,568446438);d=gg(d,a,b,c,k[14],9,-1019803690);c=gg(c,d,a,b,k[3],14,-187363961);b=gg(b,c,d,a,k[8],20,1163531501);a=gg(a,b,c,d,k[13],5,-1444681467);d=gg(d,a,b,c,k[2],9,-51403784);c=gg(c,d,a,b,k[7],14,1735328473);b=gg(b,c,d,a,k[12],20,-1926607734);a=hh(a,b,c,d,k[5],4,-378558);d=hh(d,a,b,c,k[8],11,-2022574463);c=hh(c,d,a,b,k[11],16,1839030562);b=hh(b,c,d,a,k[14],23,-35309556);a=hh(a,b,c,d,k[1],4,-1530992060);d=hh(d,a,b,c,k[4],11,1272893353);c=hh(c,d,a,b,k[7],16,-155497632);b=hh(b,c,d,a,k[10],23,-1094730640);a=hh(a,b,c,d,k[13],4,681279174);d=hh(d,a,b,c,k[0],11,-358537222);c=hh(c,d,a,b,k[3],16,-722521979);b=hh(b,c,d,a,k[6],23,76029189);a=hh(a,b,c,d,k[9],4,-640364487);d=hh(d,a,b,c,k[12],11,-421815835);c=hh(c,d,a,b,k[15],16,530742520);b=hh(b,c,d,a,k[2],23,-995338651);a=ii(a,b,c,d,k[0],6,-198630844);d=ii(d,a,b,c,k[7],10,1126891415);c=ii(c,d,a,b,k[14],15,-1416354905);b=ii(b,c,d,a,k[5],21,-57434055);a=ii(a,b,c,d,k[12],6,1700485571);d=ii(d,a,b,c,k[3],10,-1894986606);c=ii(c,d,a,b,k[10],15,-1051523);b=ii(b,c,d,a,k[1],21,-2054922799);a=ii(a,b,c,d,k[8],6,1873313359);d=ii(d,a,b,c,k[15],10,-30611744);c=ii(c,d,a,b,k[6],15,-1560198380);b=ii(b,c,d,a,k[13],21,1309151649);a=ii(a,b,c,d,k[4],6,-145523070);d=ii(d,a,b,c,k[11],10,-1120210379);c=ii(c,d,a,b,k[2],15,718787259);b=ii(b,c,d,a,k[9],21,-343485551);x[0]=_add32(a,x[0]);x[1]=_add32(b,x[1]);x[2]=_add32(c,x[2]);x[3]=_add32(d,x[3])}
-function _md5blk(d){var md5blks=[],i;for(i=0;i<64;i+=4)md5blks[i>>2]=d[i]+(d[i+1]<<8)+(d[i+2]<<16)+(d[i+3]<<24);return md5blks}
-function _cmn(q,a,b,x,s,t){a=_add32(_add32(a,q),_add32(x,t));return _add32((a<<s)|(a>>>(32-s)),b)}
-function ff(a,b,c,d,x,s,t){return _cmn((b&c)|((~b)&d),a,b,x,s,t)}
-function gg(a,b,c,d,x,s,t){return _cmn((b&d)|(c&(~d)),a,b,x,s,t)}
-function hh(a,b,c,d,x,s,t){return _cmn(b^c^d,a,b,x,s,t)}
-function ii(a,b,c,d,x,s,t){return _cmn(c^(b|(~d)),a,b,x,s,t)}
-function md5(file){
-	var data=new Uint8Array(file.fileReader.dataView.buffer);
 
-	var n=data.length,state=[1732584193,-271733879,-1732584194,271733878],i;
-	for(i=64;i<=data.length;i+=64)
-		_md5cycle(state,_md5blk(data.slice(i-64,i)));
-	data=data.slice(i-64);
-	var tail=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-	for(i=0;i<data.length;i++)
-		tail[i>>2]|=data[i]<<((i%4)<<3);
-	tail[i>>2]|=0x80<<((i%4)<<3);
-	if(i>55){
-		_md5cycle(state,tail);
-		for(i=0;i<16;i++)tail[i]=0;
+function setElementEnabled(element,status){
+	if(status){
+		el(element).className='enabled';
+	}else{
+		el(element).className='disabled';
 	}
-	tail[14]=n*8;
-	_md5cycle(state,tail);
-
-	for(var i=0;i<state.length;i++){
-		var s='',j=0;
-		for(;j<4;j++)
-			s+=HEX_CHR[(state[i]>>(j*8+4))&0x0f]+HEX_CHR[(state[i]>>(j*8))&0x0f];
-		state[i]=s;
-	}
-	return state.join('')
+	el(element).disabled=!status;
 }
-/* CRC32 - from Alex - https://stackoverflow.com/a/18639999 */
-function _makeCRCTable(){
-	var c,crcTable=[];
-	for(var n=0;n<256;n++){
-		c=n;
-		for(var k=0;k<8;k++)
-			c=((c&1)?(0xedb88320^(c>>>1)):(c>>>1));
-		crcTable[n]=c;
+function setTabCreateEnabled(status){
+	if(
+		(romFile1 && romFile1.fileSize>TOO_BIG_ROM_SIZE) ||
+		(romFile2 && romFile2.fileSize>TOO_BIG_ROM_SIZE)
+	){
+		setMessage('create',_('warning_too_big'),'warning');
 	}
-	return crcTable;
+	setElementEnabled('input-file-rom1', status);
+	setElementEnabled('input-file-rom2', status);
+	setElementEnabled('select-patch-type', status);
+	if(romFile1 && romFile2 && status){
+		setElementEnabled('button-create', status);
+	}else{
+		setElementEnabled('button-create', false);
+	}
 }
-function crc32(file,ignoreLast4Bytes){
-	var data=new Uint8Array(file.fileReader.dataView.buffer);
-	if(!CRC_TABLE)
-		CRC_TABLE=_makeCRCTable();
-
-	var crc=0^(-1);
-
-	var len=ignoreLast4Bytes?data.length-4:data.length;
-	for(var i=0;i<len;i++)
-		crc=(crc>>>8)^CRC_TABLE[(crc^data[i])&0xff];
-
-	return ((crc^(-1))>>>0);
+function setTabApplyEnabled(status){
+	setElementEnabled('input-file-rom', status);
+	setElementEnabled('input-file-patch', status);
+	if(romFile && status && (patch || typeof PREDEFINED_PATCHES!=='undefined')){
+		setElementEnabled('button-apply', status);
+	}else{
+		setElementEnabled('button-apply', false);
+	}
+}
+function setCreatorMode(creatorMode){
+	if(creatorMode){
+		el('tab0').style.display='none';
+		el('tab1').style.display='block';
+		el('switch-create').className='switch enabled'
+	}else{
+		el('tab0').style.display='block';
+		el('tab1').style.display='none';
+		el('switch-create').className='switch disabled'
+	}
 }
 
 
-/* MarcDialogs.js */
-MarcDialogs=function(){function e(e,t,n){a?e.attachEvent("on"+t,n):e.addEventListener(t,n,!1)}function t(){s&&(o?history.go(-1):(c.className="dialog-overlay",s.className=s.className.replace(/ active/g,""),s=null))}function n(e){for(var t=0;t<s.dialogElements.length;t++){var n=s.dialogElements[t];if("INPUT"===n.nodeName&&"hidden"!==n.type||"INPUT"!==n.nodeName)return n.focus(),!0}return!1}function l(){s&&(s.style.marginLeft="-"+s.offsetWidth/2+"px",s.style.marginTop="-"+s.offsetHeight/2-30+"px")}var a=/MSIE 8/.test(navigator.userAgent),o=navigator.userAgent.match(/Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone/i)&&"function"==typeof history.pushState,i=["Cancel","Accept"],s=null,c=document.createElement("div");c.className="dialog-overlay",c.style.position="fixed",c.style.top="0",c.style.left="0",c.style.width="100%",c.style.height="100%",c.style.zIndex=8e3,e(c,"click",t),e(window,"load",function(){document.body.appendChild(c),o&&history.replaceState({myDialog:!1},null,null)}),e(window,"resize",l),o&&e(window,"popstate",function(e){e.state.myDialog?(s=e.state.myDialog,MarcDialogs.open(e.state.myDialog)):e.state.myDialog===!1&&s&&(c.className="dialog-overlay",s.className=s.className.replace(/ active/g,""),s=null)}),e(document,"keydown",function(e){s&&(27==e.keyCode?(e.preventDefault?e.preventDefault():e.returnValue=!1,t()):9==e.keyCode&&s.dialogElements[s.dialogElements.length-1]==document.activeElement&&(e.preventDefault?e.preventDefault():e.returnValue=!1,n()))});var d=null,u=null,m=null;return{open:function(e){s&&(s.className=s.className.replace(/ active/g,"")),o&&(s?history.replaceState({myDialog:e},null,null):(console.log("a"),history.pushState({myDialog:e},null,null))),c.className="dialog-overlay active",s="string"==typeof e?document.getElementById("dialog-"+e):e,s.className+=" active",s.style.position="fixed",s.style.top="50%",s.style.left="50%",s.style.zIndex=8001,s.dialogElements||(s.dialogElements=s.querySelectorAll("input,textarea,select")),n(),l(s),l(s)},close:t,alert:function(t){if(!d){d=document.createElement("div"),d.id="dialog-quick-alert",d.className="dialog",d.msg=document.createElement("div"),d.msg.style.textAlign="center",d.appendChild(d.msg),d.buttons=document.createElement("div"),d.buttons.className="buttons";var n=document.createElement("button");n.type="button",n.className="colored",n.innerHTML=i[1],e(n,"click",this.close),d.buttons.appendChild(n),d.appendChild(d.buttons),document.body.appendChild(d)}d.msg.innerHTML=t,MarcDialogs.open("quick-alert")},confirm:function(t,n){if(!u){u=document.createElement("div"),u.id="dialog-quick-confirm",u.className="dialog",u.msg=document.createElement("div"),u.msg.style.textAlign="center",u.appendChild(u.msg),u.buttons=document.createElement("div"),u.buttons.className="buttons";var l=document.createElement("button");l.type="button",l.innerHTML=i[1],e(l,"click",function(){m()}),u.buttons.appendChild(l);var a=document.createElement("button");a.type="button",a.innerHTML=i[0],e(a,"click",this.close),u.buttons.appendChild(a),u.appendChild(u.buttons),document.body.appendChild(u)}m=n,u.msg.innerHTML=t,MarcDialogs.open("quick-confirm")}}}();
-/* MarcBinFile.js v20190703 - Marc Robledo 2014-2016 - http://www.marcrobledo.com/license */
-function MarcBinFile(a,b){if("function"!=typeof window.FileReader)throw console.error("MarcBinFile.js: Browser doesn't support FileReader."),"Invalid browser";if("object"==typeof a&&a.name&&a.size)this.file=a,this.fileName=this.file.name,this.fileSize=this.file.size,this.fileType=a.type;else if("object"==typeof a&&a.files){if(1!=a.files.length){for(var c=[],d=a.files.length,e=function(){d--,0==d&&b&&b.call()},f=0;f<a.files.length;f++)c.push(new MarcBinFile(a.files[f],e));return c}this.file=a.files[0],this.fileName=this.file.name,this.fileSize=this.file.size,this.fileType=this.file.type}else{if("number"!=typeof a)throw console.error("MarcBinFile.js: Invalid type of file."),"Invalid file.";this.file=!1,this.fileName="newfile.hex",this.fileSize=a,this.fileType="application/octet-stream"}this.littleEndian=function(){var a=new ArrayBuffer(2);return new DataView(a).setInt16(0,256,!0),256===new Int16Array(a)[0]}(),this.file?(this.fileReader=new FileReader,this.fileReader.addEventListener("load",function(){this.dataView=new DataView(this.result)},!1),b&&this.fileReader.addEventListener("load",b,!1),this.fileReader.readAsArrayBuffer(this.file)):(this.fileReader=new ArrayBuffer(this.fileSize),this.fileReader.dataView=new DataView(this.fileReader),b&&b.call())}var saveAs=saveAs||function(a){"use strict";if("undefined"==typeof navigator||!/MSIE [1-9]\./.test(navigator.userAgent)){var b=a.document,c=function(){return a.URL||a.webkitURL||a},d=b.createElementNS("http://www.w3.org/1999/xhtml","a"),e="download"in d,f=function(a){var b=new MouseEvent("click");a.dispatchEvent(b)},g=/Version\/[\d\.]+.*Safari/.test(navigator.userAgent),h=a.webkitRequestFileSystem,i=a.requestFileSystem||h||a.mozRequestFileSystem,j=function(b){(a.setImmediate||a.setTimeout)(function(){throw b},0)},k="application/octet-stream",l=0,m=500,n=function(b){var d=function(){"string"==typeof b?c().revokeObjectURL(b):b.remove()};a.chrome?d():setTimeout(d,m)},o=function(a,b,c){b=[].concat(b);for(var d=b.length;d--;){var e=a["on"+b[d]];if("function"==typeof e)try{e.call(a,c||a)}catch(a){j(a)}}},p=function(a){return/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\ufeff",a],{type:a.type}):a},q=function(b,j,m){m||(b=p(b));var t,u,z,q=this,r=b.type,s=!1,v=function(){o(q,"writestart progress write writeend".split(" "))},w=function(){if(u&&g&&"undefined"!=typeof FileReader){var d=new FileReader;return d.onloadend=function(){var a=d.result;u.location.href="data:attachment/file"+a.slice(a.search(/[,;]/)),q.readyState=q.DONE,v()},d.readAsDataURL(b),void(q.readyState=q.INIT)}if(!s&&t||(t=c().createObjectURL(b)),u)u.location.href=t;else{var e=a.open(t,"_blank");void 0==e&&g&&(a.location.href=t)}q.readyState=q.DONE,v(),n(t)},x=function(a){return function(){if(q.readyState!==q.DONE)return a.apply(this,arguments)}},y={create:!0,exclusive:!1};return q.readyState=q.INIT,j||(j="download"),e?(t=c().createObjectURL(b),void setTimeout(function(){d.href=t,d.download=j,f(d),v(),n(t),q.readyState=q.DONE})):(a.chrome&&r&&r!==k&&(z=b.slice||b.webkitSlice,b=z.call(b,0,b.size,k),s=!0),h&&"download"!==j&&(j+=".download"),(r===k||h)&&(u=a),i?(l+=b.size,void i(a.TEMPORARY,l,x(function(a){a.root.getDirectory("saved",y,x(function(a){var c=function(){a.getFile(j,y,x(function(a){a.createWriter(x(function(c){c.onwriteend=function(b){u.location.href=a.toURL(),q.readyState=q.DONE,o(q,"writeend",b),n(a)},c.onerror=function(){var a=c.error;a.code!==a.ABORT_ERR&&w()},"writestart progress write abort".split(" ").forEach(function(a){c["on"+a]=q["on"+a]}),c.write(b),q.abort=function(){c.abort(),q.readyState=q.DONE},q.readyState=q.WRITING}),w)}),w)};a.getFile(j,{create:!1},x(function(a){a.remove(),c()}),x(function(a){a.code===a.NOT_FOUND_ERR?c():w()}))}),w)}),w)):void w())},r=q.prototype,s=function(a,b,c){return new q(a,b,c)};return"undefined"!=typeof navigator&&navigator.msSaveOrOpenBlob?function(a,b,c){return c||(a=p(a)),navigator.msSaveOrOpenBlob(a,b||"download")}:(r.abort=function(){var a=this;a.readyState=a.DONE,o(a,"abort")},r.readyState=r.INIT=0,r.WRITING=1,r.DONE=2,r.error=r.onwritestart=r.onprogress=r.onwrite=r.onabort=r.onerror=r.onwriteend=null,s)}}("undefined"!=typeof self&&self||"undefined"!=typeof window&&window||this.content);"undefined"!=typeof module&&module.exports?module.exports.saveAs=saveAs:"undefined"!=typeof define&&null!==define&&null!=define.amd&&define([],function(){return saveAs}),MarcBinFile.prototype.isReady=function(){return 2==this.fileReader.readyState},MarcBinFile.prototype.save=function(){var a=new Blob([this.fileReader.dataView],{type:this.fileType});saveAs(a,this.fileName)},MarcBinFile.prototype.readByte=function(a){return this.fileReader.dataView.getUint8(a)},MarcBinFile.prototype.readByteSigned=function(a){return this.fileReader.dataView.getInt8(a)},MarcBinFile.prototype.readBytes=function(a,b){for(var c=new Array(b),d=0;d<b;d++)c[d]=this.readByte(a+d);return c},MarcBinFile.prototype.readShort=function(a){return this.fileReader.dataView.getUint16(a,this.littleEndian)},MarcBinFile.prototype.readShortSigned=function(a){return this.fileReader.dataView.getInt16(a,this.littleEndian)},MarcBinFile.prototype.readInt=function(a){return this.fileReader.dataView.getUint32(a,this.littleEndian)},MarcBinFile.prototype.readIntSigned=function(a){return this.fileReader.dataView.getInt32(a,this.littleEndian)},MarcBinFile.prototype.readFloat32=function(a){return this.fileReader.dataView.getFloat32(a,this.littleEndian)},MarcBinFile.prototype.readFloat64=function(a){return this.fileReader.dataView.getFloat64(a,this.littleEndian)},MarcBinFile.prototype.readString=function(a,b){for(var c=this.readBytes(a,b),d="",e=0;e<b&&c[e]>0;e++)d+=String.fromCharCode(c[e]);return d},MarcBinFile.prototype.writeByte=function(a,b){this.fileReader.dataView.setUint8(a,b,this.littleEndian)},MarcBinFile.prototype.writeByteSigned=function(a,b){this.fileReader.dataView.setInt8(a,b,this.littleEndian)},MarcBinFile.prototype.writeBytes=function(a,b){for(var c=0;c<b.length;c++)this.writeByte(a+c,b[c])},MarcBinFile.prototype.writeShort=function(a,b){this.fileReader.dataView.setUint16(a,b,this.littleEndian)},MarcBinFile.prototype.writeShortSigned=function(a,b){this.fileReader.dataView.setInt16(a,b,this.littleEndian)},MarcBinFile.prototype.writeInt=function(a,b){this.fileReader.dataView.setUint32(a,b,this.littleEndian)},MarcBinFile.prototype.writeIntSigned=function(a,b){this.fileReader.dataView.setInt32(a,b,this.littleEndian)},MarcBinFile.prototype.writeFloat32=function(a,b){this.fileReader.dataView.setFloat32(a,b,this.littleEndian)},MarcBinFile.prototype.writeFloat64=function(a,b){this.fileReader.dataView.setFloat64(a,b,this.littleEndian)},MarcBinFile.prototype.writeString=function(a,b,c){for(var d=0;d<c;d++)this.writeByte(a+d,0);for(var d=0;d<b.length&&d<c;d++)this.writeByte(a+d,b.charCodeAt(d))};
-/* Implement 3-byte reader/writer in MarcBinFile */
-MarcBinFile.prototype.readThreeBytes=function(offset){return (this.readByte(offset+0) << 16)+(this.readByte(offset+1) << 8)+(this.readByte(offset+2))}
-MarcBinFile.prototype.writeThreeBytes=function(offset,val){this.writeBytes(offset, [(val & 0xff0000) >> 16, (val & 0x00ff00) >> 8, (val & 0x0000ff)])}
-/* FileSaver.min.js: https://github.com/eligrey/FileSaver.js/blob/master/FileSaver.min.js */
-var saveAs=saveAs||function(view){"use strict";if(typeof navigator!=="undefined"&&/MSIE [1-9]\./.test(navigator.userAgent)){return}var doc=view.document,get_URL=function(){return view.URL||view.webkitURL||view},save_link=doc.createElementNS("http://www.w3.org/1999/xhtml","a"),can_use_save_link="download"in save_link,click=function(node){var event=new MouseEvent("click");node.dispatchEvent(event)},is_safari=/Version\/[\d\.]+.*Safari/.test(navigator.userAgent),webkit_req_fs=view.webkitRequestFileSystem,req_fs=view.requestFileSystem||webkit_req_fs||view.mozRequestFileSystem,throw_outside=function(ex){(view.setImmediate||view.setTimeout)(function(){throw ex},0)},force_saveable_type="application/octet-stream",fs_min_size=0,arbitrary_revoke_timeout=500,revoke=function(file){var revoker=function(){if(typeof file==="string"){get_URL().revokeObjectURL(file)}else{file.remove()}};if(view.chrome){revoker()}else{setTimeout(revoker,arbitrary_revoke_timeout)}},dispatch=function(filesaver,event_types,event){event_types=[].concat(event_types);var i=event_types.length;while(i--){var listener=filesaver["on"+event_types[i]];if(typeof listener==="function"){try{listener.call(filesaver,event||filesaver)}catch(ex){throw_outside(ex)}}}},auto_bom=function(blob){if(/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)){return new Blob(["\ufeff",blob],{type:blob.type})}return blob},FileSaver=function(blob,name,no_auto_bom){if(!no_auto_bom){blob=auto_bom(blob)}var filesaver=this,type=blob.type,blob_changed=false,object_url,target_view,dispatch_all=function(){dispatch(filesaver,"writestart progress write writeend".split(" "))},fs_error=function(){if(target_view&&is_safari&&typeof FileReader!=="undefined"){var reader=new FileReader;reader.onloadend=function(){var base64Data=reader.result;target_view.location.href="data:attachment/file"+base64Data.slice(base64Data.search(/[,;]/));filesaver.readyState=filesaver.DONE;dispatch_all()};reader.readAsDataURL(blob);filesaver.readyState=filesaver.INIT;return}if(blob_changed||!object_url){object_url=get_URL().createObjectURL(blob)}if(target_view){target_view.location.href=object_url}else{var new_tab=view.open(object_url,"_blank");if(new_tab==undefined&&is_safari){view.location.href=object_url}}filesaver.readyState=filesaver.DONE;dispatch_all();revoke(object_url)},abortable=function(func){return function(){if(filesaver.readyState!==filesaver.DONE){return func.apply(this,arguments)}}},create_if_not_found={create:true,exclusive:false},slice;filesaver.readyState=filesaver.INIT;if(!name){name="download"}if(can_use_save_link){object_url=get_URL().createObjectURL(blob);setTimeout(function(){save_link.href=object_url;save_link.download=name;click(save_link);dispatch_all();revoke(object_url);filesaver.readyState=filesaver.DONE});return}if(view.chrome&&type&&type!==force_saveable_type){slice=blob.slice||blob.webkitSlice;blob=slice.call(blob,0,blob.size,force_saveable_type);blob_changed=true}if(webkit_req_fs&&name!=="download"){name+=".download"}if(type===force_saveable_type||webkit_req_fs){target_view=view}if(!req_fs){fs_error();return}fs_min_size+=blob.size;req_fs(view.TEMPORARY,fs_min_size,abortable(function(fs){fs.root.getDirectory("saved",create_if_not_found,abortable(function(dir){var save=function(){dir.getFile(name,create_if_not_found,abortable(function(file){file.createWriter(abortable(function(writer){writer.onwriteend=function(event){target_view.location.href=file.toURL();filesaver.readyState=filesaver.DONE;dispatch(filesaver,"writeend",event);revoke(file)};writer.onerror=function(){var error=writer.error;if(error.code!==error.ABORT_ERR){fs_error()}};"writestart progress write abort".split(" ").forEach(function(event){writer["on"+event]=filesaver["on"+event]});writer.write(blob);filesaver.abort=function(){writer.abort();filesaver.readyState=filesaver.DONE};filesaver.readyState=filesaver.WRITING}),fs_error)}),fs_error)};dir.getFile(name,{create:false},abortable(function(file){file.remove();save()}),abortable(function(ex){if(ex.code===ex.NOT_FOUND_ERR){save()}else{fs_error()}}))}),fs_error)}),fs_error)},FS_proto=FileSaver.prototype,saveAs=function(blob,name,no_auto_bom){return new FileSaver(blob,name,no_auto_bom)};if(typeof navigator!=="undefined"&&navigator.msSaveOrOpenBlob){return function(blob,name,no_auto_bom){if(!no_auto_bom){blob=auto_bom(blob)}return navigator.msSaveOrOpenBlob(blob,name||"download")}}FS_proto.abort=function(){var filesaver=this;filesaver.readyState=filesaver.DONE;dispatch(filesaver,"abort")};FS_proto.readyState=FS_proto.INIT=0;FS_proto.WRITING=1;FS_proto.DONE=2;FS_proto.error=FS_proto.onwritestart=FS_proto.onprogress=FS_proto.onwrite=FS_proto.onabort=FS_proto.onerror=FS_proto.onwriteend=null;return saveAs}(typeof self!=="undefined"&&self||typeof window!=="undefined"&&window||this.content);if(typeof module!=="undefined"&&module.exports){module.exports.saveAs=saveAs}else if(typeof define!=="undefined"&&define!==null&&define.amd!=null){define([],function(){return saveAs})}
 
+
+
+
+
+
+/* FileSaver.js (source: http://purl.eligrey.com/github/FileSaver.js/blob/master/src/FileSaver.js)
+ * A saveAs() FileSaver implementation.
+ * 1.3.8
+ * 2018-03-22 14:03:47
+ *
+ * By Eli Grey, https://eligrey.com
+ * License: MIT
+ *   See https://github.com/eligrey/FileSaver.js/blob/master/LICENSE.md
+ */
+var saveAs=saveAs||function(c){"use strict";if(!(void 0===c||"undefined"!=typeof navigator&&/MSIE [1-9]\./.test(navigator.userAgent))){var t=c.document,f=function(){return c.URL||c.webkitURL||c},s=t.createElementNS("http://www.w3.org/1999/xhtml","a"),d="download"in s,u=/constructor/i.test(c.HTMLElement)||c.safari,l=/CriOS\/[\d]+/.test(navigator.userAgent),p=c.setImmediate||c.setTimeout,v=function(t){p(function(){throw t},0)},w=function(t){setTimeout(function(){"string"==typeof t?f().revokeObjectURL(t):t.remove()},4e4)},m=function(t){return/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(t.type)?new Blob([String.fromCharCode(65279),t],{type:t.type}):t},r=function(t,n,e){e||(t=m(t));var r,o=this,a="application/octet-stream"===t.type,i=function(){!function(t,e,n){for(var r=(e=[].concat(e)).length;r--;){var o=t["on"+e[r]];if("function"==typeof o)try{o.call(t,n||t)}catch(t){v(t)}}}(o,"writestart progress write writeend".split(" "))};if(o.readyState=o.INIT,d)return r=f().createObjectURL(t),void p(function(){var t,e;s.href=r,s.download=n,t=s,e=new MouseEvent("click"),t.dispatchEvent(e),i(),w(r),o.readyState=o.DONE},0);!function(){if((l||a&&u)&&c.FileReader){var e=new FileReader;return e.onloadend=function(){var t=l?e.result:e.result.replace(/^data:[^;]*;/,"data:attachment/file;");c.open(t,"_blank")||(c.location.href=t),t=void 0,o.readyState=o.DONE,i()},e.readAsDataURL(t),o.readyState=o.INIT}r||(r=f().createObjectURL(t)),a?c.location.href=r:c.open(r,"_blank")||(c.location.href=r);o.readyState=o.DONE,i(),w(r)}()},e=r.prototype;return"undefined"!=typeof navigator&&navigator.msSaveOrOpenBlob?function(t,e,n){return e=e||t.name||"download",n||(t=m(t)),navigator.msSaveOrOpenBlob(t,e)}:(e.abort=function(){},e.readyState=e.INIT=0,e.WRITING=1,e.DONE=2,e.error=e.onwritestart=e.onprogress=e.onwrite=e.onabort=e.onerror=e.onwriteend=null,function(t,e,n){return new r(t,e||t.name||"download",n)})}}("undefined"!=typeof self&&self||"undefined"!=typeof window&&window||this);

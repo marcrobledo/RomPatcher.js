@@ -3,36 +3,48 @@
 <head>
 	<title>Rom Patcher JS</title>
 	<meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
-	<meta name="description" content="A web-based IPS/UPS/APS/BPS ROM patcher."/>
-	<meta name="keywords" content="ips,ups,aps,bps,patcher,online,html5,web,online,rom,patch,hack,translation"/>
+	<meta name="description" content="An online web-based ROM patcher. Supported formats: IPS, BPS, UPS, APS, RUP, PPF and xdelta."/>
+	<meta name="keywords" content="ips,ups,aps,bps,rup,ninja,ppf,xdelta,patcher,online,html5,web,rom,patch,hack,translation"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
 	<link rel="manifest" href="./manifest.json"/>
 	<link rel="shortcut icon" href="./favicon.png" type="image/png" sizes="16x16"/>
 	<link rel="shortcut icon" href="./logo192.png" type="image/png" sizes="192x192"/>
 	<!-- <link rel="apple-touch-icon" href="./logo192.png" sizes="192x192" /> -->
 	<link type="text/css" rel="stylesheet" href="./RomPatcher.css" media="all"/>
+	<script type="text/javascript" src="./locale.js"></script>
 	<script type="text/javascript" src="./RomPatcher.js"></script>
+	<script type="text/javascript" src="./MarcFile.js"></script>
+	<script type="text/javascript" src="./crc.js"></script>
 	<script type="text/javascript" src="./ips.js"></script>
 	<script type="text/javascript" src="./ups.js"></script>
 	<script type="text/javascript" src="./aps.js"></script>
 	<script type="text/javascript" src="./bps.js"></script>
-	<!-- <script type="text/javascript" src="./xdelta.js"></script> -->
+	<script type="text/javascript" src="./rup.js"></script>
+	<script type="text/javascript" src="./ppf.js"></script>
+	<script type="text/javascript" src="./vcdiff.js"></script>
+	<script type="text/javascript"><!--
+		//uncomment the following lines to enable predefined patches, example should be self explanatory
+		/*var PREDEFINED_PATCHES=[
+			{patch:'./_example/SONICDX.xdelta',name:'Sonic 3D Blast Director\'s Cut v1.1',crc:0x44a2ca44},
+			{patch:'./_example/SML2DXv181.ips',name:'Super Mario Land 2 DX v1.81',crc:0xd5ec24e4}
+		];*/
+	--></script>
 </head>
 <body><div id="column">
 
 
 <!-- HEADER -->
-<header><img src="logo192.png" /><h1>RomPatcher.js</h1></header>
+<header><img src="logo192.png" /><h1>Rom Patcher JS</h1></header>
 
 <!-- APP -->
 <div id="wrapper">
-	<div id="tabs"><div class="selected clickable" onclick="setTab(0)">Apply patch</div><div class="clickable" onclick="setTab(1)">Create patch</div></div>
+	<div id="switch-container"><span id="switch-create-button" onclick="setCreatorMode(!/enabled/.test(el('switch-create').className));"><span data-localize="creator_mode">Creator mode</span> <span id="switch-create" class="switch disabled"></span></span></div>
 
 	<div id="tab0" class="tab">
 		<div class="row">
-			<div class="leftcol"><label for="input-file-rom">ROM file:</label></div>
+			<div class="leftcol"><label for="input-file-rom" data-localize="rom_file">ROM file:</label></div>
 			<div class="rightcol">
-				<input type="file" id="input-file-rom" />
+				<input type="file" id="input-file-rom" class="enabled" />
 			</div>
 		</div>
 		<div class="row" id="rom-info">
@@ -41,27 +53,28 @@
 			<div class="leftcol">SHA-1:</div><div class="rightcol"><span id="sha1"></span></div>
 		</div>
 		<div class="row" id="row-removeheader" style="display:none">
-			<div class="leftcol"><label for="checkbox-removeheader">Remove header before patching:</label></div>
+			<div class="leftcol"><label for="checkbox-removeheader" data-localize="remove_header">Remove header before patching:</label></div>
 			<div class="rightcol">
 				<input type="checkbox" id="checkbox-removeheader" />
 			</div>
 		</div>
 		<div class="row" id="row-addheader" style="display:none">
-			<div class="leftcol"><label for="checkbox-addheader">Patch needs a headered ROM:</label></div>
+			<div class="leftcol"><label for="checkbox-addheader" data-localize="add_header">Add temporary header:</label></div>
 			<div class="rightcol">
-				<input type="checkbox" id="checkbox-addheader" />
+				<input type="checkbox" id="checkbox-addheader" /> <label id="headersize" for="checkbox-addheader"></label>
 			</div>
 		</div>
 
-		<div class="row" title="Compatible formats: IPS, UPS, APS, and BPS">
-			<div class="leftcol"><label for="input-file-patch">Patch file:</label></div>
+		<div class="row" id="row-file-patch">
+			<div class="leftcol"><label for="input-file-patch" data-localize="patch_file">Patch file:</label></div>
 			<div class="rightcol">
-				<input type="file" id="input-file-patch" accept=".ips,.ups,.bps,.aps"/>
+				<input type="file" id="input-file-patch" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.xdelta"/>
 			</div>
 		</div>
 
 		<div class="buttons">
-			<button class="with-dot" onclick="applyPatchFile(patch, romFile)">Apply patch</button>
+			<span id="message-apply" class="message"></span>
+			<button id="button-apply" data-localize="apply_patch" class="disabled" disabled onclick="applyPatch(patch, romFile, !/error/.test(el('message-apply').className))">Apply patch</button>
 		</div>
 	</div>
 
@@ -69,41 +82,47 @@
 
 	<div id="tab1" class="tab">
 		<div class="row">
-			<div class="leftcol"><label for="input-file-rom1">Original ROM:</label></div>
+			<div class="leftcol"><label for="input-file-rom1" data-localize="original_rom" >Original ROM:</label></div>
 			<div class="rightcol">
 				<input type="file" id="input-file-rom1" />
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="leftcol"><label for="input-file-rom2">Modified ROM:</label></div>
+			<div class="leftcol"><label for="input-file-rom2" data-localize="modified_rom">Modified ROM:</label></div>
 			<div class="rightcol">
 				<input type="file" id="input-file-rom2" />
 			</div>
 		</div>
 
 		<div class="row">
-			<div class="leftcol">Patch type:</div>
+			<div class="leftcol" data-localize="patch_type">Patch type:</div>
 			<div class="rightcol">
-				<select id="patch-type">
+				<select id="select-patch-type">
 					<option value="ips">IPS</option>
+					<option value="bps">BPS</option>
+					<option value="ppf">PPF</option>
 					<option value="ups">UPS</option>
 					<option value="aps">APS</option>
-					<option value="apsn64">APS (N64)</option>
-					<!-- <option value="bps">BPS</option> -->
+					<option value="rup">RUP</option>
 				</select>
 			</div>
 		</div>
 
 		<div class="buttons">
-			<button class="with-dot" onclick="createPatchFile()">Create patch</button>
+			<span id="message-create" class="message"></span>
+			<button id="button-create" class="disabled" disabled onclick="createPatch(romFile1, romFile2, el('select-patch-type').value)" data-localize="create_patch">Create patch</button>
 		</div>
 	</div>
 </div>
 
+<div id="snackbar" class="closed"></div>
+
+
+
 <!-- FOOTER -->
 <footer>
-	Rom Patcher JS <small>rev20180926</small> by <a href="/">Marc Robledo</a>
+	Rom Patcher JS <small>v2.0 RC1</small> by <a href="/">Marc Robledo</a>
 	<br />
 	<i class="icon github"></i> <a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank">See on GitHub</a>
 	<i class="icon heart"></i> <a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow">Donate</a>

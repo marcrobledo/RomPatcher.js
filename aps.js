@@ -1,9 +1,10 @@
-/* APS (N64) module for RomPatcher.js v20180428 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
+/* APS (N64) module for Rom Patcher JS v20180930 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://github.com/btimofeev/UniPatcher/wiki/APS-(N64) */
 
-var RECORD_RLE=0x0000;
-var RECORD_SIMPLE=1;
-var APS_MAGIC='APS10';
+const APS_MAGIC='APS10';
+const APS_RECORD_RLE=0x0000;
+const APS_RECORD_SIMPLE=0x01;
+const APS_N64_MODE=0x01;
 
 function APS(){
 	this.records=[];
@@ -14,110 +15,96 @@ function APS(){
 	this.header={};
 }
 APS.prototype.addRecord=function(o, d){
-	this.records.push({offset:o, type:RECORD_SIMPLE, data:d})
+	this.records.push({offset:o, type:APS_RECORD_SIMPLE, data:d})
 }
-APS.prototype.addRLERecord=function(o, l, b){
-	this.records.push({offset:o, type:RECORD_RLE, length:l, byte:b})
+APS.prototype.addRLERecord=function(o, b, l){
+	this.records.push({offset:o, type:APS_RECORD_RLE, length:l, byte:b})
 }
 APS.prototype.toString=function(){
-	nSimpleRecords=0;
-	nRLERecords=0;
-	for(var i=0; i<this.records.length; i++){
-		if(this.records[i].type===RECORD_RLE)
-			nRLERecords++;
-		else
-			nSimpleRecords++;
-	}
-	var s='';
-	s+='\Simple records: '+nSimpleRecords;
-	s+='\nRLE records: '+nRLERecords;
-	s+='\nTotal records: '+this.records.length;
+	var s='Total records: '+this.records.length;
 	s+='\nHeader type: '+this.headerType;
+	if(this.headerType===APS_N64_MODE){
+		s+=' (N64)';
+	}
 	s+='\nEncoding method: '+this.encodingMethod;
 	s+='\nDescription: '+this.description;
 	s+='\nHeader: '+JSON.stringify(this.header);
 	return s
 }
+APS.prototype.validateSource=function(sourceFile){
+	if(this.headerType===APS_N64_MODE){
+		sourceFile.seek(0x3c);
+		if(sourceFile.readString(3)!==this.header.cartId)
+			return false;
+
+		sourceFile.seek(0x10);
+		var crc=sourceFile.readBytes(8);
+		for(var i=0; i<8; i++){
+			if(crc[i]!==this.header.crc[i])
+				return false
+		}
+	}
+	return true
+}
 APS.prototype.export=function(fileName){
-	var patchFileSize=(this.headerType===1)?78:61;
+	var patchFileSize=61;
+	if(this.headerType===APS_N64_MODE)
+		patchFileSize+=17;
 
 	for(var i=0; i<this.records.length; i++){
-		if(this.records[i].type===RECORD_RLE)
+		if(this.records[i].type===APS_RECORD_RLE)
 			patchFileSize+=7;
 		else
 			patchFileSize+=5+this.records[i].data.length; //offset+length+data
 	}
 
-	tempFile=new MarcBinFile(patchFileSize);
+	tempFile=new MarcFile(patchFileSize);
 	tempFile.littleEndian=true;
 	tempFile.fileName=fileName+'.aps';
-	tempFile.writeString(0, APS_MAGIC, APS_MAGIC.length);
-	tempFile.writeByte(5, this.headerType);
-	tempFile.writeByte(6, this.encodingMethod);
-	tempFile.writeString(7, this.description, 50);
+	tempFile.writeString(APS_MAGIC, APS_MAGIC.length);
+	tempFile.writeU8(this.headerType);
+	tempFile.writeU8(this.encodingMethod);
+	tempFile.writeString(this.description, 50);
 
-	var seek;
-	if(this.headerType===1){
-		tempFile.writeByte(57, this.header.originalFileFormat);
-		tempFile.writeString(58, this.header.cartId, 3);
-		tempFile.writeBytes(61, this.header.crc);
-		tempFile.writeBytes(69, this.header.pad);
-		tempFile.writeInt(74, this.header.sizeOutput);
-		seek=78;
-	}else{
-		tempFile.writeInt(57, this.header.sizeOutput);
-		seek=61;
+	if(this.headerType===APS_N64_MODE){
+		tempFile.writeU8(this.header.originalN64Format);
+		tempFile.writeString(this.header.cartId, 3);
+		tempFile.writeBytes(this.header.crc);
+		tempFile.writeBytes(this.header.pad);
 	}
+	tempFile.writeU32(this.header.sizeOutput);
 
 	for(var i=0; i<this.records.length; i++){
 		var rec=this.records[i];
-		if(rec.type===RECORD_RLE){
-			tempFile.writeInt(seek, rec.offset);
-			tempFile.writeByte(seek+4, 0x00);
-			tempFile.writeByte(seek+5, rec.byte);
-			tempFile.writeByte(seek+6, rec.length);
-			seek+=7;
+		tempFile.writeU32(rec.offset);
+		if(rec.type===APS_RECORD_RLE){
+			tempFile.writeU8(0x00);
+			tempFile.writeU8(rec.byte);
+			tempFile.writeU8(rec.length);
 		}else{
-			tempFile.writeInt(seek, rec.offset);
-			tempFile.writeByte(seek+4, rec.data.length);
-			tempFile.writeBytes(seek+5, rec.data);
-			seek+=5+rec.data.length;
+			tempFile.writeU8(rec.data.length);
+			tempFile.writeBytes(rec.data);
 		}
 	}
 
 	return tempFile
 }
-APS.prototype.apply=function(romFile){
-	if(this.headerType===1){
-		if(romFile.readString(0x3c, 3)!==this.header.cartId){
-			MarcDialogs.alert('Error: invalid ROM cart id');
-			return false;
-		}
-		var crc=romFile.readBytes(0x10, 8);
-		var crcOk=true;
-		for(var i=0; i<8 && crcOk; i++){
-			if(crc[i]!==this.header.crc[i])
-				crcOk=false;
-		}
-		if(!crcOk){
-			MarcDialogs.alert('Error: invalid ROM checksum');
-			return false;
-		}
+
+APS.prototype.apply=function(romFile, validate){
+	if(validate && !this.validateSource(romFile)){
+		throw new Error('error_crc_input');
 	}
 
-	tempFile=new MarcBinFile(this.header.sizeOutput);
-
-	for(var i=0; i<romFile.fileSize && i<this.header.sizeOutput; i++)
-		tempFile.writeByte(i, romFile.readByte(i));
+	tempFile=new MarcFile(this.header.sizeOutput);
+	romFile.copyToFile(tempFile, 0, tempFile.fileSize);
 
 	for(var i=0; i<this.records.length; i++){
-		var rec=this.records[i];
-		if(rec.type===RECORD_RLE){
-			for(var j=0; j<rec.length; j++)
-				tempFile.writeByte(rec.offset+j, rec.byte);
+		tempFile.seek(this.records[i].offset);
+		if(this.records[i].type===APS_RECORD_RLE){
+			for(var j=0; j<this.records[i].length; j++)
+				tempFile.writeU8(this.records[i].byte);
 		}else{
-			for(var j=0; j<rec.data.length; j++)
-				tempFile.writeByte(rec.offset+j, rec.data[j]);
+			tempFile.writeBytes(this.records[i].data);
 		}
 	}
 
@@ -127,88 +114,85 @@ APS.prototype.apply=function(romFile){
 
 
 
-function readAPSFile(file){
-	var patchFile=new APS();
-	file.littleEndian=true;
+function parseAPSFile(patchFile){
+	var patch=new APS();
+	patchFile.littleEndian=true;
 
-	patchFile.headerType=file.readByte(5);
-	patchFile.encodingMethod=file.readByte(6);
-	patchFile.description=file.readString(7, 50);
+	patchFile.seek(5);
+	patch.headerType=patchFile.readU8();
+	patch.encodingMethod=patchFile.readU8();
+	patch.description=patchFile.readString(50);
 
 	var seek;
-	if(patchFile.headerType===1){
-		patchFile.header.originalFileFormat=file.readByte(57);
-		patchFile.header.cartId=file.readString(58, 3);
-		patchFile.header.crc=file.readBytes(61, 8);
-		patchFile.header.pad=file.readBytes(69, 5);
-		patchFile.header.sizeOutput=file.readInt(74);
-		seek=78;
-	}else{
-		patchFile.header.sizeOutput=file.readInt(57);
-		seek=61;
+	if(patch.headerType===APS_N64_MODE){
+		patch.header.originalN64Format=patchFile.readU8();
+		patch.header.cartId=patchFile.readString(3);
+		patch.header.crc=patchFile.readBytes(8);
+		patch.header.pad=patchFile.readBytes(5);
 	}
+	patch.header.sizeOutput=patchFile.readU32();
 
-	while(seek<file.fileSize){
-		var offset=file.readInt(seek);
-		seek+=4;
+	while(!patchFile.isEOF()){
+		var offset=patchFile.readU32();
+		var length=patchFile.readU8();
 
-		var length=file.readByte(seek);
-		seek+=1;
-
-		if(length==RECORD_RLE){
-			patchFile.addRLERecord(offset, file.readByte(seek+1), file.readByte(seek));
-			seek+=2;
-		}else{
-			patchFile.addRecord(offset, file.readBytes(seek, length));
-			seek+=length;
-		}
+		if(length===APS_RECORD_RLE)
+			patch.addRLERecord(offset, patchFile.readU8(seek), patchFile.readU8(seek+1));
+		else
+			patch.addRecord(offset, patchFile.readBytes(length));
 	}
-	return patchFile;
+	return patch;
 }
 
-function createAPSFromFiles(original, modified, N64header){
-	tempFile=new APS();
+function createAPSFromFiles(original, modified){
+	var patch=new APS();
 
-	if(N64header){
-		tempFile.headerType=1;
 
-		tempFile.header.originalFileFormat=0;
-		tempFile.header.cartId=original.readString(0x3c, 3);
-		tempFile.header.crc=original.readBytes(0x10, 8);
-		tempFile.header.pad=[0,0,0,0,0];
+
+	if(original.readU32()===0x80371240){ //is N64 ROM
+		patch.headerType=APS_N64_MODE;
+
+		patch.header.originalN64Format=/\.v64$/i.test(original.fileName)?0:1;
+		original.seek(0x3c);
+		patch.header.cartId=original.readString(3);
+		original.seek(0x10);
+		patch.header.crc=original.readBytes(8);
+		patch.header.pad=[0,0,0,0,0];
 	}
-	tempFile.header.sizeOutput=modified.fileSize;
+	patch.header.sizeOutput=modified.fileSize;
 
-	var seek=0;
-	while(seek<modified.fileSize){
-		var b1=seek>=original.fileSize?0x00:original.readByte(seek);
-		var b2=modified.readByte(seek);
+	original.seek(0);
+	modified.seek(0);
+
+	while(!modified.isEOF()){
+		var b1=original.isEOF()?0x00:original.readU8();
+		var b2=modified.readU8();
 
 		if(b1!==b2){
 			var RLERecord=true;
 			var differentBytes=[];
-			var offset=seek;
+			var offset=modified.offset-1;
 
-			while(b1!==b2 && differentBytes.length<255){
+			while(b1!==b2 && differentBytes.length<0xff){
 				differentBytes.push(b2);
 				if(b2!==differentBytes[0])
 					RLERecord=false;
-				seek++;
-				if(seek===modified.fileSize)
+
+				if(modified.isEOF() || differentBytes.length===0xff)
 					break;
-				b1=seek>=original.fileSize?0x00:original.readByte(seek);
-				b2=modified.readByte(seek);
+
+				b1=original.isEOF()?0x00:original.readU8();
+				b2=modified.readU8();
 			}
 
 			if(RLERecord && differentBytes.length>2){
-				tempFile.addRLERecord(offset, differentBytes.length, differentBytes[0]);
+				patch.addRLERecord(offset, differentBytes[0], differentBytes.length);
 			}else{
-				tempFile.addRecord(offset, differentBytes);
+				patch.addRecord(offset, differentBytes);
 			}
-			//seek++;
-		}else{
-			seek++;
+			//NO se puede comentar??? why????
 		}
 	}
-	return tempFile
+
+	return patch
 }

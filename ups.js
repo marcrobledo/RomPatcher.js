@@ -1,7 +1,7 @@
-/* UPS module for RomPatcher.js v20180428 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
+/* UPS module for Rom Patcher JS v20180930 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
-var UPS_MAGIC='UPS1';
+const UPS_MAGIC='UPS1';
 
 function UPS(){
 	this.records=[];
@@ -10,81 +10,76 @@ function UPS(){
 	this.checksumInput=0;
 	this.checksumOutput=0;
 }
-UPS.prototype.addRecord=function(o, d){
-	this.records.push({offset:o, XORdata:d})
+UPS.prototype.addRecord=function(relativeOffset, d){
+	this.records.push({offset:relativeOffset, XORdata:d})
 }
 UPS.prototype.toString=function(){
 	var s='Records: '+this.records.length;
 	s+='\nInput file size: '+this.sizeInput;
 	s+='\nOutput file size: '+this.sizeOutput;
-	s+='\nInput file checksum: '+this.checksumInput;
-	s+='\nOutput file checksum: '+this.checksumOutput;
+	s+='\nInput file checksum: '+padZeroes(this.checksumInput,4);
+	s+='\nOutput file checksum: '+padZeroes(this.checksumOutput,4);
 	return s
 }
 UPS.prototype.export=function(fileName){
-	var encodedSizeInput=encodeVLV(this.sizeInput);
-	var encodedSizeOutput=encodeVLV(this.sizeOutput);
-	var encodedRecords=[];
-	var binFileSize=0;
-	binFileSize+=UPS_MAGIC.length; //UPS1 string
-	binFileSize+=encodedSizeInput.length; //input file size
-	binFileSize+=encodedSizeOutput.length; //output file size
+	var patchFileSize=UPS_MAGIC.length;//UPS1 string
+	patchFileSize+=UPS_getVLVLength(this.sizeInput); //input file size
+	patchFileSize+=UPS_getVLVLength(this.sizeOutput); //output file size
 	for(var i=0; i<this.records.length; i++){
-		encodedRecords.push(encodeVLV(this.records[i].offset));
-		binFileSize+=encodedRecords[i].length;
-		binFileSize+=this.records[i].XORdata.length+1;
+		patchFileSize+=UPS_getVLVLength(this.records[i].offset);
+		patchFileSize+=this.records[i].XORdata.length+1;
 	}
-	binFileSize+=12; //input/output/patch checksums
+	patchFileSize+=12; //input/output/patch checksums
 
-	tempFile=new MarcBinFile(binFileSize);
-	tempFile.littleEndian=false;
+	tempFile=new MarcFile(patchFileSize);
+	tempFile.writeVLV=UPS_writeVLV;
 	tempFile.fileName=fileName+'.ups';
-	tempFile.writeString(0, UPS_MAGIC, UPS_MAGIC.length);
+	tempFile.writeString(UPS_MAGIC);
 
-	tempFile.writeBytes(4, encodedSizeInput);
-	tempFile.writeBytes(4+encodedSizeInput.length, encodedSizeOutput);
+	tempFile.writeVLV(this.sizeInput);
+	tempFile.writeVLV(this.sizeOutput);
 
-	var seek=4+encodedSizeInput.length+encodedSizeOutput.length;
 	for(var i=0; i<this.records.length; i++){
-		tempFile.writeBytes(seek, encodedRecords[i]);
-		seek+=encodedRecords[i].length;
-		tempFile.writeBytes(seek, this.records[i].XORdata);
-		seek+=this.records[i].XORdata.length;
-		tempFile.writeByte(seek, 0);
-		seek+=1;
+		tempFile.writeVLV(this.records[i].offset);
+		tempFile.writeBytes(this.records[i].XORdata);
+		tempFile.writeU8(0x00);
 	}
 	tempFile.littleEndian=true;
-	tempFile.writeInt(seek, this.checksumInput);
-	tempFile.writeInt(seek+4, this.checksumOutput);
-	tempFile.writeInt(seek+8, crc32(tempFile, true));
+	tempFile.writeU32(this.checksumInput);
+	tempFile.writeU32(this.checksumOutput);
+	tempFile.writeU32(crc32(tempFile, 0, true));
 
 	return tempFile
 }
-UPS.prototype.validateSource=function(romFile){return crc32(romFile)===this.checksumInput}
-UPS.prototype.apply=function(romFile){
-	if(!this.validateSource(romFile)){
-		MarcDialogs.alert('Error: invalid input ROM checksum');
-		return false;
+UPS.prototype.validateSource=function(romFile,headerSize){return crc32(romFile,headerSize)===this.checksumInput}
+UPS.prototype.apply=function(romFile, validate){
+	if(validate && !this.validateSource(romFile)){
+		throw new Error('error_crc_input');
 	}
 
-	tempFile=new MarcBinFile(this.sizeOutput);
 
 	/* copy original file */
-	for(var i=0; i<romFile.fileSize; i++)
-		tempFile.writeByte(i, romFile.readByte(i));
+	tempFile=new MarcFile(this.sizeOutput);
+	romFile.copyToFile(tempFile, 0, this.sizeInput);
+
+	romFile.seek(0);
+
 
 	var nextOffset=0;
 	for(var i=0; i<this.records.length; i++){
-		var nextDifference=this.records[i];
-		nextOffset+=nextDifference.offset;
-		for(var j=0; j<nextDifference.XORdata.length; j++){
-			tempFile.writeByte(nextOffset+j, ((nextOffset+j)<romFile.fileSize?romFile.readByte(nextOffset+j):0x00) ^ nextDifference.XORdata[j]);
+		var record=this.records[i];
+		tempFile.skip(record.offset);
+		romFile.skip(record.offset);
+
+		for(var j=0; j<record.XORdata.length; j++){
+			tempFile.writeU8((romFile.isEOF()?0x00:romFile.readU8()) ^ record.XORdata[j]);
 		}
-		nextOffset+=nextDifference.XORdata.length+1;
+		tempFile.skip(1);
+		romFile.skip(1);
 	}
 
-	if(crc32(tempFile)!==this.checksumOutput){
-		MarcDialogs.alert('Warning: invalid output ROM checksum');
+	if(validate && crc32(tempFile)!==this.checksumOutput){
+		throw new Error('error_crc_output');
 	}
 
 	return tempFile
@@ -92,115 +87,118 @@ UPS.prototype.apply=function(romFile){
 
 
 /* encode/decode variable length values, used by UPS file structure */
-function encodeVLV(offset){
-	var bytes=[];
+function UPS_writeVLV(data){
 	while(1){
-		var x=offset & 0x7f;
-		offset=offset>>7;
-		if(offset===0){
-			bytes.push(0x80 | x);
+		var x=data & 0x7f;
+		data=data>>7;
+		if(data===0){
+			this.writeU8(0x80 | x);
 			break;
 		}
-		bytes.push(x);
-		offset=offset-1;
+		this.writeU8(x);
+		data=data-1;
 	}
-	return bytes;
 }
-function decodeVLV(file, pos){
-	var offset=0;
-	var size=0;
+function UPS_readVLV(){
+	var data=0;
+
 	var shift=1;
 	while(1){
-		var x=file.readByte(pos);
-		pos++;
+		var x=this.readU8();
+
 		if(x==-1)
-			console.error('corrupted UPS file?');
-		size++;
-		offset+=(x&0x7f)*shift;
+			throw new Error('Can\'t read UPS VLV at 0x'+(this.offset-1).toString(16));
+
+		data+=(x&0x7f)*shift;
 		if((x&0x80)!==0)
 			break;
 		shift=shift<<7;
-		offset+=shift;
+		data+=shift;
 	}
-	return {offset:offset, size:size}
+	return data
+}
+function UPS_getVLVLength(data){
+	var len=0;
+	while(1){
+		var x=data & 0x7f;
+		data=data>>7;
+		len++;
+		if(data===0){
+			break;
+		}
+		data=data-1;
+	}
+	return len;
 }
 
 
-function readUPSFile(file){
-	var patchFile=new UPS();
+function parseUPSFile(file){
+	var patch=new UPS();
+	file.readVLV=UPS_readVLV;
 
-	var decodedInputFilesize=decodeVLV(tempFile,4);
-	patchFile.sizeInput=decodedInputFilesize.offset;
+	file.seek(UPS_MAGIC.length);
+
+	patch.sizeInput=file.readVLV();
+	patch.sizeOutput=file.readVLV();
 
 
-	var decodedOutputFilesize=decodeVLV(tempFile,4+decodedInputFilesize.size);
-	patchFile.sizeOutput=decodedOutputFilesize.offset;
-
-	var seek=4+decodedInputFilesize.size+decodedOutputFilesize.size;
 	var nextOffset=0;
-	while(seek<(tempFile.fileSize-12)){
-		var decodedOffset=decodeVLV(tempFile, seek);
-		seek+=decodedOffset.size;
+	while(file.offset<(file.fileSize-12)){
+		var relativeOffset=file.readVLV();
 
-		nextOffset+=decodedOffset.offset;
 
-		var bytes=[];
-		var lastByte;
-		while(lastByte=tempFile.readByte(seek)){
-			bytes.push(lastByte);
-			seek++;
+		var XORdifferences=[];
+		while(file.readU8()){
+			XORdifferences.push(file._lastRead);
 		}
-		seek++;
-		patchFile.addRecord(decodedOffset.offset, bytes);
+		patch.addRecord(relativeOffset, XORdifferences);
 	}
 
 	file.littleEndian=true;
-	patchFile.checksumInput=tempFile.readInt(seek);
-	patchFile.checksumOutput=tempFile.readInt(seek+4);
+	patch.checksumInput=file.readU32();
+	patch.checksumOutput=file.readU32();
 
-	if(tempFile.readInt(seek+8)!==crc32(file, true)){
-		MarcDialogs.alert('Warning: invalid patch checksum');
+	if(file.readU32()!==crc32(file, 0, true)){
+		throw new Error('error_crc_patch');
 	}
-	return patchFile;
+
+	file.littleEndian=false;
+	return patch;
 }
 
 
 
 function createUPSFromFiles(original, modified){
-	tempFile=new UPS();
-	tempFile.sizeInput=original.fileSize;
-	tempFile.sizeOutput=modified.fileSize;
+	var patch=new UPS();
+	patch.sizeInput=original.fileSize;
+	patch.sizeOutput=modified.fileSize;
 
-	var seek=0;
-	var previousSeek=0;
-	while(seek<modified.fileSize){
-		var b1=seek>=original.fileSize?0x00:original.readByte(seek);
-		var b2=modified.readByte(seek);
+
+	var previousSeek=1;
+	while(!modified.isEOF()){
+		var b1=original.isEOF()?0x00:original.readU8();
+		var b2=modified.readU8();
 
 		if(b1!==b2){
-			var currentSeek=seek;
-			var differentBytes=[];
+			var currentSeek=modified.offset;
+			var XORdata=[];
 
 			while(b1!==b2){
-				differentBytes.push(b1 ^ b2);
-				seek++;
-				if(seek===modified.fileSize)
+				XORdata.push(b1 ^ b2);
+
+				if(modified.isEOF())
 					break;
-				b1=seek>=original.fileSize?0x00:original.readByte(seek);
-				b2=modified.readByte(seek);
+				b1=original.isEOF()?0x00:original.readU8();
+				b2=modified.readU8();
 			}
 
-			var nextDifference=currentSeek-previousSeek;
-			tempFile.addRecord(nextDifference, differentBytes);
-			previousSeek=currentSeek+differentBytes.length+1;
-			seek++;
-		}else{
-			seek++;
+			patch.addRecord(currentSeek-previousSeek, XORdata);
+			previousSeek=currentSeek+XORdata.length+1;
 		}
 	}
 
 
-	tempFile.checksumInput=crc32(original);
-	tempFile.checksumOutput=crc32(modified);
-	return tempFile
+	patch.checksumInput=crc32(original);
+	patch.checksumOutput=crc32(modified);
+	return patch
 }
