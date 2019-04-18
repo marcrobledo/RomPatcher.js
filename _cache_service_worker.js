@@ -87,10 +87,10 @@ self.addEventListener('fetch', evt => {
 		evt.respondWith(
 			caches.match(evt.request).then(cachedResource => {
 				if (cachedResource) {
-					console.log('retrieving cached resource: '+cachedResource;
+					console.log('retrieving cached resource: '+cachedResource);
 					return cachedResource;
 				}else{
-					console.log('FAILED retrieving cached resource: '+evt.request;
+					console.log('FAILED retrieving cached resource: '+evt.request);
 					return fetch(evt.request);
 				}
 			})
