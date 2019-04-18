@@ -14,7 +14,7 @@ limitations under the License.
 */
 
 
-const PRECACHE = 'precache-v6';
+const PRECACHE = 'precache-v7';
 const RUNTIME = 'runtime';
 const PRECACHE_URLS = [
 	'index.html','/RomPatcher.js/',
