@@ -11,6 +11,11 @@ const HEADERS_INFO=[
 
 
 const FORCE_HTTPS=true;
+/* service worker */
+if(FORCE_HTTPS && location.protocol==='http:')
+	location.href=window.location.href.replace('http:','https:');
+else if(location.protocol==='https:' && 'serviceWorker' in navigator)
+	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', {scope: '/RomPatcher.js/'});
 
 
 
@@ -155,11 +160,6 @@ function fetchPredefinedPatch(i, doNotDisable){
 
 /* initialize app */
 addEvent(window,'load',function(){
-	/* service worker */
-	if(FORCE_HTTPS && location.protocol==='http:')
-		location.href=window.location.href.replace('http:','https:');
-	else if(location.protocol==='https:' && 'serviceWorker' in navigator)
-		navigator.serviceWorker.register('_cache_service_worker.js');
 
 	/* language */
 	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
