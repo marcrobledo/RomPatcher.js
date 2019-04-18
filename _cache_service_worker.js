@@ -14,10 +14,10 @@ limitations under the License.
 */
 
 
-const PRECACHE = 'precache-v5';
+const PRECACHE = 'precache-v6';
 const RUNTIME = 'runtime';
 const PRECACHE_URLS = [
-	'index.html',/*'./',*/
+	'index.html','/RomPatcher.js/',
 	'manifest.json',
 	'favicon.png',
 	'logo192.png',
