@@ -30,7 +30,7 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v1';
+var PRECACHE_VERSION='v2';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
@@ -87,10 +87,8 @@ self.addEventListener('fetch', evt => {
 		evt.respondWith(
 			caches.match(evt.request).then(cachedResource => {
 				if (cachedResource) {
-					console.log('retrieving cached resource: '+cachedResource);
 					return cachedResource;
 				}else{
-					console.log('FAILED retrieving cached resource: '+evt.request);
 					return fetch(evt.request);
 				}
 			})
