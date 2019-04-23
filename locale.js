@@ -73,5 +73,30 @@
 		'error_downloading':		'Error descarregant pegat',
 		'error_invalid_patch':		'Arxiu de pegat no vàlid',
 		'warning_too_big':			'No es recomana usar arxius molt grans.'
+	},
+	'ru':{
+		'creator_mode':				'Режим создания',
+
+		'apply_patch':				'Применить патч',
+		'rom_file':					'Файл ROM:',
+		'patch_file':				'Файл патча:',
+		'remove_header':			'Удалить заголовок перед применением:',
+		'add_header':				'Добавить временный заголовок:',
+		'compatible_formats':		'Совместимые форматы:',
+		'applying_patch':			'Применяется патч...',
+		'downloading':				'Загрузка...',
+
+		'create_patch':				'Создать патч:',
+		'original_rom':				'Оригинальный ROM:',
+		'modified_rom':				'Изменённый ROM:',
+		'patch_type':				'Тип патча:',
+		'creating_patch':			'Патч создаётся...',
+
+		'error_crc_input':			'Неправильная контрольная сумма входного ROM',
+		'error_crc_output':			'Неправильная контрольная сумма выходного ROM',
+		'error_crc_patch':			'Неправильная контрольная сумма патча',
+		'error_downloading':		'Ошибка при скачивании патча',
+		'error_invalid_patch':		'Неправильный файл патча',
+		'warning_too_big':			'Не рекомендуется использовать большие файлы.'
 	}
 };
