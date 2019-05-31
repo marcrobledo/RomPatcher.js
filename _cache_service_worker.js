@@ -30,11 +30,13 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v4';
+var PRECACHE_VERSION='v6';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
 	'/RomPatcher.js/favicon.png',
+	'/RomPatcher.js/logo114.png',
+	'/RomPatcher.js/logo144.png',
 	'/RomPatcher.js/logo192.png',
 	'/RomPatcher.js/RomPatcher.css',
 	'/RomPatcher.js/RomPatcher.js',
@@ -42,8 +44,12 @@ var PRECACHE_URLS=[
 	'/RomPatcher.js/worker_apply.js',
 	'/RomPatcher.js/worker_create.js',
 	'/RomPatcher.js/worker_crc.js',
-	'/RomPatcher.js/MarcFile.js',
+	'/RomPatcher.js/libs/MarcFile.js',
+	'/RomPatcher.js/libs/zip.js',
+	'/RomPatcher.js/libs/z-worker.js',
+	'/RomPatcher.js/libs/inflate.js',
 	'/RomPatcher.js/crc.js',
+	'/RomPatcher.js/zip.js',
 	'/RomPatcher.js/ips.js',
 	'/RomPatcher.js/ups.js',
 	'/RomPatcher.js/aps.js',
@@ -55,7 +61,6 @@ var PRECACHE_URLS=[
 
 
 
-//PRECACHE_ID='precache-'+PRECACHE_ID+'-'+PRECACHE_VERSION;
 // install event (fired when sw is first installed): opens a new cache
 self.addEventListener('install', evt => {
 	evt.waitUntil(

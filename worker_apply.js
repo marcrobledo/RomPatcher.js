@@ -1,7 +1,7 @@
 /* Rom Patcher JS v20181018 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
 
 self.importScripts(
-	'./MarcFile.js',
+	'./libs/MarcFile.js',
 	'./crc.js',
 	'./ips.js',
 	'./aps.js',
@@ -49,13 +49,13 @@ self.onmessage = event => { // listen for messages from the main thread
 	//console.log('postMessage');
 	self.postMessage(
 		{
-			//romFileU8Array:event.data.romFileU8Array,
-			//patchFileU8Array:event.data.patchFileU8Array,
+			romFileU8Array:event.data.romFileU8Array,
+			patchFileU8Array:event.data.patchFileU8Array,
 			patchedRomU8Array:patchedRom._u8array
 		},
 		[
-			//event.data.romFileU8Array.buffer,
-			//event.data.patchFileU8Array.buffer,
+			event.data.romFileU8Array.buffer,
+			event.data.patchFileU8Array.buffer,
 			patchedRom._u8array.buffer
 		]
 	);

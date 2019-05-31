@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20190411 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20190531 - Marc Robledo 2016-2019 - http://www.marcrobledo.com/license */
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
 	[/\.nes$/, 16, 1024], //interNES
@@ -10,8 +10,8 @@ const HEADERS_INFO=[
 
 
 
-const FORCE_HTTPS=true;
 /* service worker */
+const FORCE_HTTPS=true;
 if(FORCE_HTTPS && location.protocol==='http:')
 	location.href=window.location.href.replace('http:','https:');
 else if(location.protocol==='https:' && 'serviceWorker' in navigator)
@@ -28,37 +28,30 @@ var webWorkerApply,webWorkerCreate,webWorkerCrc;
 try{
 	webWorkerApply=new Worker('./worker_apply.js');
 	webWorkerApply.onmessage = event => { // listen for events from the worker
-		//romFile._u8array=event.data.romFileU8Array;
-		//romFile._dataView=new DataView(romFile._u8array.buffer);
-		//patchFile._u8array=event.data.patchFileU8Array;
-		//patchFile._dataView=new DataView(patchFile._u8array.buffer);
-		//if(patch.file){
-		//	patch.file._u8array=patchFile._u8array;
-		//	patch.file._dataView=patchFile._dataView;
-		//}
-
+		//retrieve arraybuffers back from webworker
+		if(!el('checkbox-removeheader').checked && !el('checkbox-addheader').checked){ //when adding/removing header we don't need the arraybuffer back
+			romFile._u8array=event.data.romFileU8Array;
+			romFile._dataView=new DataView(romFile._u8array.buffer);
+		}
+		patchFile._u8array=event.data.patchFileU8Array;
+		patchFile._dataView=new DataView(patchFile._u8array.buffer);
+				
+				
 		preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
-
 		setTabApplyEnabled(true);
 	};
 	webWorkerApply.onerror = event => { // listen for events from the worker
+		romFile=new MarcFile(el('input-file-rom'), _parseROM);
+		patchFile=new MarcFile(el('input-file-patch'), _readPatchFile);
+
 		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
 		setTabApplyEnabled(true);
 	};
 
 
 
-
-
 	webWorkerCreate=new Worker('./worker_create.js');
 	webWorkerCreate.onmessage = event => { // listen for events from the worker
-		//console.log('received_create');
-		//romFile1._u8array=event.data.sourceFileU8Array;
-		//romFile1._dataView=new DataView(romFile1._u8array.buffer);
-		//romFile2._u8array=event.data.modifiedFileU8Array;
-		//romFile2._dataView=new DataView(romFile2._u8array.buffer);
-
-
 		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
 		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
 		newPatchFile.save();
@@ -70,8 +63,6 @@ try{
 		setMessage('create', _(event.message.replace('Error: ','')), 'error');
 		setTabCreateEnabled(true);
 	};
-
-
 
 
 
@@ -105,27 +96,25 @@ function _(str){return userLanguage[str] || str}
 
 
 
-function selectFetchedPatch(i){
-	patchFile=fetchedPatches[i].slice(0);
-	_readPatchFile();
-}
-function fetchPredefinedPatch(i, doNotDisable){
-	if(!doNotDisable)
-		setTabApplyEnabled(false);
-
-	var patchFromUrl=PREDEFINED_PATCHES[i].patch;
+function fetchPatch(uri){
+	setTabApplyEnabled(false);
 	setMessage('apply', _('downloading'), 'loading');
 
 
+	var isCompressed=/\#/.test(uri);
+	var patchURI=decodeURI(uri.replace(/\#.*?$/, ''));
+	//console.log(patchURI);
+	var compressedName=uri.replace(/^.*?\#/,'');
+	//console.log(compressedName);
+
+
 	if(typeof window.fetch==='function'){
-		fetch(patchFromUrl)
+		fetch(patchURI)
 			.then(result => result.arrayBuffer()) // Gets the response and returns it as a blob
 			.then(arrayBuffer => {
-				fetchedPatches[i]=new MarcFile(arrayBuffer);
-				fetchedPatches[i].fileName=decodeURIComponent(patchFromUrl);
-
-				if(i===el('input-file-patch').selectedIndex)
-					selectFetchedPatch(i);
+				fetchedPatches[patchURI]=patchFile=new MarcFile(arrayBuffer);
+				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
+				_readPatchFile();
 			})
 			.catch(function(evt){
 				setMessage('apply', _('error_downloading'), 'error');
@@ -133,16 +122,14 @@ function fetchPredefinedPatch(i, doNotDisable){
 			});
 	}else{
 		var xhr=new XMLHttpRequest();
-		xhr.open('GET', patchFromUrl, true);
+		xhr.open('GET', patchURI, true);
 		xhr.responseType='arraybuffer';
 
 		xhr.onload=function(evt){
 			if(this.status===200){
-				fetchedPatches[i]=new MarcFile(xhr.response);
-				fetchedPatches[i].fileName=decodeURIComponent(patchFromUrl);
-
-				if(i===el('input-file-patch').selectedIndex)
-					selectFetchedPatch(i);
+				fetchedPatches[patchURI]=patchFile=new MarcFile(xhr.response);
+				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
+				_readPatchFile();
 			}else{
 				setMessage('apply', _('error_downloading')+' ('+this.status+')', 'error');
 			}
@@ -157,9 +144,48 @@ function fetchPredefinedPatch(i, doNotDisable){
 }
 
 
+function _parseROM(){
+	el('checkbox-addheader').checked=false;
+	el('checkbox-removeheader').checked=false;
+
+	if(romFile.readString(4).startsWith(ZIP_MAGIC)){
+		parseZIPFile(romFile);
+		setTabApplyEnabled(false);
+	}else{
+		if(headerSize=canHaveFakeHeader(romFile)){
+			el('row-addheader').style.display='flex';
+			if(headerSize<1024){
+				el('headersize').innerHTML=headerSize+'b';
+			}else{
+				el('headersize').innerHTML=parseInt(headerSize/1024)+'kb';
+			}
+			el('row-removeheader').style.display='none';
+		}else if(headerSize=hasHeader(romFile)){
+			el('row-addheader').style.display='none';
+			el('row-removeheader').style.display='flex';
+		}else{
+			el('row-addheader').style.display='none';
+			el('row-removeheader').style.display='none';
+		}
+
+		updateChecksums(romFile, 0);
+	}
+}
+
 
 /* initialize app */
 addEvent(window,'load',function(){
+	/* zip-js web worker */
+	if(CAN_USE_WEB_WORKERS){
+		zip.useWebWorkers=true;
+		zip.workerScriptsPath='./libs/';
+	}else{
+		zip.useWebWorkers=false;
+
+		var script=document.createElement('script');
+		script.src='./libs/inflate.js';
+		document.getElementsByTagName('head')[0].appendChild(script);
+	}
 
 	/* language */
 	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
@@ -181,36 +207,38 @@ addEvent(window,'load',function(){
 
 	addEvent(el('input-file-rom'), 'change', function(){
 		setTabApplyEnabled(false);
-		romFile=new MarcFile(this, function(){
-			el('checkbox-addheader').checked=false;
-			el('checkbox-removeheader').checked=false;
-
-			if(headerSize=canHaveFakeHeader(romFile)){
-				el('row-addheader').style.display='flex';
-				if(headerSize<1024){
-					el('headersize').innerHTML=headerSize+'b';
-				}else{
-					el('headersize').innerHTML=parseInt(headerSize/1024)+'kb';
-				}
-				el('row-removeheader').style.display='none';
-			}else if(headerSize=hasHeader(romFile)){
-				el('row-addheader').style.display='none';
-				el('row-removeheader').style.display='flex';
-			}else{
-				el('row-addheader').style.display='none';
-				el('row-removeheader').style.display='none';
-			}
-
-			updateChecksums(romFile, 0);
-		});
+		romFile=new MarcFile(this, _parseROM);
 	});
 
 
 
+	/* predefined patches: parse URL parameter */
+	/*if(/\?.*?patch=[^=]+/.test(window.location.href)){
+		
+		var patchUri=decodeURI(window.location.href.match(/\?.*?patch=([^=]+)/)[1]);
+		var patchInfo={
+			patch:patchUri,
+			name:patchUri
+		};
+		
+		if(/\?.*?name=[^=]+/.test(window.location.href)){
+			patchInfo.name=decodeURI(window.location.href.match(/\?.*?name=([^=]+)/)[1]);
+		}
+		if(/\?.*?crc=[0-9a-f]{8}/i.test(window.location.href)){
+			patchInfo.crc=parseInt(window.location.href.match(/\?.*?patch=([0-9a-f]{8})/)[1], 16);
+		}
+		
+		if(typeof PREDEFINED_PATCHES === 'undefined'){
+			PREDEFINED_PATCHES=[patchInfo];
+		}else{
+			PREDEFINED_PATCHES.push(patchInfo);
+		}
+	}*/
 
 
+	/* predefined patches */
 	if(typeof PREDEFINED_PATCHES!=='undefined'){
-		fetchedPatches=new Array(PREDEFINED_PATCHES.length);
+		fetchedPatches={};
 
 		var container=el('input-file-patch').parentElement;
 		container.removeChild(el('input-file-patch'));
@@ -219,22 +247,26 @@ addEvent(window,'load',function(){
 		select.id='input-file-patch';
 		for(var i=0; i<PREDEFINED_PATCHES.length; i++){
 			var option=document.createElement('option');
-			option.value=i;
+			option.value=PREDEFINED_PATCHES[i].patch;
 			option.innerHTML=PREDEFINED_PATCHES[i].name;
 			select.appendChild(option);
 		}
 		container.appendChild(select)
 		container.parentElement.title='';
+
+
 		addEvent(select,'change',function(){
-			if(fetchedPatches[this.selectedIndex])
-				selectFetchedPatch(this.selectedIndex);
-			else{
+			if(fetchedPatches[this.value.replace(/\#.*?$/, '')]){
+				patchFile=fetchedPatches[this.value.replace(/\#.*?$/, '')];
+				patchFile.seek(0);
+				_readPatchFile();
+			}else{
 				patch=null;
 				patchFile=null;
-				fetchPredefinedPatch(this.selectedIndex);
+				fetchPatch(this.value);
 			}
 		});
-		fetchPredefinedPatch(0, true);
+		fetchPatch(select.value);
 	}else{
 		setTabCreateEnabled(true);
 		el('input-file-rom1').value='';
@@ -344,14 +376,6 @@ function validateSource(){
 			el('crc32').className='invalid';
 			setMessage('apply', _('error_crc_input'), 'warning');
 		}
-	}else if(patch && romFile && typeof PREDEFINED_PATCHES!=='undefined' && PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc){
-		if(PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc===crc32(romFile, el('checkbox-removeheader').checked && hasHeader(romFile))){
-			el('crc32').className='valid';
-			setMessage('apply');
-		}else{
-			el('crc32').className='invalid';
-			setMessage('apply', _('error_crc_input'), 'warning');
-		}
 	}else{
 		el('crc32').className='';
 		setMessage('apply');
@@ -365,28 +389,44 @@ function _readPatchFile(){
 	patchFile.littleEndian=false;
 
 	var header=patchFile.readString(6);
-	if(header.startsWith(IPS_MAGIC)){
-		patch=parseIPSFile(patchFile);
-	}else if(header.startsWith(UPS_MAGIC)){
-		patch=parseUPSFile(patchFile);
-	}else if(header.startsWith(APS_MAGIC)){
-		patch=parseAPSFile(patchFile);
-	}else if(header.startsWith(BPS_MAGIC)){
-		patch=parseBPSFile(patchFile);
-	}else if(header.startsWith(RUP_MAGIC)){
-		patch=parseRUPFile(patchFile);
-	}else if(header.startsWith(PPF_MAGIC)){
-		patch=parsePPFFile(patchFile);
-	}else if(header.startsWith(VCDIFF_MAGIC)){
-		patch=parseVCDIFF(patchFile);
+	if(header.startsWith(ZIP_MAGIC)){
+		if(typeof PREDEFINED_PATCHES !== 'undefined' && /\#/.test(el('input-file-patch').value)){
+			parseZIPFile(patchFile, el('input-file-patch').value.replace(/^.*?\#/, ''));
+		}else{
+			parseZIPFile(patchFile);
+		}
+		patch=false;
+		validateSource();
+		setTabApplyEnabled(false);
 	}else{
-		patch=null;
-		setMessage('apply', _('error_invalid_patch'), 'error');
+		if(header.startsWith(IPS_MAGIC)){
+			patch=parseIPSFile(patchFile);
+		}else if(header.startsWith(UPS_MAGIC)){
+			patch=parseUPSFile(patchFile);
+		}else if(header.startsWith(APS_MAGIC)){
+			patch=parseAPSFile(patchFile);
+		}else if(header.startsWith(BPS_MAGIC)){
+			patch=parseBPSFile(patchFile);
+		}else if(header.startsWith(RUP_MAGIC)){
+			patch=parseRUPFile(patchFile);
+		}else if(header.startsWith(PPF_MAGIC)){
+			patch=parsePPFFile(patchFile);
+		}else if(header.startsWith(VCDIFF_MAGIC)){
+			patch=parseVCDIFF(patchFile);
+		}else{
+			patch=null;
+			setMessage('apply', _('error_invalid_patch'), 'error');
+		}
+
+		if(patch && typeof PREDEFINED_PATCHES!=='undefined' && PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc){
+			patch.validateSource=function(romFile, headerSize){
+				return PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc===crc32(romFile, headerSize)
+			}
+		}
+
+		validateSource();
+		setTabApplyEnabled(true);
 	}
-
-
-	validateSource();
-	setTabApplyEnabled(true);
 }
 
 
@@ -451,6 +491,7 @@ function applyPatch(p,r,validateChecksums){
 		if(CAN_USE_WEB_WORKERS){
 			setMessage('apply', _('applying_patch'), 'loading');
 			setTabApplyEnabled(false);
+
 			webWorkerApply.postMessage(
 				{
 					romFileU8Array:r._u8array,
@@ -462,20 +503,11 @@ function applyPatch(p,r,validateChecksums){
 				]
 			);
 
-
-			romFile=new MarcFile(el('input-file-rom'));
-			if(typeof PREDEFINED_PATCHES==='undefined'){
-				patchFile=new MarcFile(el('input-file-patch'));
-			}else{
-				patchFile=fetchedPatches[el('input-file-patch').selectedIndex].slice(0);
-			}
-			if(patch.file) //VCDiff does not parse patch file, it just keeps a copy of original patch, so we retrieve arraybuffer again
-				patch.file=patchFile;
-
 		}else{
 			setMessage('apply', _('applying_patch'), 'loading');
 
 			try{
+				p.apply(r, validateChecksums);
 				preparePatchedRom(r, p.apply(r, validateChecksums), headerSize);
 
 			}catch(e){

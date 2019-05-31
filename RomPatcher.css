@@ -1,4 +1,4 @@
-/* WebApps CSS template by Marc Robledo v20180428 */
+/* WebApps CSS template by Marc Robledo v20190531 */
 /* minify at https://cssminifier.com/ + https://www.base64-image.de/ */
 
 /* @FONT-FACES */
@@ -147,6 +147,10 @@ hr{border:none;border-top:1px dotted #bbb;margin:15px 0}
 .tab{background-color:#f9fafa;padding:30px 15px;border-radius: 3px}
 #tab1{display:none}
 
+.buttons{
+	margin-top:20px;
+	text-align:right
+}
 
 
 
@@ -291,6 +295,12 @@ button.no-text.with-icon:before{margin-right:0px}
 
 
 
+
+
+
+
+
+
 /* responsive */
 @media only screen and (max-width:641px){
 	#wrapper{font-size:14px}
@@ -303,35 +313,48 @@ button.no-text.with-icon:before{margin-right:0px}
 
 
 
-/* MarcDialogs */
-.dialog-overlay,.dialog{visibility:hidden;opacity:0}
-.dialog-overlay.active,.dialog.active{visibility:visible;opacity:1;transition-delay:0s}/* fixes fade-in/fade-out*/
+/* ZIP dialog */
+.zip-overlay{
+	position:fixed;
+	display:flex;
+	top:0;
+	left:0;
+	width:100%;
+	height:100%;
+	background-color:rgba(0,0,0,.65);
 
-.dialog-overlay{
-	transition:visibility 0s .2s, opacity .2s;
-
-	background-color:black;
-	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";/* IE8 */
-	background-color:rgba(0,0,0,.7)
+	margin:0;
+	padding:0;
 }
-
-.dialog{
-	position:absolute;top:0;left:0; /* fix for reserved space */
-
-	transform:translateY(-10px);
-	transition:visibility 0s .2s, opacity .2s ease-in, transform .2s ease-in;
-
-	background-color:#f9fafa;
-	padding:15px;
-	min-width:360px;
-	max-width:80%;
+.zip-dialog{
+	vertical-align:middle;
+	color:#999;
+	text-align:center;
+	margin:auto;
+	background-color:white;
+	box-sizing:border-box;
+	padding:4px;
 	border-radius:3px;
-	box-shadow:0 5px 15px 0 rgba(0,0,0,.5);
-	line-height:1.8;
+	min-width:340px;
+	max-width: 90%;
 }
-.dialog.active{transform:translateY(0px)}
-.buttons{
-	margin-top:20px;
-	text-align:right
+.zipped-files{
+	list-style:none;
+	padding:0;
+	margin: 0;
+	max-height:300px;
+	overflow-y:auto;
 }
-
+.zipped-files li{
+	color:#3c3c3c;
+	padding: 2px 8px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.zipped-files li:hover{
+	background-color:#eee;
+	cursor:pointer;
+	color: black;
+	border-radius: 3px;
+}

@@ -55,10 +55,14 @@ RUP.prototype.validateSource=function(romFile,headerSize){
 	return false;
 }
 RUP.prototype.apply=function(romFile, validate){
-	var validFile=this.validateSource(romFile);
-
-	if(validate && !validFile){
-		throw new Error('error_crc_input');
+	var validFile;
+	if(validate){
+		validFile=this.validateSource(romFile);
+		
+		if(!validFile)
+			throw new Error('error_crc_input');
+	}else{
+		validFile=this.files[0];
 	}
 
 

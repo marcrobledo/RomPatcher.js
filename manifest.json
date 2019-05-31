@@ -3,6 +3,16 @@
 	"name":"Rom Patcher JS",
 	"icons":[
 		{
+			"src": "logo114.png",
+			"sizes": "114x114",
+			"type": "image/png",
+			"density": "1.0"
+		},{
+			"src": "logo144.png",
+			"sizes": "144x144",
+			"type": "image/png",
+			"density": "1.0"
+		},{
 			"src": "logo192.png",
 			"sizes": "192x192",
 			"type": "image/png",
