@@ -1,4 +1,4 @@
-/* PPF module for Rom Patcher JS v20190401 - Marc Robledo 2019 - http://www.marcrobledo.com/license */
+/* PPF module for Rom Patcher JS v20200221 - Marc Robledo 2019-2020 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/utilities/353/  */
 
 
@@ -6,6 +6,7 @@
 const PPF_MAGIC='PPF';
 const PPF_IMAGETYPE_BIN=0x00;
 const PPF_IMAGETYPE_GI=0x01;
+const PPF_BEGIN_FILE_ID_DIZ_MAGIC='@BEG';//@BEGIN_FILE_ID.DIZ
 
 function PPF(){
 	this.version=3;
@@ -28,6 +29,8 @@ PPF.prototype.toString=function(){
 	s+='\nImage type: '+this.imageType;
 	s+='\nBlock check: '+!!this.blockCheck;
 	s+='\nUndo data: '+this.undoData;
+	if(this.fileIdDiz)
+		s+='\nFILE_ID.DIZ: '+this.fileIdDiz;
 	return s
 }
 PPF.prototype.export=function(fileName){
@@ -43,6 +46,9 @@ PPF.prototype.export=function(fileName){
 	}
 	if(this.blockCheck){
 		patchFileSize+=1024;
+	}
+	if(this.fileIdDiz){
+		patchFileSize+=18+this.fileIdDiz.length+16+4;
 	}
 
 	tempFile=new MarcFile(patchFileSize);
@@ -60,11 +66,7 @@ PPF.prototype.export=function(fileName){
 		tempFile.writeU8(0x00); //dummy
 
 	}else if(this.version===2){
-		//unknown data?
-		tempFile.writeU8(0x00);
-		tempFile.writeU8(0x00);
-		tempFile.writeU8(0x00);
-		tempFile.writeU8(0x00);
+		tempFile.writeU32(this.inputFileSize);
 	}
 
 	if(this.blockCheck){
@@ -76,17 +78,26 @@ PPF.prototype.export=function(fileName){
 	tempFile.littleEndian=true;
 	for(var i=0; i<this.records.length; i++){
 		tempFile.writeU32(this.records[i].offset & 0xffffffff);
-		//tempFile.writeU32(0x00000000); //to-do: limited to 4GB right now
-		var offset2=this.records[i].offset;
-		for(var j=0; j<32; j++)
-			offset2=parseInt((offset2/2)>>>0);
-		tempFile.writeU32(offset2);
+
+		if(this.version===3){
+			var offset2=this.records[i].offset;
+			for(var j=0; j<32; j++)
+				offset2=parseInt((offset2/2)>>>0);
+			tempFile.writeU32(offset2);
+		}
 		tempFile.writeU8(this.records[i].data.length);
 		tempFile.writeBytes(this.records[i].data);
 		if(this.undoData)
 			tempFile.writeBytes(this.records[i].undoData);
 	}
 
+	if(this.fileIdDiz){
+		tempFile.writeString('@BEGIN_FILE_ID.DIZ');
+		tempFile.writeString(this.fileIdDiz);
+		tempFile.writeString('@END_FILE_ID.DIZ');
+		tempFile.writeU16(this.fileIdDiz.length);
+		tempFile.writeU16(0x00);
+	}
 
 
 
@@ -164,17 +175,27 @@ function parsePPFFile(patchFile){
 		patchFile.skip(1);
 	}else if(patch.version===2){
 		patch.blockCheck=true;
-		patchFile.skip(4);
+		patch.inputFileSize=patchFile.readU32();
 	}
 
 	if(patch.blockCheck){
-		patchFile.blockCheck=patchFile.readBytes(1024);
+		patch.blockCheck=patchFile.readBytes(1024);
 	}
 
 
 
 	patchFile.littleEndian=true;
 	while(!patchFile.isEOF()){
+
+		if(patchFile.readString(4)===PPF_BEGIN_FILE_ID_DIZ_MAGIC){
+			patchFile.skip(14);
+			//console.log('found file_id.diz begin');
+			patch.fileIdDiz=patchFile.readString(3072);
+			patch.fileIdDiz=patch.fileIdDiz.substr(0, patch.fileIdDiz.indexOf('@END_FILE_ID.DIZ'));
+			break;
+		}
+		patchFile.skip(-4);
+
 		var offset;
 		if(patch.version===3){
 			var u64_1=patchFile.readU32();
