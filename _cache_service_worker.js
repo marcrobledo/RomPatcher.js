@@ -30,7 +30,7 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v7';
+var PRECACHE_VERSION='v7b';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
@@ -56,6 +56,7 @@ var PRECACHE_URLS=[
 	'/RomPatcher.js/bps.js',
 	'/RomPatcher.js/rup.js',
 	'/RomPatcher.js/ppf.js',
+	'/RomPatcher.js/pmsr.js',
 	'/RomPatcher.js/vcdiff.js'
 ];
 

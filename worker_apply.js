@@ -9,6 +9,7 @@ self.importScripts(
 	'./bps.js',
 	'./rup.js',
 	'./ppf.js',
+	'./pmsr.js',
 	'./vcdiff.js'
 );
 
@@ -32,6 +33,8 @@ self.onmessage = event => { // listen for messages from the main thread
 		patch=parseRUPFile(patchFile);
 	}else if(header.startsWith(PPF_MAGIC)){
 		patch=parsePPFFile(patchFile);
+	}else if(header.startsWith(PMSR_MAGIC)){
+		patch=parseMODFile(patchFile);
 	}else if(header.startsWith(VCDIFF_MAGIC)){
 		patch=parseVCDIFF(patchFile);
 	}else{

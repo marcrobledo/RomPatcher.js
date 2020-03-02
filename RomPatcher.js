@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20190531 - Marc Robledo 2016-2019 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20200225 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
 	[/\.nes$/, 16, 1024], //interNES
@@ -199,7 +199,7 @@ addEvent(window,'load',function(){
 		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
 	}
 	
-	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, xdelta';
+	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, MOD (Paper Mario Star Rod), xdelta';
 	
 	el('input-file-rom').value='';
 	el('input-file-patch').value='';
@@ -411,6 +411,8 @@ function _readPatchFile(){
 			patch=parseRUPFile(patchFile);
 		}else if(header.startsWith(PPF_MAGIC)){
 			patch=parsePPFFile(patchFile);
+		}else if(header.startsWith(PMSR_MAGIC)){
+			patch=parseMODFile(patchFile);
 		}else if(header.startsWith(VCDIFF_MAGIC)){
 			patch=parseVCDIFF(patchFile);
 		}else{

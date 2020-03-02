@@ -8,8 +8,9 @@ A ROM patcher made in HTML5.
    * APS
    * BPS
    * RUP
-   * VCDiff (xdelta)
    * PPF
+   * Paper Mario Star Rod (.mod)
+   * VCDiff (.xdelta)
 * can patch and create patches
 * shows ROM CRC32, MD5 and SHA-1 before patching
 * can remove headers before patching
