@@ -1,4 +1,5 @@
-/* Rom Patcher JS v20200225 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20200303 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
 	[/\.nes$/, 16, 1024], //interNES

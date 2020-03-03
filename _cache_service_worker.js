@@ -20,7 +20,6 @@ caches.keys().then(function(cacheNames){
 		if(
 			cacheNames[i]==='runtime' ||
 			/^precache-\w+$/.test(cacheNames[i]) ||
-			/^precache-editor-([\w\+]+)-\w+$/.test(cacheNames[i]) ||
 			/^v?\d+\w?$/.test(cacheNames[i])
 		){
 			console.log('deleting old cache: '+cacheNames[i]);
@@ -30,7 +29,7 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v7c';
+var PRECACHE_VERSION='v8';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
