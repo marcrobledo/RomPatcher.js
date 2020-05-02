@@ -1,4 +1,4 @@
-/* IPS module for Rom Patcher JS v20180930 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* IPS module for Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 
@@ -144,11 +144,6 @@ function parseIPSFile(file){
 
 
 function createIPSFromFiles(original, modified){
-	if(original.fileSize>IPS_MAX_SIZE || modified.fileSize>IPS_MAX_SIZE){
-		throw new Error('files are too big for IPS format')
-	}
-
-
 	var patch=new IPS();
 
 	if(modified.fileSize<original.fileSize){
@@ -200,6 +195,11 @@ function createIPSFromFiles(original, modified){
 					previousRecord.length=previousRecord.data.length;
 				}
 			}else{
+				if(startOffset>=IPS_MAX_SIZE){
+					throw new Error('files are too big for IPS format');
+					return null;
+				}
+
 				if(RLEmode && differentData.length>2){
 					patch.addRLERecord(startOffset, differentData.length, differentData[0]);
 				}else{

@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20200303 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -27,31 +27,33 @@ var userLanguage;
 var CAN_USE_WEB_WORKERS=true;
 var webWorkerApply,webWorkerCreate,webWorkerCrc;
 try{
-	webWorkerApply=new Worker('./worker_apply.js');
+	webWorkerApply=new Worker('./js/worker_apply.js');
 	webWorkerApply.onmessage = event => { // listen for events from the worker
 		//retrieve arraybuffers back from webworker
-		if(!el('checkbox-removeheader').checked && !el('checkbox-addheader').checked){ //when adding/removing header we don't need the arraybuffer back
+		if(!el('checkbox-removeheader').checked && !el('checkbox-addheader').checked){ //when adding/removing header we don't need the arraybuffer back since we made a copy previously
 			romFile._u8array=event.data.romFileU8Array;
 			romFile._dataView=new DataView(romFile._u8array.buffer);
 		}
 		patchFile._u8array=event.data.patchFileU8Array;
 		patchFile._dataView=new DataView(patchFile._u8array.buffer);
 				
-				
-		preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
+		if(event.data.patchedRomU8Array)
+			preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
+
 		setTabApplyEnabled(true);
+		if(event.data.errorMessage)
+			setMessage('apply', _(event.data.errorMessage.replace('Error: ','')), 'error');
+		else
+			setMessage('apply');
 	};
 	webWorkerApply.onerror = event => { // listen for events from the worker
-		romFile=new MarcFile(el('input-file-rom'), _parseROM);
-		patchFile=new MarcFile(el('input-file-patch'), _readPatchFile);
-
-		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
 		setTabApplyEnabled(true);
+		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
 	};
 
 
 
-	webWorkerCreate=new Worker('./worker_create.js');
+	webWorkerCreate=new Worker('./js/worker_create.js');
 	webWorkerCreate.onmessage = event => { // listen for events from the worker
 		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
 		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
@@ -61,13 +63,13 @@ try{
 		setTabCreateEnabled(true);
 	};
 	webWorkerCreate.onerror = event => { // listen for events from the worker
-		setMessage('create', _(event.message.replace('Error: ','')), 'error');
 		setTabCreateEnabled(true);
+		setMessage('create', _(event.message.replace('Error: ','')), 'error');
 	};
 
 
 
-	webWorkerCrc=new Worker('./worker_crc.js');
+	webWorkerCrc=new Worker('./js/worker_crc.js');
 	webWorkerCrc.onmessage = event => { // listen for events from the worker
 		//console.log('received_crc');
 		el('crc32').innerHTML=padZeroes(event.data.crc32, 4);
@@ -179,12 +181,12 @@ addEvent(window,'load',function(){
 	/* zip-js web worker */
 	if(CAN_USE_WEB_WORKERS){
 		zip.useWebWorkers=true;
-		zip.workerScriptsPath='./libs/';
+		zip.workerScriptsPath='./js/zip.js/';
 	}else{
 		zip.useWebWorkers=false;
 
 		var script=document.createElement('script');
-		script.src='./libs/inflate.js';
+		script.src='./js/zip.js/inflate.js';
 		document.getElementsByTagName('head')[0].appendChild(script);
 	}
 
@@ -211,30 +213,6 @@ addEvent(window,'load',function(){
 		romFile=new MarcFile(this, _parseROM);
 	});
 
-
-
-	/* predefined patches: parse URL parameter */
-	/*if(/\?.*?patch=[^=]+/.test(window.location.href)){
-		
-		var patchUri=decodeURI(window.location.href.match(/\?.*?patch=([^=]+)/)[1]);
-		var patchInfo={
-			patch:patchUri,
-			name:patchUri
-		};
-		
-		if(/\?.*?name=[^=]+/.test(window.location.href)){
-			patchInfo.name=decodeURI(window.location.href.match(/\?.*?name=([^=]+)/)[1]);
-		}
-		if(/\?.*?crc=[0-9a-f]{8}/i.test(window.location.href)){
-			patchInfo.crc=parseInt(window.location.href.match(/\?.*?patch=([0-9a-f]{8})/)[1], 16);
-		}
-		
-		if(typeof PREDEFINED_PATCHES === 'undefined'){
-			PREDEFINED_PATCHES=[patchInfo];
-		}else{
-			PREDEFINED_PATCHES.push(patchInfo);
-		}
-	}*/
 
 
 	/* predefined patches */
@@ -540,9 +518,9 @@ function createPatch(sourceFile, modifiedFile, mode){
 
 
 	if(CAN_USE_WEB_WORKERS){
-		setMessage('create', _('creating_patch'), 'loading');
-		
 		setTabCreateEnabled(false);
+
+		setMessage('create', _('creating_patch'), 'loading');
 
 		webWorkerCreate.postMessage(
 			{
@@ -559,7 +537,6 @@ function createPatch(sourceFile, modifiedFile, mode){
 		romFile1=new MarcFile(el('input-file-rom1'));
 		romFile2=new MarcFile(el('input-file-rom2'));
 	}else{
-
 		try{
 			sourceFile.seek(0);
 			modifiedFile.seek(0);

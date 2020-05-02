@@ -1,14 +1,14 @@
-/* Rom Patcher JS v20181018 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 
 self.importScripts(
-	'./libs/MarcFile.js',
+	'./MarcFile.js',
 	'./crc.js',
-	'./ips.js',
-	'./aps.js',
-	'./ups.js',
-	'./bps.js',
-	'./ppf.js',
-	'./rup.js'
+	'./formats/ips.js',
+	'./formats/aps.js',
+	'./formats/ups.js',
+	'./formats/bps.js',
+	'./formats/ppf.js',
+	'./formats/rup.js'
 );
 
 

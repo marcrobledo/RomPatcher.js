@@ -29,34 +29,34 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v8';
+var PRECACHE_VERSION='v9';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
-	'/RomPatcher.js/favicon.png',
-	'/RomPatcher.js/logo114.png',
-	'/RomPatcher.js/logo144.png',
-	'/RomPatcher.js/logo192.png',
-	'/RomPatcher.js/RomPatcher.css',
-	'/RomPatcher.js/RomPatcher.js',
-	'/RomPatcher.js/locale.js',
-	'/RomPatcher.js/worker_apply.js',
-	'/RomPatcher.js/worker_create.js',
-	'/RomPatcher.js/worker_crc.js',
-	'/RomPatcher.js/libs/MarcFile.js',
-	'/RomPatcher.js/libs/zip.js',
-	'/RomPatcher.js/libs/z-worker.js',
-	'/RomPatcher.js/libs/inflate.js',
-	'/RomPatcher.js/crc.js',
-	'/RomPatcher.js/zip.js',
-	'/RomPatcher.js/ips.js',
-	'/RomPatcher.js/ups.js',
-	'/RomPatcher.js/aps.js',
-	'/RomPatcher.js/bps.js',
-	'/RomPatcher.js/rup.js',
-	'/RomPatcher.js/ppf.js',
-	'/RomPatcher.js/pmsr.js',
-	'/RomPatcher.js/vcdiff.js'
+	'/RomPatcher.js/style/favicon.png',
+	'/RomPatcher.js/style/logo114.png',
+	'/RomPatcher.js/style/logo144.png',
+	'/RomPatcher.js/style/logo192.png',
+	'/RomPatcher.js/style/RomPatcher.css',
+	'/RomPatcher.js/js/RomPatcher.js',
+	'/RomPatcher.js/js/locale.js',
+	'/RomPatcher.js/js/worker_apply.js',
+	'/RomPatcher.js/js/worker_create.js',
+	'/RomPatcher.js/js/worker_crc.js',
+	'/RomPatcher.js/js/MarcFile.js',
+	'/RomPatcher.js/js/crc.js',
+	'/RomPatcher.js/js/zip.js/zip.js',
+	'/RomPatcher.js/js/zip.js/z-worker.js',
+	'/RomPatcher.js/js/zip.js/inflate.js',
+	'/RomPatcher.js/js/formats/zip.js',
+	'/RomPatcher.js/js/formats/ips.js',
+	'/RomPatcher.js/js/formats/ups.js',
+	'/RomPatcher.js/js/formats/aps.js',
+	'/RomPatcher.js/js/formats/bps.js',
+	'/RomPatcher.js/js/formats/rup.js',
+	'/RomPatcher.js/js/formats/ppf.js',
+	'/RomPatcher.js/js/formats/pmsr.js',
+	'/RomPatcher.js/js/formats/vcdiff.js'
 ];
 
 

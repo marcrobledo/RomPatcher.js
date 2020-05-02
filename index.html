@@ -7,30 +7,30 @@
 	<meta name="keywords" content="ips,ups,aps,bps,rup,ninja,ppf,xdelta,patcher,online,html5,web,rom,patch,hack,translation"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
 	<link rel="manifest" href="./manifest.json"/>
-	<link rel="shortcut icon" href="./favicon.png" type="image/png" sizes="16x16"/>
-	<link rel="shortcut icon" href="./logo192.png" type="image/png" sizes="192x192"/>
+	<link rel="shortcut icon" href="./style/favicon.png" type="image/png" sizes="16x16"/>
+	<link rel="shortcut icon" href="./style/logo192.png" type="image/png" sizes="192x192"/>
 	<!-- iOS icons -->
-	<link rel="apple-touch-icon" sizes="57x57" href="./logo114.png" />
-	<link rel="apple-touch-icon" sizes="114x114" href="./logo114.png" />
-	<link rel="apple-touch-icon" sizes="72x72" href="./logo144.png" />
-	<link rel="apple-touch-icon" sizes="144x144" href="./logo144.png" />
-	<link rel="apple-touch-icon" href="./logo192.png" />
+	<link rel="apple-touch-icon" sizes="57x57" href="./style/logo114.png" />
+	<link rel="apple-touch-icon" sizes="114x114" href="./style/logo114.png" />
+	<link rel="apple-touch-icon" sizes="72x72" href="./style/logo144.png" />
+	<link rel="apple-touch-icon" sizes="144x144" href="./style/logo144.png" />
+	<link rel="apple-touch-icon" href="./style/logo192.png" />
 
-	<link type="text/css" rel="stylesheet" href="./RomPatcher.css" media="all"/>
-	<script type="text/javascript" src="./locale.js"></script>
-	<script type="text/javascript" src="./RomPatcher.js"></script>
-	<script type="text/javascript" src="./libs/MarcFile.js"></script>
-	<script type="text/javascript" src="./zip.js"></script>
-	<script type="text/javascript" src="./crc.js"></script>
-	<script type="text/javascript" src="./ips.js"></script>
-	<script type="text/javascript" src="./ups.js"></script>
-	<script type="text/javascript" src="./aps.js"></script>
-	<script type="text/javascript" src="./bps.js"></script>
-	<script type="text/javascript" src="./rup.js"></script>
-	<script type="text/javascript" src="./ppf.js"></script>
-	<script type="text/javascript" src="./pmsr.js"></script>
-	<script type="text/javascript" src="./vcdiff.js"></script>
-	<script type="text/javascript" src="./libs/zip.js"></script>
+	<link type="text/css" rel="stylesheet" href="./style/RomPatcher.css" media="all"/>
+	<script type="text/javascript" src="./js/locale.js"></script>
+	<script type="text/javascript" src="./js/RomPatcher.js"></script>
+	<script type="text/javascript" src="./js/MarcFile.js"></script>
+	<script type="text/javascript" src="./js/crc.js"></script>
+	<script type="text/javascript" src="./js/formats/zip.js"></script>
+	<script type="text/javascript" src="./js/formats/ips.js"></script>
+	<script type="text/javascript" src="./js/formats/ups.js"></script>
+	<script type="text/javascript" src="./js/formats/aps.js"></script>
+	<script type="text/javascript" src="./js/formats/bps.js"></script>
+	<script type="text/javascript" src="./js/formats/rup.js"></script>
+	<script type="text/javascript" src="./js/formats/ppf.js"></script>
+	<script type="text/javascript" src="./js/formats/pmsr.js"></script>
+	<script type="text/javascript" src="./js/formats/vcdiff.js"></script>
+	<script type="text/javascript" src="./js/zip.js/zip.js"></script>
 
 	<script type="text/javascript"><!--
 		/*
@@ -55,12 +55,36 @@
 		];
 		*/
 	--></script>
+	
+	
+	<!-- custom code for RHDN -->
+	<!--
+		<?php
+			if(isset($_REQUEST["file"]) && preg_match("/^(hacks|translations)\/\d+$/", $_REQUEST["file"]) && isset($_REQUEST["patch_name"])){
+				$patch="/download/".$_REQUEST["file"];
+				if(isset($_REQUEST["patch"])){
+					$patch.='#'+strip_tags(trim($_REQUEST["patch"]))
+				}
+				$patch_name=strip_tags(trim($_REQUEST["patch_name"]));
+				$crc="";
+				if(isset($_REQUEST["crc"]) && preg_match("/^[0-9a-fA-F]{8}$/", $_REQUEST["crc"])){
+					$crc=', crc:0x'.$_REQUEST["crc"];
+				}
+		?>
+				<script type="text/javascript">
+					var PREDEFINED_PATCHES=[{patch:'<?= strip_tags($patch); ?>', name:'<?= strip_tags($patch_name); ?>'<?= $crc?>}];
+				</script>
+		<?php
+			}
+		?>
+	-->
+
 </head>
 <body><div id="column">
 
 
 <!-- HEADER -->
-<header><img src="logo192.png" /><h1>Rom Patcher JS</h1></header>
+<header><img src="./style/logo192.png" /><h1>Rom Patcher JS</h1></header>
 
 <!-- APP -->
 <div id="wrapper">
@@ -149,7 +173,7 @@
 
 <!-- FOOTER -->
 <footer>
-	Rom Patcher JS <small>v2.2b</small> by <a href="/">Marc Robledo</a>
+	Rom Patcher JS <small>v2.3</small> by <a href="/">Marc Robledo</a>
 	<br />
 	<i class="icon github"></i> <a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank">See on GitHub</a>
 	<i class="icon heart"></i> <a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow">Donate</a>
