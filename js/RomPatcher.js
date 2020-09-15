@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20200915 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -212,6 +212,12 @@ addEvent(window,'load',function(){
 		setTabApplyEnabled(false);
 		romFile=new MarcFile(this, _parseROM);
 	});
+
+
+	/* dirty fix for mobile Safari https://stackoverflow.com/a/19323498 */
+	if(/Mobile\/\S+ Safari/.test(navigator.userAgent)){
+		el('input-file-patch').accept='';
+	}
 
 
 
