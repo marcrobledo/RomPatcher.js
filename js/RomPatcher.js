@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20200915 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20201106 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -176,6 +176,23 @@ function _parseROM(){
 }
 
 
+
+function setLanguage(langCode){
+	if(typeof LOCALIZATION[langCode]==='undefined')
+		langCode='en';
+
+	userLanguage=LOCALIZATION[langCode];
+
+	var translatableElements=document.querySelectorAll('*[data-localize]');
+	for(var i=0; i<translatableElements.length; i++){
+		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
+	}
+	
+	if(typeof localStorage!=='undefined'){
+		localStorage.setItem('rompatcher-js-lang', langCode);
+	}
+}
+
 /* initialize app */
 addEvent(window,'load',function(){
 	/* zip-js web worker */
@@ -192,15 +209,11 @@ addEvent(window,'load',function(){
 
 	/* language */
 	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
-	if(typeof LOCALIZATION[langCode]==='object'){
-		userLanguage=LOCALIZATION[langCode];
-	}else{
-		userLanguage=LOCALIZATION.en;
-	}
-	var translatableElements=document.querySelectorAll('*[data-localize]');
-	for(var i=0; i<translatableElements.length; i++){
-		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
-	}
+	if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-lang'))
+		langCode=localStorage.getItem('rompatcher-js-lang');
+	el('select-language').value=langCode;
+	setLanguage(langCode);
+
 	
 	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, MOD (Paper Mario Star Rod), xdelta';
 	
@@ -437,8 +450,21 @@ function preparePatchedRom(originalRom, patchedRom, headerSize){
 		}
 	}
 
+
+
+	/* fix checksum if needed */
+	//var fixedChecksum=fixConsoleChecksum(patchedRom);
+
+
+
+
 	setMessage('apply');
 	patchedRom.save();
+
+
+	/*if(fixedChecksum){
+		setMessage('apply','Checksum was fixed','warning');
+	}*/
 	
 	//debug: create unheadered patch
 	/*if(headerSize && el('checkbox-addheader').checked){

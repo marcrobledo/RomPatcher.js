@@ -111,7 +111,7 @@
 		<div class="row" id="row-addheader" style="display:none">
 			<div class="leftcol"></div>
 			<div class="rightcol">
-				<input type="checkbox" id="checkbox-addheader" /> <label for="checkbox-addheader" data-localize="add_header">Add temporary header:</label> <small>(<label id="headersize" for="checkbox-addheader"></label>)</small>
+				<input type="checkbox" id="checkbox-addheader" /> <label for="checkbox-addheader" data-localize="add_header">Add temporary header</label> <small>(<label id="headersize" for="checkbox-addheader"></label>)</small>
 			</div>
 		</div>
 
@@ -166,14 +166,23 @@
 	</div>
 </div>
 
-<div id="snackbar" class="closed"></div>
 
 
 
 
 <!-- FOOTER -->
 <footer>
-	Rom Patcher JS <small>v2.3b</small> by <a href="/">Marc Robledo</a>
+	<div>
+		<select id="select-language" onchange="setLanguage(this.value)">
+			<option value="en">English</option>
+			<option value="de">Deutsch</option>
+			<option value="es">Español</option>
+			<option value="ca">Català</option>
+			<option value="ru">Russian</option>
+		</select>
+	</div>
+
+	Rom Patcher JS <small>v2.4</small> by <a href="/">Marc Robledo</a>
 	<br />
 	<i class="icon github"></i> <a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank">See on GitHub</a>
 	<i class="icon heart"></i> <a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow">Donate</a>

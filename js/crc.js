@@ -1,4 +1,4 @@
-/* Rom Patcher JS - CRC32/MD5/SHA-1 calculators v20181017 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS - CRC32/MD5/SHA-1/checksums calculators v20200926 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
 
 function padZeroes(intVal, nBytes){
 	var hexString=intVal.toString(16);
@@ -102,4 +102,131 @@ function adler32(marcFile, offset, len){
 	}
 
 	return ((b<<16) | a)>>>0;
+}
+
+
+
+
+/* CRC16 */
+/*
+const CRC16_TABLE=(function(){
+	var c,crcTable=[];
+	for(var n=0;n<256;n++){
+		c=n;
+		for(var k=0;k<8;k++)
+			c=((c&1)?(0x8408^(c>>>1)):(c>>>1));
+		crcTable[n]=c;
+	}
+	return crcTable;
+}());
+function crc16(marcFile){
+	var crc=0^(-1);
+
+	for(var i=0;i<marcFile._u8array.length;i++)
+		crc=((crc>>>8)&0x0ff)^CRC16_TABLE[(crc^marcFile._u8array[i])&0xff];
+
+	return ((crc^(-1))>>>0) & 0xffff;
+}
+*/
+
+
+
+		
+		
+		
+
+/* specific ROM checksums */
+/* this is unused code, might be used in a future so ROM checksums can be fixed after patching */
+const CONSOLES=[
+	{
+		title:'Sega Mega Drive/Genesis',
+		MEGADRIVE_LOGO:[0x53, 0x45, 0x47, 0x41, 0x20, 0x4d, 0x45, 0x47, 0x41, 0x20, 0x44, 0x52],
+		GENESIS_LOGO:[0x53, 0x45, 0x47, 0x41, 0x20, 0x47, 0x45, 0x4e, 0x45, 0x53, 0x49, 0x53],
+		checkHeader:function(marcFile){
+			var megadrive=true;
+			var genesis=true;
+			for(var i=0; i<12 && (megadrive || genesis); i++){
+				if(marcFile._u8array[0x100+i]!==this.MEGADRIVE_LOGO[i])
+					megadrive=false;
+				if(marcFile._u8array[0x100+i]!==this.GENESIS_LOGO[i])
+					genesis=false;
+			}
+			return megadrive || genesis;
+		},
+		getChecksum:function(marcFile){
+			return (marcFile._u8array[0x018e]<<8) + marcFile._u8array[0x018f];
+		},
+		recalculateChecksum:function(marcFile){
+			var checksum=0;
+
+			for(var i=0x200; i<marcFile.fileSize; i+=2)
+				checksum=(checksum + (((marcFile._u8array[i]<<8) + marcFile._u8array[i+1])>>>0)) & 0xffff;
+
+			return checksum
+		},
+		updateChecksum:function(marcFile, newChecksum){
+			marcFile._u8array[0x18e]=newChecksum>>8;
+			marcFile._u8array[0x18f]=newChecksum & 0xff;
+		}
+	},{
+		title:'Game Boy',
+		NINTENDO_LOGO:[0xce, 0xed, 0x66, 0x66, 0xcc, 0x0d, 0x00, 0x0b, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0c, 0x00, 0x0d],
+		checkHeader:function(marcFile){
+			for(var i=0; i<this.NINTENDO_LOGO.length; i++){
+				if(marcFile._u8array[0x104+i]!==this.NINTENDO_LOGO[i])
+					return false;
+			}
+			return true;
+		},
+		getChecksum:function(marcFile){
+			return marcFile._u8array[0x14d]
+		},
+		recalculateChecksum:function(marcFile){
+			var checksum=0;
+
+			for(var i=0x134; i<0x014d; i++){
+				checksum=(checksum - marcFile._u8array[i] - 1) & 0xff;
+			}
+
+			return checksum
+		},
+		updateChecksum:function(marcFile, newChecksum){
+			marcFile._u8array[0x014d]=newChecksum;
+
+
+			/* global checksum isn't checked by real hw, but fix it anyway */
+			var globalChecksumOld=(marcFile._u8array[0x014e]<<8) + marcFile._u8array[0x014f];
+			var globalChecksumNew=0;
+			for(var i=0x0000; i<0x014e; i++)
+				globalChecksumNew=((globalChecksumNew + marcFile._u8array[i]) >>> 0) & 0xffff;
+			for(i=0x0150;i<marcFile.fileSize; i++)
+				globalChecksumNew=((globalChecksumNew + marcFile._u8array[i]) >>> 0) & 0xffff;
+			if(globalChecksumOld!==globalChecksumNew){
+				marcFile._u8array[0x014e]=globalChecksumNew>>8;
+				marcFile._u8array[0x014f]=globalChecksumNew & 0xff;
+			}
+		}
+	}
+];
+function checkConsole(marcFile){
+	return false;
+}
+function fixConsoleChecksum(marcFile){
+	var system=false;
+	for(var i=0; i<CONSOLES.length && !system; i++)
+		if(CONSOLES[i].checkHeader(marcFile))
+			system=CONSOLES[i];
+	if(!system)
+		return false;
+	
+	var oldChecksum=console.getChecksum(marcFile);
+	var newChecksum=console.recalculateChecksum(marcFile);
+	
+	if(oldChecksum!==newChecksum)
+		if(alert('Fix '+console.title+' checksum?')){
+			console.updateChecksum(marcFile, newChecksum);
+			return true;
+		}
+	
+	return false;
 }
