@@ -12,7 +12,7 @@ const LOCALIZATION={
 		'downloading':				'Downloading...',
 		'unzipping':				'Unzipping...',
 
-		'create_patch':				'Create patch:',
+		'create_patch':				'Create patch',
 		'original_rom':				'Original ROM:',
 		'modified_rom':				'Modified ROM:',
 		'patch_type':				'Patch type:',
@@ -93,7 +93,7 @@ const LOCALIZATION={
 		'downloading':				'Загрузка...',
 		'unzipping':				'Unzipping...',
 
-		'create_patch':				'Создать патч:',
+		'create_patch':				'Создать патч',
 		'original_rom':				'Оригинальный ROM:',
 		'modified_rom':				'Изменённый ROM:',
 		'patch_type':				'Тип патча:',
@@ -106,5 +106,32 @@ const LOCALIZATION={
 		'error_unzipping':			'Error unzipping file',
 		'error_invalid_patch':		'Неправильный файл патча',
 		'warning_too_big':			'Не рекомендуется использовать большие файлы.'
+	},
+	'de':{
+		'creator_mode':				'Erstellmodus',
+
+		'apply_patch':				'Patch anwenden',
+		'rom_file':					'ROM-Datei:',
+		'patch_file':				'Patch-Datei:',
+		'remove_header':			'Header entfernen',
+		'add_header':				'Header temporär hinzufügen',
+		'compatible_formats':		'Unterstützte Formate:',
+		'applying_patch':			'Patch wird angewandt...',
+		'downloading':				'Herunterladen...',
+		'unzipping':				'Entpacken...',
+
+		'create_patch':				'Patch erstellen',
+		'original_rom':				'Originale ROM:',
+		'modified_rom':				'Veränderte ROM:',
+		'patch_type':				'Patch-Format:',
+		'creating_patch':			'Patch wird erstellt...',
+
+		'error_crc_input':			'Prüfsumme der Input-ROM stimmt nicht überein',
+		'error_crc_output':			'Prüfsumme der Output-ROM stimmt nicht überein',
+		'error_crc_patch':			'Prüfsumme vom Patch stimmt nicht überein',
+		'error_downloading':		'Fehler beim Herunterladen vom Patch',
+		'error_unzipping':			'Fehler beim Entpacken',
+		'error_invalid_patch':		'Ungültiger Patch',
+		'warning_too_big':			'Große Dateien zu verwenden ist nicht empfohlen.'
 	}
 };
