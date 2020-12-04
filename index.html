@@ -99,7 +99,7 @@
 
 <!-- APP -->
 <div id="wrapper">
-	<div id="switch-container"><span id="switch-create-button" onclick="setCreatorMode(!/enabled/.test(el('switch-create').className));"><span data-localize="creator_mode">Creator mode</span> <span id="switch-create" class="switch disabled"></span></span></div>
+	<div id="switch-container"><span id="switch-create-button"><span data-localize="creator_mode">Creator mode</span> <span id="switch-create" class="switch disabled"></span></span></div>
 
 	<div id="tab0" class="tab">
 		<div class="row">
@@ -113,13 +113,13 @@
 			<div class="leftcol">MD5:</div><div class="rightcol"><span id="md5"></span></div>
 			<div class="leftcol">SHA-1:</div><div class="rightcol"><span id="sha1"></span></div>
 		</div>
-		<div class="row" id="row-removeheader" style="display:none">
+		<div class="row" id="row-removeheader">
 			<div class="leftcol"></div>
 			<div class="rightcol">
 				<input type="checkbox" id="checkbox-removeheader" /> <label for="checkbox-removeheader" data-localize="remove_header">Remove header before patching</label>
 			</div>
 		</div>
-		<div class="row" id="row-addheader" style="display:none">
+		<div class="row" id="row-addheader">
 			<div class="leftcol"></div>
 			<div class="rightcol">
 				<input type="checkbox" id="checkbox-addheader" /> <label for="checkbox-addheader" data-localize="add_header">Add temporary header</label> <small>(<label id="headersize" for="checkbox-addheader"></label>)</small>
@@ -135,7 +135,7 @@
 
 		<div class="buttons">
 			<span id="message-apply" class="message"></span>
-			<button id="button-apply" data-localize="apply_patch" class="disabled" disabled onclick="applyPatch(patch, romFile, false)">Apply patch</button>
+			<button id="button-apply" data-localize="apply_patch" class="disabled" disabled>Apply patch</button>
 		</div>
 	</div>
 
@@ -172,7 +172,7 @@
 
 		<div class="buttons">
 			<span id="message-create" class="message"></span>
-			<button id="button-create" class="disabled" disabled onclick="createPatch(romFile1, romFile2, el('select-patch-type').value)" data-localize="create_patch">Create patch</button>
+			<button id="button-create" class="disabled" disabled data-localize="create_patch">Create patch</button>
 		</div>
 	</div>
 </div>
@@ -184,7 +184,7 @@
 <!-- FOOTER -->
 <footer>
 	<div>
-		<select id="select-language" onchange="setLanguage(this.value)">
+		<select id="select-language">
 			<option value="en">English</option>
 			<option value="de">Deutsch</option>
 			<option value="es">Español</option>

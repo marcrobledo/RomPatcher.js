@@ -19,6 +19,11 @@ body{
 	user-select:none
 }
 
+
+/* hide header checkboxes */
+#row-removeheader,#row-addheader{display:none}
+
+
 /* flex main column */
 html, body{height:100%}
 #column{

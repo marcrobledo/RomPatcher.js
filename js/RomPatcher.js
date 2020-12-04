@@ -674,6 +674,14 @@ function setCreatorMode(creatorMode){
 
 
 
+/* Event listeners */
+
+document.addEventListener('DOMContentLoaded', function() {
+document.getElementById("switch-create-button").addEventListener('click', function(){setCreatorMode(!/enabled/.test(el('switch-create').className))})
+document.getElementById("button-apply").addEventListener('click', function(){applyPatch(patch, romFile, false)})
+document.getElementById("button-create").addEventListener('click', function(){createPatch(romFile1, romFile2, el('select-patch-type').value)})
+document.getElementById("select-language").addEventListener('change', function(){setLanguage(this.value)})
+})
 
 
 
