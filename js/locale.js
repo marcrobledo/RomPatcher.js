@@ -133,5 +133,32 @@ const LOCALIZATION={
 		'error_unzipping':			'Fehler beim Entpacken',
 		'error_invalid_patch':		'Ungültiger Patch',
 		'warning_too_big':			'Große Dateien zu verwenden ist nicht empfohlen.'
+	},
+	'ptb':{
+		'creator_mode':				'Modo criador',
+
+		'apply_patch':				'Aplicar patch',
+		'rom_file':					'Arquivo ROM:',
+		'patch_file':				'Arquivo de patch:',
+		'remove_header':			'Remover header',
+		'add_header':				'Adicionar header temporário',
+		'compatible_formats':		'Formatos compatíveis:',
+		'applying_patch':			'Aplicando patch...',
+		'downloading':				'Baixando...',
+		'unzipping':				'Extraindo...',
+
+		'create_patch':				'Criar patch',
+		'original_rom':				'ROM original:',
+		'modified_rom':				'ROM modificada:',
+		'patch_type':				'Tipo do patch:',
+		'creating_patch':			'Criando patch...',
+
+		'error_crc_input':			'Checksum da ROM original inválido',
+		'error_crc_output':			'Checksum da ROM modificada inválido',
+		'error_crc_patch':			'Checksum do patch inválido',
+		'error_downloading':		'Erro ao baixar patch, tente novamente',
+		'error_unzipping':			'Erro ao extrair arquivo',
+		'error_invalid_patch':		'Patch inválido',
+		'warning_too_big':			'Uso de arquivos muito grandes não recomendado.'
 	}
 };
