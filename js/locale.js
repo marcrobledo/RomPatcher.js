@@ -160,5 +160,32 @@ const LOCALIZATION={
 		'error_unzipping':			'Erro ao extrair arquivo',
 		'error_invalid_patch':		'Patch inválido',
 		'warning_too_big':			'Uso de arquivos muito grandes não recomendado.'
+	},
+	'ja':{
+		'creator_mode':				'作成モード',
+
+		'apply_patch':				'パッチを当て',
+		'rom_file':					'ROMファィル：',
+		'patch_file':				'パッチファイル：',
+		'remove_header':			'ヘッダーを削除',
+		'add_header':				'一時的なヘッダーを追加',
+		'compatible_formats':		'互換性のあるフォーマット：',
+		'applying_patch':			'パッチを当ている…',
+		'downloading':				'ダウンロードしている…',
+		'unzipping':				'解凍している…',
+
+		'create_patch':				'パッチを作成',
+		'original_rom':				'元のROM：',
+		'modified_rom':				'変更されたROM：',
+		'patch_type':				'パッチのタイプ：',
+		'creating_patch':			'パッチを作成している…',
+
+		'error_crc_input':			'ソースROMチェックサムの不一致',
+		'error_crc_output':			'ターゲットROMチェクサムの不一致',
+		'error_crc_patch':			'バッチチェックサムの不一致',
+		'error_downloading':		'パッチのダウンロードエラー',
+		'error_unzipping':			'パッチの解凍エラー',
+		'error_invalid_patch':		'無効なパッチエラー',
+		'warning_too_big':			'大きなファイルの使いはおすすめしない。'
 	}
 };
