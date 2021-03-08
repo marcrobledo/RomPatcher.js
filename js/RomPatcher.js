@@ -183,6 +183,8 @@ function setLanguage(langCode){
 
 	userLanguage=LOCALIZATION[langCode];
 
+	document.documentElement.lang = langCode;
+
 	var translatableElements=document.querySelectorAll('*[data-localize]');
 	for(var i=0; i<translatableElements.length; i++){
 		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
