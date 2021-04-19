@@ -205,7 +205,7 @@ const LOCALIZATION={
 		'original_rom':				'ROM originale:',
 		'modified_rom':				'ROM modifiée:',
 		'patch_type':				'Type de patch:',
-		'creating_patch':			'Creation du patch...',
+		'creating_patch':			'Création du patch...',
 
 		'error_crc_input':			'Non-concordance de la somme de contrôle de la ROM source',
 		'error_crc_output':			'Non-concordance de la somme de contrôle de la ROM cible',
