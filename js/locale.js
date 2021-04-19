@@ -187,5 +187,32 @@ const LOCALIZATION={
 		'error_unzipping':			'パッチの解凍エラー',
 		'error_invalid_patch':		'無効なパッチエラー',
 		'warning_too_big':			'大きなファイルの使いはおすすめしない。'
+	},
+	'fr':{
+		'creator_mode':				'Mode créateur',
+
+		'apply_patch':				'Appliquer le patch',
+		'rom_file':					'Fichier ROM:',
+		'patch_file':				'fichier patch:',
+		'remove_header':			'supprimer l\'en-tête',
+		'add_header':				'Ajouter une en-tête temporaire',
+		'compatible_formats':		'Formats compatibles:',
+		'applying_patch':			'Application du patch...',
+		'downloading':				'Téléchargement...',
+		'unzipping':				'Décompresser...',
+
+		'create_patch':				'Créer le patch',
+		'original_rom':				'ROM originale:',
+		'modified_rom':				'ROM modifiée:',
+		'patch_type':				'Type de patch:',
+		'creating_patch':			'Creation du patch...',
+
+		'error_crc_input':			'Non-concordance de la somme de contrôle de la ROM source',
+		'error_crc_output':			'Non-concordance de la somme de contrôle de la ROM cible',
+		'error_crc_patch':			'Non-concordance de la somme de contrôle du patch',
+		'error_downloading':		'Erreur lors du téléchargement du patch',
+		'error_unzipping':			'Erreur lors de la décompression du fichier',
+		'error_invalid_patch':		'Fichier patch invalide',
+		'warning_too_big':			'L\'utilisation de gros fichiers n\'est pas recommandée.'
 	}
 };
