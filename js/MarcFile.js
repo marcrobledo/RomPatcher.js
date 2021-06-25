@@ -260,7 +260,7 @@ MarcFile.prototype.writeString=function(str,len){
 		this._u8array[this.offset+i]=str.charCodeAt(i);
 
 	for(;i<len;i++)
-		this._u8array[this.offset+i]=0x00;
+		this._u8array[this.offset+i]=0x20;
 
 	this.offset+=len;
 }
