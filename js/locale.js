@@ -26,6 +26,60 @@ const LOCALIZATION={
 		'error_invalid_patch':		'Invalid patch file',
 		'warning_too_big':			'Using big files is not recommended.'
 	},
+    'nl':{
+        'creator_mode':				'Creator-modus',
+
+		'apply_patch':				'Pas patch toe',
+		'rom_file':					'ROM bestand:',
+		'patch_file':				'Patch bestand:',
+		'remove_header':			'Verwijder rubriek',
+		'add_header':				'Voeg tijdelijk rubriek toe',
+		'compatible_formats':		'Compatibele formaten:',
+		'applying_patch':			'Patch toepassen...',
+		'downloading':				'Downloaden...',
+		'unzipping':				'Uitpakken...',
+
+		'create_patch':				'Maak patch',
+		'original_rom':				'Originale ROM:',
+		'modified_rom':				'Aangepaste ROM:',
+		'patch_type':				'Type patch:',
+		'creating_patch':			'Patch maken...',
+
+		'error_crc_input':			'Controlesom van bron-ROM komt niet overeen',
+		'error_crc_output':			'Controlesom van doel-ROM komt niet overeen',
+		'error_crc_patch':			'Controlesom van patch komt niet overeen',
+		'error_downloading':		'Fout bij downloaden van patch',
+		'error_unzipping':			'Fout bij uitpakken van bestand',
+		'error_invalid_patch':		'Ongeldig patchbestand',
+		'warning_too_big':			'Het gebruik van grote bestanden wordt niet aanbevolen.'
+    },
+    'sv':{
+        'creator_mode':				'Skaparläge',
+
+		'apply_patch':				'Tillämpa korrigeringsfil',
+		'rom_file':					'ROM-fil:',
+		'patch_file':				'Korrigeringsfil:',
+		'remove_header':			'Ta bort rubrik',
+		'add_header':				'Lägg till tillfällig rubrik',
+		'compatible_formats':		'Kompatibla format:',
+		'applying_patch':			'Tillämpar korrigeringsfil...',
+		'downloading':				'Ladda ner...',
+		'unzipping':				'Packa upp...',
+
+		'create_patch':				'Skapa korrigeringsfil',
+		'original_rom':				'Original-ROM:',
+		'modified_rom':				'Modifierad ROM:',
+		'patch_type':				'Korrigeringsfil-typ:',
+		'creating_patch':			'Skapa korrigeringsfil...',
+
+		'error_crc_input':			'ROM-källans kontrollsumman matchar inte',
+		'error_crc_output':			'ROM-målets kontrollsumman matchar inte',
+		'error_crc_patch':			'korrigeringsfilens kontrollsumman matchar inte',
+		'error_downloading':		'Fel vid nedladdning av korrigeringsfilen',
+		'error_unzipping':			'Det gick inte att packa upp filen',
+		'error_invalid_patch':		'Ogiltig korrigeringsfil',
+		'warning_too_big':			'Användning av stora filer rekommenderas inte.'
+    },
 	'es':{
 		'creator_mode':				'Modo creador',
 
