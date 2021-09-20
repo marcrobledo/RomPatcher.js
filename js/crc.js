@@ -1,4 +1,4 @@
-/* Rom Patcher JS - CRC32/MD5/SHA-1/checksums calculators v20200926 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS - CRC32/MD5/SHA-1/checksums calculators v20210815 - Marc Robledo 2016-2021 - http://www.marcrobledo.com/license */
 
 function padZeroes(intVal, nBytes){
 	var hexString=intVal.toString(16);
@@ -53,6 +53,7 @@ function md5(marcFile, headerSize){
 		for(i=0;i<16;i++)tail[i]=0;
 	}
 	tail[14]=n*8;
+	tail[15]=Math.floor(n/536870912) >>> 0; //if file is bigger than 512Mb*8, value is bigger than 32 bits, so it needs two words to store its length
 	_md5cycle(state,tail);
 
 	for(var i=0;i<state.length;i++){

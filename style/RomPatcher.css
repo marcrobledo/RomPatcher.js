@@ -1,4 +1,4 @@
-/* WebApps CSS template by Marc Robledo v20191106 */
+/* Rom Patcher JS CSS template by Marc Robledo v20210815 */
 /* minify at https://cssminifier.com/ + https://www.base64-image.de/ */
 
 /* @FONT-FACES */
@@ -19,11 +19,6 @@ body{
 	user-select:none
 }
 
-
-/* hide header checkboxes */
-#row-removeheader,#row-addheader{display:none}
-
-
 /* flex main column */
 html, body{height:100%}
 #column{
@@ -39,6 +34,7 @@ footer{padding: 50px 0 20px}
 
 
 .clickable{cursor:pointer}
+.hide{display:none !important}
 
 
 /* flex box */
@@ -185,9 +181,10 @@ input[type=file].enabled:hover,select.enabled:hover{background-color:#dee1e1}
 input[type=file].disabled,select.disabled{background-color:transparent}
 
 #select-language{
-	background-color:#31343a;
+	background-color:transparent;
 	color:white;
 	cursor:pointer;
+	text-align:center;
 	background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHN0eWxlPSJmaWxsOiNmZmYiIHZlcnNpb249IjEuMSIgeD0iMTJweCIgeT0iMHB4IiB3aWR0aD0iMjRweCIgaGVpZ2h0PSIzcHgiIHZpZXdCb3g9IjAgMCA2IDMiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDYgMyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBvbHlnb24gcG9pbnRzPSI1Ljk5MiwwIDIuOTkyLDMgLTAuMDA4LDAgIi8+PC9zdmc+");
 }
 #select-language:hover,#select-language:focus{
@@ -262,7 +259,7 @@ button.no-text.with-icon:before{margin-right:0px}
 
 
 
-.message{padding: 3px 10px; border-radius:3px;display:inline}
+.message{padding: 3px 10px; border-radius:3px;display:inline-block;vertical-align:middle}
 .message.error{background-color:#de4205; color:white}
 .message.warning{background-color:#ffec68; color:black}
 

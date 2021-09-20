@@ -21,12 +21,40 @@ const LOCALIZATION={
 		'error_crc_input':			'Source ROM checksum mismatch',
 		'error_crc_output':			'Target ROM checksum mismatch',
 		'error_crc_patch':			'Patch checksum mismatch',
-		'error_downloading':		'Error downloading patch',
+		'error_downloading':		'Error downloading %s',
 		'error_unzipping':			'Error unzipping file',
 		'error_invalid_patch':		'Invalid patch file',
 		'warning_too_big':			'Using big files is not recommended.'
 	},
-    'nl':{
+	'es':{
+		'creator_mode':				'Modo creador',
+
+		'apply_patch':				'Aplicar parche',
+		'rom_file':					'Archivo ROM:',
+		'patch_file':				'Archivo parche:',
+		'remove_header':			'Quitar cabecera',
+		'add_header':				'Añadir cabecera temporal',
+		'compatible_formats':		'Formatos compatibles:',
+		'applying_patch':			'Aplicando parche...',
+		'downloading':				'Descargando...',
+		'unzipping':				'Descomprimiendo...',
+
+		'create_patch':				'Crear parche',
+		'original_rom':				'ROM original:',
+		'modified_rom':				'ROM modificada:',
+		'patch_type':				'Tipo de parche:',
+		'creating_patch':			'Creando parche...',
+
+		'error_crc_input':			'Checksum de ROM original no válida',
+		'error_crc_output':			'Checksum de ROM creada no válida',
+		'error_crc_patch':			'Checksum de parche no válida',
+		'error_downloading':		'Error descargando %s',
+		'error_unzipping':			'Error descomprimiendo archivo',
+		'error_unzipping':			'Error descomprimiendo archivo',
+		'error_invalid_patch':		'Archivo de parche no válido',
+		'warning_too_big':			'No se recomienda usar archivos muy grandes.'
+	},
+   'nl':{
         'creator_mode':				'Creator-modus',
 
 		'apply_patch':				'Pas patch toe',
@@ -79,33 +107,6 @@ const LOCALIZATION={
 		'error_unzipping':			'Det gick inte att packa upp filen',
 		'error_invalid_patch':		'Ogiltig korrigeringsfil',
 		'warning_too_big':			'Användning av stora filer rekommenderas inte.'
-    },
-	'es':{
-		'creator_mode':				'Modo creador',
-
-		'apply_patch':				'Aplicar parche',
-		'rom_file':					'Archivo ROM:',
-		'patch_file':				'Archivo parche:',
-		'remove_header':			'Quitar cabecera',
-		'add_header':				'Añadir cabecera temporal',
-		'compatible_formats':		'Formatos compatibles:',
-		'applying_patch':			'Aplicando parche...',
-		'downloading':				'Descargando...',
-		'unzipping':				'Descomprimiendo...',
-
-		'create_patch':				'Crear parche',
-		'original_rom':				'ROM original:',
-		'modified_rom':				'ROM modificada:',
-		'patch_type':				'Tipo de parche:',
-		'creating_patch':			'Creando parche...',
-
-		'error_crc_input':			'Checksum de ROM original no válida',
-		'error_crc_output':			'Checksum de ROM creada no válida',
-		'error_crc_patch':			'Checksum de parche no válida',
-		'error_downloading':		'Error descargando parche',
-		'error_unzipping':			'Error descomprimiendo archivo',
-		'error_invalid_patch':		'Archivo de parche no válido',
-		'warning_too_big':			'No se recomienda usar archivos muy grandes.'
 	},
 	'ca':{
 		'creator_mode':				'Mode creador',
@@ -129,7 +130,7 @@ const LOCALIZATION={
 		'error_crc_input':			'Checksum de ROM original no vàlida',
 		'error_crc_output':			'Checksum de ROM creada no vàlida',
 		'error_crc_patch':			'Checksum de pedaç no vàlida',
-		'error_downloading':		'Error descarregant pedaç',
+		'error_downloading':		'Error descarregant %s',
 		'error_unzipping':			'Error descomprimint arxiu',
 		'error_invalid_patch':		'Arxiu de pedaç no vàlid',
 		'warning_too_big':			'No es recomana usar arxius molt grans.'
@@ -183,12 +184,12 @@ const LOCALIZATION={
 		'error_crc_input':			'Prüfsumme der Input-ROM stimmt nicht überein',
 		'error_crc_output':			'Prüfsumme der Output-ROM stimmt nicht überein',
 		'error_crc_patch':			'Prüfsumme vom Patch stimmt nicht überein',
-		'error_downloading':		'Fehler beim Herunterladen vom Patch',
+		'error_downloading':		'Fehler beim Herunterladen vom %s',
 		'error_unzipping':			'Fehler beim Entpacken',
 		'error_invalid_patch':		'Ungültiger Patch',
 		'warning_too_big':			'Große Dateien zu verwenden ist nicht empfohlen.'
 	},
-	'ptb':{
+	'pt-br':{
 		'creator_mode':				'Modo criador',
 
 		'apply_patch':				'Aplicar patch',

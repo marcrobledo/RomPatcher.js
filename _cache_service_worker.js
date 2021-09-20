@@ -29,7 +29,7 @@ caches.keys().then(function(cacheNames){
 });
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v12';
+var PRECACHE_VERSION='v14';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
@@ -48,7 +48,6 @@ var PRECACHE_URLS=[
 	'/RomPatcher.js/js/zip.js/zip.js',
 	'/RomPatcher.js/js/zip.js/z-worker.js',
 	'/RomPatcher.js/js/zip.js/inflate.js',
-	'/RomPatcher.js/js/formats/zip.js',
 	'/RomPatcher.js/js/formats/ips.js',
 	'/RomPatcher.js/js/formats/ups.js',
 	'/RomPatcher.js/js/formats/aps.js',
@@ -56,7 +55,8 @@ var PRECACHE_URLS=[
 	'/RomPatcher.js/js/formats/rup.js',
 	'/RomPatcher.js/js/formats/ppf.js',
 	'/RomPatcher.js/js/formats/pmsr.js',
-	'/RomPatcher.js/js/formats/vcdiff.js'
+	'/RomPatcher.js/js/formats/vcdiff.js',
+	'/RomPatcher.js/js/formats/zip.js'
 ];
 
 

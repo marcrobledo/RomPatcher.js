@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20201106 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20210920 - Marc Robledo 2016-2021 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -15,13 +15,12 @@ const HEADERS_INFO=[
 const FORCE_HTTPS=true;
 if(FORCE_HTTPS && location.protocol==='http:')
 	location.href=window.location.href.replace('http:','https:');
-else if(location.protocol==='https:' && 'serviceWorker' in navigator)
+else if(location.protocol==='https:' && 'serviceWorker' in navigator && window.location.hostname==='www.marcrobledo.com')
 	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', {scope: '/RomPatcher.js/'});
 
 
 
 var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
-var fetchedPatches;
 var userLanguage;
 
 var CAN_USE_WEB_WORKERS=true;
@@ -99,42 +98,78 @@ function _(str){return userLanguage[str] || str}
 
 
 
-function fetchPatch(uri){
+
+
+/* custom patcher */
+function isCustomPatcherEnabled(){
+	return typeof CUSTOM_PATCHER!=='undefined' && typeof CUSTOM_PATCHER==='object' && CUSTOM_PATCHER.length
+}
+function parseCustomPatch(customPatch){
+	patchFile=customPatch.fetchedFile;
+	patchFile.seek(0);
+	_readPatchFile();
+
+	if(typeof patch.validateSource === 'undefined'){
+		if(typeof customPatch.crc==='number'){
+			patch.validateSource=function(romFile,headerSize){
+				return customPatch.crc===crc32(romFile, headerSize)
+			}
+		}else if(typeof customPatch.crc==='object'){
+			patch.validateSource=function(romFile,headerSize){
+				for(var i=0; i<customPatch.crc.length; i++)
+					if(customPatch.crc[i]===crc32(romFile, headerSize))
+						return true;
+				return false;
+			}
+		}
+		validateSource();
+	}
+}	
+function fetchPatch(customPatchIndex, compressedFileIndex){
+	var customPatch=CUSTOM_PATCHER[customPatchIndex];
+
 	setTabApplyEnabled(false);
 	setMessage('apply', _('downloading'), 'loading');
 
+	var uri=decodeURI(customPatch.file.trim());
 
-	var isCompressed=/\#/.test(uri);
-	var patchURI=decodeURI(uri.replace(/\#.*?$/, ''));
 	//console.log(patchURI);
-	var compressedName=uri.replace(/^.*?\#/,'');
-	//console.log(compressedName);
-
 
 	if(typeof window.fetch==='function'){
-		fetch(patchURI)
+		fetch(uri)
 			.then(result => result.arrayBuffer()) // Gets the response and returns it as a blob
 			.then(arrayBuffer => {
-				fetchedPatches[patchURI]=patchFile=new MarcFile(arrayBuffer);
-				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
-				_readPatchFile();
+				patchFile=CUSTOM_PATCHER[customPatchIndex].fetchedFile=new MarcFile(arrayBuffer);
+				patchFile.fileName=customPatch.file.replace(/^.*[\/\\]/g,'');
+
+				if(patchFile.readString(4).startsWith(ZIP_MAGIC))
+					ZIPManager.parseFile(CUSTOM_PATCHER[customPatchIndex].fetchedFile, compressedFileIndex);
+				else
+					parseCustomPatch(CUSTOM_PATCHER[customPatchIndex]);
+
+				setMessage('apply');
 			})
 			.catch(function(evt){
-				setMessage('apply', _('error_downloading'), 'error');
-				//setMessage('apply', evt.message, 'error');
+				setMessage('apply', (_('error_downloading')/* + evt.message */).replace('%s', CUSTOM_PATCHER[customPatchIndex].file.replace(/^.*[\/\\]/g,'')), 'error');
 			});
 	}else{
 		var xhr=new XMLHttpRequest();
-		xhr.open('GET', patchURI, true);
+		xhr.open('GET', uri, true);
 		xhr.responseType='arraybuffer';
 
 		xhr.onload=function(evt){
 			if(this.status===200){
-				fetchedPatches[patchURI]=patchFile=new MarcFile(xhr.response);
-				fetchedPatches[patchURI].fileName=patchURI.replace(/^(.*?\/)+/g, '');
-				_readPatchFile();
+				patchFile=CUSTOM_PATCHER[customPatchIndex].fetchedFile=new MarcFile(xhr.response);
+				patchFile.fileName=customPatch.file.replace(/^.*[\/\\]/g,'');
+
+				if(patchFile.readString(4).startsWith(ZIP_MAGIC))
+					ZIPManager.parseFile(CUSTOM_PATCHER[customPatchIndex].fetchedFile, compressedFileIndex);
+				else
+					parseCustomPatch(CUSTOM_PATCHER[customPatchIndex]);
+
+				setMessage('apply');
 			}else{
-				setMessage('apply', _('error_downloading')+' ('+this.status+')', 'error');
+				setMessage('apply', _('error_downloading').replace('%s', CUSTOM_PATCHER[customPatchIndex].file.replace(/^.*[\/\\]/g,''))+' ('+this.status+')', 'error');
 			}
 		};
 
@@ -146,29 +181,28 @@ function fetchPatch(uri){
 	}
 }
 
-
 function _parseROM(){
 	el('checkbox-addheader').checked=false;
 	el('checkbox-removeheader').checked=false;
 
 	if(romFile.readString(4).startsWith(ZIP_MAGIC)){
-		parseZIPFile(romFile);
+		ZIPManager.parseFile(romFile);
 		setTabApplyEnabled(false);
 	}else{
 		if(headerSize=canHaveFakeHeader(romFile)){
-			el('row-addheader').style.display='flex';
+			el('row-addheader').className='row';
 			if(headerSize<1024){
 				el('headersize').innerHTML=headerSize+'b';
 			}else{
 				el('headersize').innerHTML=parseInt(headerSize/1024)+'kb';
 			}
-			el('row-removeheader').style.display='none';
+			el('row-removeheader').className='row hide';
 		}else if(headerSize=hasHeader(romFile)){
-			el('row-addheader').style.display='none';
-			el('row-removeheader').style.display='flex';
+			el('row-addheader').className='row hide';
+			el('row-removeheader').className='row';
 		}else{
-			el('row-addheader').style.display='none';
-			el('row-removeheader').style.display='none';
+			el('row-addheader').className='row hide';
+			el('row-removeheader').className='row hide';
 		}
 
 		updateChecksums(romFile, 0);
@@ -182,8 +216,8 @@ function setLanguage(langCode){
 		langCode='en';
 
 	userLanguage=LOCALIZATION[langCode];
-
-	document.documentElement.lang = langCode;
+	
+	document.documentElement.lang=langCode;
 
 	var translatableElements=document.querySelectorAll('*[data-localize]');
 	for(var i=0; i<translatableElements.length; i++){
@@ -223,11 +257,6 @@ addEvent(window,'load',function(){
 	el('input-file-patch').value='';
 	setTabApplyEnabled(true);
 
-	addEvent(el('input-file-rom'), 'change', function(){
-		setTabApplyEnabled(false);
-		romFile=new MarcFile(this, _parseROM);
-	});
-
 
 	/* dirty fix for mobile Safari https://stackoverflow.com/a/19323498 */
 	if(/Mobile\/\S+ Safari/.test(navigator.userAgent)){
@@ -237,36 +266,62 @@ addEvent(window,'load',function(){
 
 
 	/* predefined patches */
-	if(typeof PREDEFINED_PATCHES!=='undefined'){
-		fetchedPatches={};
-
-		var container=el('input-file-patch').parentElement;
-		container.removeChild(el('input-file-patch'));
-
+	if(isCustomPatcherEnabled()){
 		var select=document.createElement('select');
+		select.disabled=true;
 		select.id='input-file-patch';
-		for(var i=0; i<PREDEFINED_PATCHES.length; i++){
-			var option=document.createElement('option');
-			option.value=PREDEFINED_PATCHES[i].patch;
-			option.innerHTML=PREDEFINED_PATCHES[i].name;
-			select.appendChild(option);
-		}
-		container.appendChild(select)
-		container.parentElement.title='';
+		el('input-file-patch').parentElement.replaceChild(select, el('input-file-patch'));
+		select.parentElement.title='';
 
+		for(var i=0; i<CUSTOM_PATCHER.length; i++){
+			CUSTOM_PATCHER[i].fetchedFile=false;
+
+			CUSTOM_PATCHER[i].selectOption=document.createElement('option');
+			CUSTOM_PATCHER[i].selectOption.value=i;
+			CUSTOM_PATCHER[i].selectOption.innerHTML=CUSTOM_PATCHER[i].name || CUSTOM_PATCHER[i].file;
+			select.appendChild(CUSTOM_PATCHER[i].selectOption);
+			
+			if(typeof CUSTOM_PATCHER[i].patches==='object'){
+				for(var j=0; j<CUSTOM_PATCHER[i].patches.length; j++){					
+					if(j===0){
+						CUSTOM_PATCHER[i].patches[0].selectOption=CUSTOM_PATCHER[i].selectOption;
+						CUSTOM_PATCHER[i].selectOption=null;
+					}else{
+						CUSTOM_PATCHER[i].patches[j].selectOption=document.createElement('option');
+						select.appendChild(CUSTOM_PATCHER[i].patches[j].selectOption);
+					}
+
+					CUSTOM_PATCHER[i].patches[j].selectOption.value=i+','+j;
+					CUSTOM_PATCHER[i].patches[j].selectOption.innerHTML=CUSTOM_PATCHER[i].patches[j].name || CUSTOM_PATCHER[i].patches[j].file;
+				}
+			}
+		}
 
 		addEvent(select,'change',function(){
-			if(fetchedPatches[this.value.replace(/\#.*?$/, '')]){
-				patchFile=fetchedPatches[this.value.replace(/\#.*?$/, '')];
-				patchFile.seek(0);
-				_readPatchFile();
+			var selectedCustomPatchIndex, selectedCustomPatchCompressedIndex, selectedPatch;
+
+			if(/^\d+,\d+$/.test(this.value)){
+				var indexes=this.value.split(',');
+				selectedCustomPatchIndex=parseInt(indexes[0]);
+				selectedCustomPatchCompressedIndex=parseInt(indexes[1]);
+				selectedPatch=CUSTOM_PATCHER[selectedCustomPatchIndex].patches[selectedCustomPatchCompressedIndex];
+			}else{
+				selectedCustomPatchIndex=parseInt(this.value);
+				selectedCustomPatchCompressedIndex=null;
+				selectedPatch=CUSTOM_PATCHER[selectedCustomPatchIndex];
+			}
+			
+			
+			if(selectedPatch.fetchedFile){
+				parseCustomPatch(selectedPatch);
 			}else{
 				patch=null;
 				patchFile=null;
-				fetchPatch(this.value);
+				fetchPatch(selectedCustomPatchIndex, selectedCustomPatchCompressedIndex);
 			}
 		});
-		fetchPatch(select.value);
+		fetchPatch(0, 0);
+	
 	}else{
 		setTabCreateEnabled(true);
 		el('input-file-rom1').value='';
@@ -290,14 +345,40 @@ addEvent(window,'load',function(){
 
 
 
-
-
+	/* event listeners */
+	addEvent(el('input-file-rom'), 'change', function(){
+		setTabApplyEnabled(false);
+		romFile=new MarcFile(this, _parseROM);
+	});
 	addEvent(el('checkbox-removeheader'), 'change', function(){
 		if(this.checked)
 			updateChecksums(romFile, headerSize);
 		else
 			updateChecksums(romFile, 0);
 	});
+	addEvent(el('switch-create-button'), 'click', function(){
+		setCreatorMode(!/enabled/.test(el('switch-create').className));
+	});
+	addEvent(el('button-apply'), 'click', function(){
+		applyPatch(patch, romFile, false);
+	});
+	addEvent(el('button-create'), 'click', function(){
+		createPatch(romFile1, romFile2, el('select-patch-type').value);
+	});
+	addEvent(el('select-language'), 'change', function(){
+		setLanguage(this.value);
+	});
+
+
+
+
+
+
+
+
+
+
+
 
 	//setCreatorMode(true);
 });
@@ -390,14 +471,10 @@ function _readPatchFile(){
 
 	var header=patchFile.readString(6);
 	if(header.startsWith(ZIP_MAGIC)){
-		if(typeof PREDEFINED_PATCHES !== 'undefined' && /\#/.test(el('input-file-patch').value)){
-			parseZIPFile(patchFile, el('input-file-patch').value.replace(/^.*?\#/, ''));
-		}else{
-			parseZIPFile(patchFile);
-		}
 		patch=false;
 		validateSource();
 		setTabApplyEnabled(false);
+		ZIPManager.parseFile(patchFile);
 	}else{
 		if(header.startsWith(IPS_MAGIC)){
 			patch=parseIPSFile(patchFile);
@@ -418,12 +495,6 @@ function _readPatchFile(){
 		}else{
 			patch=null;
 			setMessage('apply', _('error_invalid_patch'), 'error');
-		}
-
-		if(patch && typeof PREDEFINED_PATCHES!=='undefined' && PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc){
-			patch.validateSource=function(romFile, headerSize){
-				return PREDEFINED_PATCHES[el('input-file-patch').selectedIndex].crc===crc32(romFile, headerSize)
-			}
 		}
 
 		validateSource();
@@ -655,7 +726,7 @@ function setTabCreateEnabled(status){
 function setTabApplyEnabled(status){
 	setElementEnabled('input-file-rom', status);
 	setElementEnabled('input-file-patch', status);
-	if(romFile && status && (patch || typeof PREDEFINED_PATCHES!=='undefined')){
+	if(romFile && status && (patch || isCustomPatcherEnabled())){
 		setElementEnabled('button-apply', status);
 	}else{
 		setElementEnabled('button-apply', false);
@@ -674,16 +745,6 @@ function setCreatorMode(creatorMode){
 }
 
 
-
-
-/* Event listeners */
-
-document.addEventListener('DOMContentLoaded', function() {
-document.getElementById("switch-create-button").addEventListener('click', function(){setCreatorMode(!/enabled/.test(el('switch-create').className))})
-document.getElementById("button-apply").addEventListener('click', function(){applyPatch(patch, romFile, false)})
-document.getElementById("button-create").addEventListener('click', function(){createPatch(romFile1, romFile2, el('select-patch-type').value)})
-document.getElementById("select-language").addEventListener('change', function(){setLanguage(this.value)})
-})
 
 
 
