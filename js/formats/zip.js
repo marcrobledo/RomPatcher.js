@@ -1,10 +1,11 @@
-/* ZIP module for Rom Patcher JS v20210815 - Marc Robledo 2016-2021 - http://www.marcrobledo.com/license */
+/* ZIP module for Rom Patcher JS v20220109 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 
 const ZIP_MAGIC='\x50\x4b\x03\x04';
 
 var ZIPManager=(function(){
-	const FILTER_PATCHES=/\.(ips|ups|bps|aps|rup|ppf|xdelta)$/i;
-	const FILTER_ROMS=/(?<!\.(txt|diz|rtf|docx?|html?|pdf|jpe?g|gif|png|bmp|zip|rar|7z))$/i;
+	const FILTER_PATCHES=/\.(ips|ups|bps|aps|rup|ppf|mod|xdelta)$/i;
+	//const FILTER_ROMS=/(?<!\.(txt|diz|rtf|docx?|xlsx?|html?|pdf|jpe?g|gif|png|bmp|webp|zip|rar|7z))$/i; //negative lookbehind is not compatible with Safari https://stackoverflow.com/a/51568859
+	const FILTER_NON_ROMS=/(\.(txt|diz|rtf|docx?|xlsx?|html?|pdf|jpe?g|gif|png|bmp|webp|zip|rar|7z))$/i;
 
 	var _unzipEntry=function(zippedEntry, dest, dest2, parse){
 		zippedEntry.getData(new zip.BlobWriter(), function(blob){
@@ -39,10 +40,14 @@ var ZIPManager=(function(){
 				/* success */
 				function(zipReader){
 					zipReader.getEntries(function(zipEntries){
-						var regex=(sourceFile===romFile)? FILTER_ROMS : FILTER_PATCHES;
 						var filteredEntries=[];
 						for(var i=0; i<zipEntries.length; i++){
-							if(regex.test(zipEntries[i].filename) && !zipEntries[i].directory){
+							if(
+								(
+									(sourceFile===romFile && !FILTER_NON_ROMS.test(zipEntries[i].filename) && !FILTER_PATCHES.test(zipEntries[i].filename)) ||
+									(sourceFile!==romFile && FILTER_PATCHES.test(zipEntries[i].filename))
+								) && !zipEntries[i].directory
+							){
 								filteredEntries.push(zipEntries[i]);
 							}
 						}
@@ -120,7 +125,7 @@ var ZIPManager=(function(){
 									addEvent(li, 'click', _evtClickDialogEntry);
 									zipList.appendChild(li);
 								}
-								zipDialog.innerHTML=_('patch_file');
+								zipDialog.innerHTML=_(sourceFile===romFile?'rom_file':'patch_file');
 								zipDialog.appendChild(zipList);
 								zipOverlay.appendChild(zipDialog);
 								document.body.appendChild(zipOverlay);
