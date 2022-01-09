@@ -129,7 +129,7 @@ function fetchPatch(customPatchIndex, compressedFileIndex){
 	var customPatch=CUSTOM_PATCHER[customPatchIndex];
 
 	setTabApplyEnabled(false);
-	setMessage('apply', _('downloading'), 'loading');
+	setMessage('apply', 'downloading', 'loading');
 
 	var uri=decodeURI(customPatch.file.trim());
 
@@ -174,7 +174,7 @@ function fetchPatch(customPatchIndex, compressedFileIndex){
 		};
 
 		xhr.onerror=function(evt){
-			setMessage('apply', _('error_downloading'), 'error');
+			setMessage('apply', 'error_downloading', 'error');
 		};
 
 		xhr.send(null);
@@ -455,7 +455,7 @@ function validateSource(){
 			setMessage('apply');
 		}else{
 			el('crc32').className='invalid';
-			setMessage('apply', _('error_crc_input'), 'warning');
+			setMessage('apply', 'error_crc_input', 'warning');
 		}
 	}else{
 		el('crc32').className='';
@@ -494,7 +494,7 @@ function _readPatchFile(){
 			patch=parseVCDIFF(patchFile);
 		}else{
 			patch=null;
-			setMessage('apply', _('error_invalid_patch'), 'error');
+			setMessage('apply', 'error_invalid_patch', 'error');
 		}
 
 		validateSource();
@@ -575,7 +575,7 @@ function applyPatch(p,r,validateChecksums){
 		}
 
 		if(CAN_USE_WEB_WORKERS){
-			setMessage('apply', _('applying_patch'), 'loading');
+			setMessage('apply', 'applying_patch', 'loading');
 			setTabApplyEnabled(false);
 
 			webWorkerApply.postMessage(
@@ -590,7 +590,7 @@ function applyPatch(p,r,validateChecksums){
 			);
 
 		}else{
-			setMessage('apply', _('applying_patch'), 'loading');
+			setMessage('apply', 'applying_patch', 'loading');
 
 			try{
 				p.apply(r, validateChecksums);
@@ -625,7 +625,7 @@ function createPatch(sourceFile, modifiedFile, mode){
 	if(CAN_USE_WEB_WORKERS){
 		setTabCreateEnabled(false);
 
-		setMessage('create', _('creating_patch'), 'loading');
+		setMessage('create', 'creating_patch', 'loading');
 
 		webWorkerCreate.postMessage(
 			{
@@ -658,7 +658,7 @@ function createPatch(sourceFile, modifiedFile, mode){
 			}else if(mode==='rup'){
 				newPatch=createRUPFromFiles(sourceFile, modifiedFile);
 			}else{
-				setMessage('create', _('error_invalid_patch'), 'error');
+				setMessage('create', 'error_invalid_patch', 'error');
 			}
 
 
@@ -678,20 +678,21 @@ function createPatch(sourceFile, modifiedFile, mode){
 
 
 /* GUI functions */
-function setMessage(tab, msg, className){
+function setMessage(tab, key, className){
 	var messageBox=el('message-'+tab);
-	if(msg){
+	if(key){
+        messageBox.setAttribute('data-localize',key);
 		if(className==='loading'){
 			messageBox.className='message';
-			messageBox.innerHTML='<span class="loading"></span> '+msg;
+			messageBox.innerHTML='<span class="loading"></span> '+_(key);
 		}else{
 			messageBox.className='message '+className;
 			if(className==='warning')
-				messageBox.innerHTML='&#9888; '+msg;
+				messageBox.innerHTML='&#9888; '+_(key);
 			else if(className==='error')
-				messageBox.innerHTML='&#10007; '+msg;
+				messageBox.innerHTML='&#10007; '+_(key);
 			else
-				messageBox.innerHTML=msg;
+				messageBox.innerHTML=_(key);
 		}
 		messageBox.style.display='inline';
 	}else{
