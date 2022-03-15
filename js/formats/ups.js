@@ -64,7 +64,7 @@ UPS.prototype.apply=function(romFile, validate){
 	}
 
 	/* copy original file */
-	tempFile=new MarcFile(this.sizeOutput);
+	tempFile=new MarcFile(sizeOutput);
 	romFile.copyToFile(tempFile, 0, this.sizeInput);
 
 	romFile.seek(0);
