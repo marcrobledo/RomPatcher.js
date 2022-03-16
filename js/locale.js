@@ -269,5 +269,32 @@ const LOCALIZATION={
 		'error_unzipping':			'Erreur lors de la décompression du fichier',
 		'error_invalid_patch':		'Fichier patch invalide',
 		'warning_too_big':			'L\'utilisation de gros fichiers n\'est pas recommandée.'
+	},
+	'zh_CN':{
+		'creator_mode':				'创建模式',
+
+		'apply_patch':				'打补丁',
+		'rom_file':					'ROM文件：',
+		'patch_file':				'补丁文件：',
+		'remove_header':			'删除文件头',
+		'add_header':				'增加临时文件头',
+		'compatible_formats':		'兼容补丁格式：',
+		'applying_patch':			'正在打补丁……',
+		'downloading':				'正在下载……',
+		'unzipping':				'正在解压……',
+
+		'create_patch':				'创建补丁',
+		'original_rom':				'原始ROM：',
+		'modified_rom':				'修改后ROM：',
+		'patch_type':				'补丁类型：',
+		'creating_patch':			'正在创建补丁……',
+
+		'error_crc_input':			'原始ROM校验和不匹配',
+		'error_crc_output':			'目标ROM校验和不匹配',
+		'error_crc_patch':			'补丁文件校验和不匹配',
+		'error_downloading':		'下载出错：%s',
+		'error_unzipping':			'解压出错',
+		'error_invalid_patch':		'无效补丁',
+		'warning_too_big':			'不推荐使用大文件。'
 	}
 };
