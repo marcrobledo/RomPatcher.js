@@ -57,10 +57,19 @@ UPS.prototype.apply=function(romFile, validate){
 		throw new Error('error_crc_input');
 	}
 
+	/* fix the glitch that cut the end of the file if it's larger than the changed file patch was originally created with */
+	sizeOutput = this.sizeOutput
+	sizeInput = this.sizeInput
+	if(!validate && sizeInput < romFile.fileSize){
+		sizeInput = romFile.fileSize
+		if(sizeOutput < sizeInput){
+			sizeOutput = sizeInput
+		}
+	}
 
 	/* copy original file */
-	tempFile=new MarcFile(this.sizeOutput);
-	romFile.copyToFile(tempFile, 0, this.sizeInput);
+	tempFile=new MarcFile(sizeOutput);
+	romFile.copyToFile(tempFile, 0, sizeInput);
 
 	romFile.seek(0);
 
