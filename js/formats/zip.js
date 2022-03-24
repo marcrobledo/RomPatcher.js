@@ -1,4 +1,4 @@
-/* ZIP module for Rom Patcher JS v20220109 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
+/* ZIP module for Rom Patcher JS v20220319 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 
 const ZIP_MAGIC='\x50\x4b\x03\x04';
 
@@ -62,7 +62,7 @@ var ZIPManager=(function(){
 							}
 						}
 
-						if(customPatch){							
+						if(customPatch){
 							if(customPatch.patches){
 								for(var i=0; i<customPatch.patches.length; i++){
 									for(var j=0; j<filteredEntries.length; j++){
@@ -107,17 +107,15 @@ var ZIPManager=(function(){
 							setTabApplyEnabled(false);
 						}else{
 							var _evtClickDialogEntry=function(evt){
-								document.body.removeChild(this.parentElement.parentElement.parentElement);
+								UI.hideDialog('zip');
 								_unzipEntry(this.zipEntry, sourceFile);
 							}
 
 							if(filteredEntries.length>1){
-								var zipOverlay=document.createElement('div');
-								zipOverlay.className='zip-overlay';
-								var zipDialog=document.createElement('div');
-								zipDialog.className='zip-dialog';
-								var zipList=document.createElement('ul');
-								zipList.className='zipped-files'
+								document.getElementById('zip-dialog-message').innerHTML=_(sourceFile===romFile?'rom_file':'patch_file');
+
+								var zipList=document.getElementById('zip-dialog-file-list');
+								zipList.innerHTML='';
 								for(var i=0; i<filteredEntries.length; i++){
 									var li=document.createElement('li');
 									li.zipEntry=filteredEntries[i];
@@ -125,15 +123,14 @@ var ZIPManager=(function(){
 									addEvent(li, 'click', _evtClickDialogEntry);
 									zipList.appendChild(li);
 								}
-								zipDialog.innerHTML=_(sourceFile===romFile?'rom_file':'patch_file');
-								zipDialog.appendChild(zipList);
-								zipOverlay.appendChild(zipDialog);
-								document.body.appendChild(zipOverlay);
+
+								UI.showDialog('zip');
 							}else if(filteredEntries.length===1){
 								_unzipEntry(filteredEntries[0], sourceFile);
 							}else{
 								if(sourceFile===romFile){
 									romFile=null;
+									setMessage('apply', _('no_valid_file_found'), 'error');
 								}else if(sourceFile===patchFile){
 									patchFile=null;
 									setMessage('apply', _('error_invalid_patch'), 'error');

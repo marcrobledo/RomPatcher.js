@@ -1,6 +1,9 @@
 const LOCALIZATION={
 	'en':{
 		'creator_mode':				'Creator mode',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Apply patch',
 		'rom_file':					'ROM file:',
@@ -28,6 +31,9 @@ const LOCALIZATION={
 	},
 	'es':{
 		'creator_mode':				'Modo creador',
+		'settings':					'Configuración',
+		'alternate_output_name':	'Guardar con nombre del parche',
+		'light_theme':				'Tema claro',
 
 		'apply_patch':				'Aplicar parche',
 		'rom_file':					'Archivo ROM:',
@@ -56,6 +62,9 @@ const LOCALIZATION={
 	},
    'nl':{
         'creator_mode':				'Creator-modus',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Pas patch toe',
 		'rom_file':					'ROM bestand:',
@@ -83,6 +92,9 @@ const LOCALIZATION={
     },
     'sv':{
         'creator_mode':				'Skaparläge',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Tillämpa korrigeringsfil',
 		'rom_file':					'ROM-fil:',
@@ -110,6 +122,9 @@ const LOCALIZATION={
 	},
 	'ca':{
 		'creator_mode':				'Mode creador',
+		'settings':					'Configuració',
+		'alternate_output_name':	'Desar amb nom del pedaç',
+		'light_theme':				'Tema clar',
 
 		'apply_patch':				'Aplicar pedaç',
 		'rom_file':					'Arxiu ROM:',
@@ -137,6 +152,9 @@ const LOCALIZATION={
 	},
 	'ru':{
 		'creator_mode':				'Режим создания',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Применить патч',
 		'rom_file':					'Файл ROM:',
@@ -164,6 +182,9 @@ const LOCALIZATION={
 	},
 	'de':{
 		'creator_mode':				'Erstellmodus',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Patch anwenden',
 		'rom_file':					'ROM-Datei:',
@@ -191,6 +212,9 @@ const LOCALIZATION={
 	},
 	'pt-br':{
 		'creator_mode':				'Modo criador',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Aplicar patch',
 		'rom_file':					'Arquivo ROM:',
@@ -218,6 +242,9 @@ const LOCALIZATION={
 	},
 	'ja':{
 		'creator_mode':				'作成モード',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'パッチを当て',
 		'rom_file':					'ROMファィル：',
@@ -245,6 +272,9 @@ const LOCALIZATION={
 	},
 	'fr':{
 		'creator_mode':				'Mode créateur',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'Appliquer le patch',
 		'rom_file':					'Fichier ROM:',
@@ -270,8 +300,11 @@ const LOCALIZATION={
 		'error_invalid_patch':		'Fichier patch invalide',
 		'warning_too_big':			'L\'utilisation de gros fichiers n\'est pas recommandée.'
 	},
-	'zh_CN':{
+	'zh-cn':{
 		'creator_mode':				'创建模式',
+		'settings':					'Settings',
+		'alternate_output_name':	'Use patch name for output',
+		'light_theme':				'Light theme',
 
 		'apply_patch':				'打补丁',
 		'rom_file':					'ROM文件：',

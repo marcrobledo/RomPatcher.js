@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20210920 - Marc Robledo 2016-2021 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20220319 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -21,7 +21,6 @@ else if(location.protocol==='https:' && 'serviceWorker' in navigator && window.l
 
 
 var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
-var userLanguage;
 
 var CAN_USE_WEB_WORKERS=true;
 var webWorkerApply,webWorkerCreate,webWorkerCrc;
@@ -94,7 +93,7 @@ try{
 /* Shortcuts */
 function addEvent(e,ev,f){e.addEventListener(ev,f,false)}
 function el(e){return document.getElementById(e)}
-function _(str){return userLanguage[str] || str}
+function _(str){return (LOCALIZATION[AppSettings.langCode] && LOCALIZATION[AppSettings.langCode][str]) || LOCALIZATION['en'][str] || str}
 
 
 
@@ -190,19 +189,19 @@ function _parseROM(){
 		setTabApplyEnabled(false);
 	}else{
 		if(headerSize=canHaveFakeHeader(romFile)){
-			el('row-addheader').className='row';
+			el('row-addheader').className='row m-b';
 			if(headerSize<1024){
 				el('headersize').innerHTML=headerSize+'b';
 			}else{
 				el('headersize').innerHTML=parseInt(headerSize/1024)+'kb';
 			}
-			el('row-removeheader').className='row hide';
+			el('row-removeheader').className='row m-b hide';
 		}else if(headerSize=hasHeader(romFile)){
-			el('row-addheader').className='row hide';
-			el('row-removeheader').className='row';
+			el('row-addheader').className='row m-b hide';
+			el('row-removeheader').className='row m-b';
 		}else{
-			el('row-addheader').className='row hide';
-			el('row-removeheader').className='row hide';
+			el('row-addheader').className='row m-b hide';
+			el('row-removeheader').className='row m-b hide';
 		}
 
 		updateChecksums(romFile, 0);
@@ -211,23 +210,73 @@ function _parseROM(){
 
 
 
-function setLanguage(langCode){
-	if(typeof LOCALIZATION[langCode]==='undefined')
-		langCode='en';
 
-	userLanguage=LOCALIZATION[langCode];
-	
-	document.documentElement.lang=langCode;
 
-	var translatableElements=document.querySelectorAll('*[data-localize]');
-	for(var i=0; i<translatableElements.length; i++){
-		translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
+
+var UI={
+	localize:function(){
+		if(typeof LOCALIZATION[AppSettings.langCode]==='undefined')
+			return false;
+
+		var translatableElements=document.querySelectorAll('*[data-localize]');
+		for(var i=0; i<translatableElements.length; i++){
+			translatableElements[i].innerHTML=_(translatableElements[i].dataset.localize);
+		}
+	},
+	showDialog:function(id){
+		el('dialog-backdrop').className='show';
+		el(id+'-dialog').className='dialog show';
+	},
+	hideDialog:function(id){
+		el('dialog-backdrop').className='';
+		el(id+'-dialog').className='dialog';
+	},
+	isDialogOpen:function(id){
+		return el(id+'-dialog').className==='dialog show';
+	},
+	setLightTheme:function(val){
+		if(val){
+			document.body.className='light';
+		}else{
+			document.body.className='';
+		}
 	}
-	
-	if(typeof localStorage!=='undefined'){
-		localStorage.setItem('rompatcher-js-lang', langCode);
+};
+
+var AppSettings={
+	langCode:(typeof navigator.userLanguage==='string')? navigator.userLanguage.substr(0,2) : 'en',
+	outputFileNameMatch:false,
+	lightTheme:false,
+
+	load:function(){
+		if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-settings')){
+			try{
+				var loadedSettings=JSON.parse(localStorage.getItem('rompatcher-js-settings'));
+
+				if(typeof loadedSettings.langCode==='string' && typeof LOCALIZATION[loadedSettings.langCode]){
+					this.langCode=loadedSettings.langCode;
+					el('select-language').value=this.langCode;
+				}
+				if(loadedSettings.outputFileNameMatch===true){
+					this.outputFileNameMatch=loadedSettings.outputFileNameMatch;
+					el('switch-output-name').className='switch enabled';
+				}
+				if(loadedSettings.lightTheme===true){
+					this.lightTheme=loadedSettings.lightTheme;
+					el('switch-theme').className='switch enabled';
+					UI.setLightTheme(true);
+				}
+			}catch(ex){
+				console.error('Error while loading settings: '+ex.message);
+			}
+		}
+	},
+
+	save:function(){
+		if(typeof localStorage!=='undefined')
+			localStorage.setItem('rompatcher-js-settings', JSON.stringify(this));
 	}
-}
+};
 
 /* initialize app */
 addEvent(window,'load',function(){
@@ -243,12 +292,9 @@ addEvent(window,'load',function(){
 		document.getElementsByTagName('head')[0].appendChild(script);
 	}
 
-	/* language */
-	var langCode=(navigator.language || navigator.userLanguage).substr(0,2);
-	if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-lang'))
-		langCode=localStorage.getItem('rompatcher-js-lang');
-	el('select-language').value=langCode;
-	setLanguage(langCode);
+	/* load settings */
+	AppSettings.load();
+	UI.localize();
 
 	
 	el('row-file-patch').title=_('compatible_formats')+' IPS, UPS, APS, BPS, RUP, PPF, MOD (Paper Mario Star Rod), xdelta';
@@ -346,6 +392,55 @@ addEvent(window,'load',function(){
 
 
 	/* event listeners */
+	addEvent(el('button-settings'), 'click', function(){
+		UI.showDialog('settings');
+	});
+	addEvent(window, 'keyup', function(evt){
+		if(evt.keyCode===27 && UI.isDialogOpen('settings')){
+			UI.hideDialog('settings');
+		}
+	});
+	addEvent(el('settings-dialog'), 'click', function(evt){
+		evt.stopPropagation();
+	});
+	addEvent(el('zip-dialog'), 'click', function(evt){
+		evt.stopPropagation();
+	});
+	addEvent(el('settings-close-dialog'), 'click', function(){
+			UI.hideDialog('settings');
+	});
+	addEvent(el('dialog-backdrop'), 'click', function(){
+		if(UI.isDialogOpen('settings')){
+			UI.hideDialog('settings');
+		}
+	});
+	addEvent(el('select-language'), 'change', function(){
+		AppSettings.langCode=this.value;
+		AppSettings.save();
+		UI.localize();
+	});
+	addEvent(el('switch-output-name'), 'click', function(){
+		if(this.className==='switch enabled'){
+			this.className='switch disabled';
+			AppSettings.outputFileNameMatch=false;
+		}else{
+			this.className='switch enabled';
+			AppSettings.outputFileNameMatch=true;
+		}
+		AppSettings.save();
+	});
+	addEvent(el('switch-theme'), 'click', function(){
+		if(this.className==='switch enabled'){
+			this.className='switch disabled';
+			AppSettings.lightTheme=false;
+		}else{
+			this.className='switch enabled';
+			AppSettings.lightTheme=true;
+		}
+		UI.setLightTheme(AppSettings.lightTheme);
+		AppSettings.save();
+	});
+
 	addEvent(el('input-file-rom'), 'change', function(){
 		setTabApplyEnabled(false);
 		romFile=new MarcFile(this, _parseROM);
@@ -364,9 +459,6 @@ addEvent(window,'load',function(){
 	});
 	addEvent(el('button-create'), 'click', function(){
 		createPatch(romFile1, romFile2, el('select-patch-type').value);
-	});
-	addEvent(el('select-language'), 'change', function(){
-		setLanguage(this.value);
 	});
 
 
@@ -507,7 +599,11 @@ function _readPatchFile(){
 
 
 function preparePatchedRom(originalRom, patchedRom, headerSize){
-	patchedRom.fileName=originalRom.fileName.replace(/\.([^\.]*?)$/, ' (patched).$1');
+	if(AppSettings.outputFileNameMatch){
+		patchedRom.fileName=patchFile.fileName.replace(/\.\w+$/i, (/\.\w+$/i.test(originalRom.fileName)? originalRom.fileName.match(/\.\w+$/i)[0] : ''));
+	}else{
+		patchedRom.fileName=originalRom.fileName.replace(/\.([^\.]*?)$/, ' (patched).$1');
+	}
 	patchedRom.fileType=originalRom.fileType;
 	if(headerSize){
 		if(el('checkbox-removeheader').checked){

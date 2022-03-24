@@ -13,31 +13,22 @@
 	navigator.serviceWorker.register('/repo/_cache_service_worker.js', {scope: '/repo/'})
 */
 
-
-/* MOD: fix old caches for mrc */
-caches.keys().then(function(cacheNames){
-	for(var i=0; i<cacheNames.length; i++){
-		if(
-			cacheNames[i]==='runtime' ||
-			/^precache-\w+$/.test(cacheNames[i]) ||
-			/^v?\d+\w?$/.test(cacheNames[i])
-		){
-			console.log('deleting old cache: '+cacheNames[i]);
-			caches.delete(cacheNames[i]);
-		}
-	}
-});
-
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v14c';
+var PRECACHE_VERSION='v26';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
-	'/RomPatcher.js/style/favicon.png',
-	'/RomPatcher.js/style/logo114.png',
-	'/RomPatcher.js/style/logo144.png',
-	'/RomPatcher.js/style/logo192.png',
+	'/RomPatcher.js/style/app_icon_16.png',
+	'/RomPatcher.js/style/app_icon_114.png',
+	'/RomPatcher.js/style/app_icon_144.png',
+	'/RomPatcher.js/style/app_icon_192.png',
+	'/RomPatcher.js/style/app_icon_maskable.png',
+	'/RomPatcher.js/style/logo.png',
 	'/RomPatcher.js/style/RomPatcher.css',
+	'/RomPatcher.js/style/icon_close.svg',
+	'/RomPatcher.js/style/icon_github.svg',
+	'/RomPatcher.js/style/icon_heart.svg',
+	'/RomPatcher.js/style/icon_settings.svg',
 	'/RomPatcher.js/js/RomPatcher.js',
 	'/RomPatcher.js/js/locale.js',
 	'/RomPatcher.js/js/worker_apply.js',
