@@ -243,7 +243,7 @@ const LOCALIZATION={
 	'ja':{
 		'creator_mode':				'作成モード',
 		'settings':					'設定',
-		'alternate_output_name':	'出力先のファイル名をパッチの名前に変更',
+		'alternate_output_name':	'パッチと同じ名前で出力',
 		'light_theme':				'ライトテーマ',
 
 		'apply_patch':				'パッチを当て',
