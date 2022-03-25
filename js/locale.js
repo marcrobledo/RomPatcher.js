@@ -242,9 +242,9 @@ const LOCALIZATION={
 	},
 	'ja':{
 		'creator_mode':				'作成モード',
-		'settings':					'Settings',
-		'alternate_output_name':	'Use patch name for output',
-		'light_theme':				'Light theme',
+		'settings':					'設定',
+		'alternate_output_name':	'パッチと同じ名前で出力',
+		'light_theme':				'ライトテーマ',
 
 		'apply_patch':				'パッチを当て',
 		'rom_file':					'ROMファィル：',
@@ -302,9 +302,9 @@ const LOCALIZATION={
 	},
 	'zh-cn':{
 		'creator_mode':				'创建模式',
-		'settings':					'Settings',
-		'alternate_output_name':	'Use patch name for output',
-		'light_theme':				'Light theme',
+		'settings':					'设置',
+		'alternate_output_name':	'修改后ROM文件名和补丁保持一致',
+		'light_theme':				'浅色主题',
 
 		'apply_patch':				'打补丁',
 		'rom_file':					'ROM文件：',
