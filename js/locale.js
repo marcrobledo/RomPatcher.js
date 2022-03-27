@@ -150,6 +150,33 @@ const LOCALIZATION={
 		'error_invalid_patch':		'Arxiu de pedaç no vàlid',
 		'warning_too_big':			'No es recomana usar arxius molt grans.'
 	},
+	'val':{
+		'creator_mode':				'Mode creador',
+
+		'apply_patch':				'Aplicar pedaç',
+		'rom_file':				'Arxiu ROM:',
+		'patch_file':				'Arxiu pedaç:',
+		'remove_header':			'Traure capçalera',
+		'add_header':				'Afegir capçalera temporal',
+		'compatible_formats':			'Formats compatibles:',
+		'applying_patch':			'Aplicant pedaç...',
+		'downloading':				'Descarregant...',
+		'unzipping':				'Descomprimint...',
+
+		'create_patch':				'Crear pedaç',
+		'original_rom':				'ROM original:',
+		'modified_rom':				'ROM modificada:',
+		'patch_type':				'Tipus de pedaç:',
+		'creating_patch':			'Creant pedaç...',
+
+		'error_crc_input':			'Checksum de ROM original incorrecta',
+		'error_crc_output':			'Checksum de ROM creada incorrecta',
+		'error_crc_patch':			'Checksum de pedaç incorrecta',
+		'error_downloading':			'Error descarregant pedaç',
+		'error_unzipping':			'Error descomprimint arxiu',
+		'error_invalid_patch':			'Arxiu de pedaç no vàlid',
+		'warning_too_big':			'No és recomanable usar arxius molt grans.'
+	},
 	'ru':{
 		'creator_mode':				'Режим создания',
 		'settings':					'Settings',
