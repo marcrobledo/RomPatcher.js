@@ -102,7 +102,8 @@ MarcFile.prototype.slice=function(offset, len){
 	if(typeof this._u8array.buffer.slice!=='undefined'){
 		newFile=new MarcFile(0);
 		newFile.fileSize=len;
-		newFile._u8array=new Uint8Array(this._u8array.buffer.slice(offset, offset+len));
+		newFile._u8array=new Uint8Array(len);
+		newFile._u8array.set(new Uint8Array(this._u8array.buffer.slice(offset, offset+len)));
 	}else{
 		newFile=new MarcFile(len);
 		this.copyToFile(newFile, offset, len, 0);
