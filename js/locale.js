@@ -60,8 +60,8 @@ const LOCALIZATION={
 		'error_invalid_patch':		'Archivo de parche no válido',
 		'warning_too_big':			'No se recomienda usar archivos muy grandes.'
 	},
-   'nl':{
-        'creator_mode':				'Creator-modus',
+	'nl':{
+		'creator_mode':				'Creator-modus',
 		'settings':					'Settings',
 		'alternate_output_name':	'Use patch name for output',
 		'light_theme':				'Light theme',
@@ -89,9 +89,9 @@ const LOCALIZATION={
 		'error_unzipping':			'Fout bij uitpakken van bestand',
 		'error_invalid_patch':		'Ongeldig patchbestand',
 		'warning_too_big':			'Het gebruik van grote bestanden wordt niet aanbevolen.'
-    },
-    'sv':{
-        'creator_mode':				'Skaparläge',
+	},
+	'sv':{
+		'creator_mode':				'Skaparläge',
 		'settings':					'Settings',
 		'alternate_output_name':	'Use patch name for output',
 		'light_theme':				'Light theme',
@@ -150,7 +150,7 @@ const LOCALIZATION={
 		'error_invalid_patch':		'Arxiu de pedaç no vàlid',
 		'warning_too_big':			'No es recomana usar arxius molt grans.'
 	},
-	'val':{
+	'ca-va':{
 		'creator_mode':				'Mode creador',
 		'settings':					'Configuració',
 		'alternate_output_name':	'Guardar amb nom del pedaç',
