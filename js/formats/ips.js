@@ -1,4 +1,4 @@
-/* IPS module for Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* IPS module for Rom Patcher JS v20220417 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
 
@@ -71,9 +71,14 @@ IPS.prototype.export=function(fileName){
 }
 IPS.prototype.apply=function(romFile){
 	if(this.truncate){
-		tempFile=romFile.slice(0, this.truncate);
+		if(this.truncate>romFile.fileSize){ //expand (discussed here: https://github.com/marcrobledo/RomPatcher.js/pull/46)
+			tempFile=new MarcFile(this.truncate);
+			romFile.copyToFile(tempFile, 0, romFile.fileSize, 0);
+		}else{ //truncate
+			tempFile=romFile.slice(0, this.truncate);
+		}
 	}else{
-
+		//calculate target ROM size, expanding it if any record offset is beyond target ROM size
 		var newFileSize=romFile.fileSize;
 		for(var i=0; i<this.records.length; i++){
 			var rec=this.records[i];
