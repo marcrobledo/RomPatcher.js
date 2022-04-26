@@ -359,5 +359,35 @@ const LOCALIZATION={
 		'error_unzipping':			'解压出错',
 		'error_invalid_patch':		'无效补丁',
 		'warning_too_big':			'不推荐使用大文件。'
+	},
+		'it':{
+		'creator_mode':				'Modalità creatore',
+		'settings':					'Impostazioni',
+		'alternate_output_name':	'Usa il nome della patch per uscita',
+		'light_theme':				'Tema chiaro',
+
+		'apply_patch':				'Applica patch',
+		'rom_file':					'File ROM:',
+		'patch_file':				'File patch:',
+		'remove_header':			'Rimuovi header',
+		'add_header':				'Aggiungi header temporaneo',
+		'compatible_formats':		'Formati:',
+		'applying_patch':			'Applica patch...',
+		'downloading':				'Scaricamento...',
+		'unzipping':				'Estrazione...',
+
+		'create_patch':				'Crea patch',
+		'original_rom':				'ROM originale:',
+		'modified_rom':				'ROM modificata:',
+		'patch_type':				'Tipologia patch:',
+		'creating_patch':			'Creazione patch...',
+
+		'error_crc_input':			'Checksum della ROM sorgente non valido',
+		'error_crc_output':			'Checksum della ROM destinataria non valido',
+		'error_crc_patch':			'Checksum della patch non valido',
+		'error_downloading':		'Errore di scaricamento %s',
+		'error_unzipping':			'Errore estrazione file',
+		'error_invalid_patch':		'File della patch non valido',
+		'warning_too_big':			'Non è raccomandato usare file di grandi dimensioni.'
 	}
 };
