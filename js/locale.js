@@ -303,7 +303,7 @@ const LOCALIZATION={
 	'fr':{
 		'creator_mode':				'Mode créateur',
 		'settings':					'Configurations',
-		'alternate_output_name':	'Utiliser le nom du patch pour renommer la ROM une fois patchée,
+		'alternate_output_name':	'Utiliser le nom du patch pour renommer la ROM une fois patchée',
 		'light_theme':				'Thème Clair',
 
 		'apply_patch':				'Appliquer le patch',
@@ -360,7 +360,7 @@ const LOCALIZATION={
 		'error_invalid_patch':		'无效补丁',
 		'warning_too_big':			'不推荐使用大文件。'
 	},
-		'it':{
+	'it':{
 		'creator_mode':				'Modalità creatore',
 		'settings':					'Impostazioni',
 		'alternate_output_name':	'Usa il nome della patch per uscita',
