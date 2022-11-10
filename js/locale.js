@@ -3,6 +3,7 @@ const LOCALIZATION={
 		'creator_mode':				'Creator mode',
 		'settings':					'Settings',
 		'alternate_output_name':	'Use patch name for output',
+		'fix_checksum':				'Fix ROM header checksum',
 		'light_theme':				'Light theme',
 
 		'apply_patch':				'Apply patch',
@@ -14,6 +15,7 @@ const LOCALIZATION={
 		'applying_patch':			'Applying patch...',
 		'downloading':				'Downloading...',
 		'unzipping':				'Unzipping...',
+		'fix_checksum_prompt':		'Fix ROM header checksum?',
 
 		'create_patch':				'Create patch',
 		'original_rom':				'Original ROM:',
@@ -33,6 +35,7 @@ const LOCALIZATION={
 		'creator_mode':				'Modo creador',
 		'settings':					'Configuración',
 		'alternate_output_name':	'Guardar con nombre del parche',
+		'fix_checksum':				'Corregir checksum cabecera ROM',
 		'light_theme':				'Tema claro',
 
 		'apply_patch':				'Aplicar parche',
@@ -44,6 +47,7 @@ const LOCALIZATION={
 		'applying_patch':			'Aplicando parche...',
 		'downloading':				'Descargando...',
 		'unzipping':				'Descomprimiendo...',
+		'fix_checksum_prompt':		'¿Corregir checksum en la cabecera de la ROM?',
 
 		'create_patch':				'Crear parche',
 		'original_rom':				'ROM original:',

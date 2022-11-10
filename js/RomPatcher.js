@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20220319 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20221110 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -246,6 +246,7 @@ var UI={
 var AppSettings={
 	langCode:(typeof navigator.userLanguage==='string')? navigator.userLanguage.substr(0,2) : 'en',
 	outputFileNameMatch:false,
+	fixChecksum:false,
 	lightTheme:false,
 
 	load:function(){
@@ -260,6 +261,10 @@ var AppSettings={
 				if(loadedSettings.outputFileNameMatch===true){
 					this.outputFileNameMatch=loadedSettings.outputFileNameMatch;
 					el('switch-output-name').className='switch enabled';
+				}
+				if(loadedSettings.fixChecksum===true){
+					this.fixChecksum=loadedSettings.fixChecksum;
+					el('switch-fix-checksum').className='switch enabled';
 				}
 				if(loadedSettings.lightTheme===true){
 					this.lightTheme=loadedSettings.lightTheme;
@@ -429,6 +434,16 @@ addEvent(window,'load',function(){
 		}
 		AppSettings.save();
 	});
+	addEvent(el('switch-fix-checksum'), 'click', function(){
+		if(this.className==='switch enabled'){
+			this.className='switch disabled';
+			AppSettings.fixChecksum=false;
+		}else{
+			this.className='switch enabled';
+			AppSettings.fixChecksum=true;
+		}
+		AppSettings.save();
+	});
 	addEvent(el('switch-theme'), 'click', function(){
 		if(this.className==='switch enabled'){
 			this.className='switch disabled';
@@ -557,6 +572,82 @@ function validateSource(){
 
 
 
+
+
+function _getRomSystem(file){
+	if(file.fileSize>0x0200 && file.fileSize%4===0){
+		if(/\.gbc?/i.test(file.fileName)){
+			var NINTENDO_LOGO=[
+				0xce, 0xed, 0x66, 0x66, 0xcc, 0x0d, 0x00, 0x0b, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0c, 0x00, 0x0d,
+				0x00, 0x08, 0x11, 0x1f, 0x88, 0x89, 0x00, 0x0e, 0xdc, 0xcc, 0x6e, 0xe6, 0xdd, 0xdd, 0xd9, 0x99
+			];
+			file.offset=0x104;
+			var valid=true;
+			for(var i=0; i<NINTENDO_LOGO.length && valid; i++){
+				if(NINTENDO_LOGO[i]!==file.readU8())
+					valid=false;
+			}
+			if(valid)
+				return 'gb';
+		}else if(/\.(bin|md)?/i.test(file.fileName)){
+			file.offset=0x0100;
+			if(/SEGA (GENESIS|MEGA DR)/.test(file.readString(12)))
+				return 'smd';
+		}
+	}
+	return null;
+}
+function _getHeaderChecksumInfo(file){
+	var info={
+		system:_getRomSystem(file),
+		current:null,
+		calculated:null,
+		fix:null
+	}
+	
+	if(info.system==='gb'){
+		/* get current checksum */
+		file.offset=0x014d;
+		info.current=file.readU8();
+
+		/* calculate checksum */
+		info.calculated=0x00;
+		file.offset=0x0134;
+		for(var i=0; i<=0x18; i++){
+			info.calculated=((info.calculated - file.readU8() - 1) >>> 0) & 0xff;
+		}
+
+		/* fix checksum */
+		info.fix=function(file){
+			file.offset=0x014d;
+			file.writeU8(this.calculated);
+		}
+
+	}else if(info.system==='smd'){
+		/* get current checksum */
+		file.offset=0x018e;
+		info.current=file.readU16();
+
+		/* calculate checksum */
+		info.calculated=0x0000;
+		file.offset=0x0200;
+		while(!file.isEOF()){
+			info.calculated=((info.calculated + file.readU16()) >>> 0) & 0xffff;
+		}
+
+		/* fix checksum */
+		info.fix=function(file){
+			file.offset=0x018e;
+			file.writeU16(this.calculated);
+		}
+	}else{
+		info=null;
+	}
+
+	return info;
+}
+
+
 function _readPatchFile(){
 	setTabApplyEnabled(false);
 	patchFile.littleEndian=false;
@@ -622,24 +713,26 @@ function preparePatchedRom(originalRom, patchedRom, headerSize){
 
 
 	/* fix checksum if needed */
-	//var fixedChecksum=fixConsoleChecksum(patchedRom);
+	if(AppSettings.fixChecksum){
+		var checksumInfo=_getHeaderChecksumInfo(patchedRom);
+		if(checksumInfo && checksumInfo.current!==checksumInfo.calculated && confirm(_('fix_checksum_prompt')+' ('+padZeroes(checksumInfo.current)+' -> '+padZeroes(checksumInfo.calculated)+')')){
+			checksumInfo.fix(patchedRom);
+		}
+	}
 
 
 
 
 	setMessage('apply');
 	patchedRom.save();
-
-
-	/*if(fixedChecksum){
-		setMessage('apply','Checksum was fixed','warning');
-	}*/
 	
 	//debug: create unheadered patch
 	/*if(headerSize && el('checkbox-addheader').checked){
 		createPatch(romFile, patchedRom);
 	}*/
 }
+
+
 
 
 /*function removeHeader(romFile){
