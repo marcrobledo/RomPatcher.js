@@ -10,14 +10,7 @@
 	https://user.github.io/repo/ (without index.html) in some browsers (Firefox)
 	use absolute paths if hosted in GitHub Pages in order to avoid it
 	also invoke sw with an absolute path:
-	navigator.serviceWorker.register('/repo/_cache_service_worker.js', {scope: '/repo/'})
-*/
 
-var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v27';
-var PRECACHE_URLS=[
-	'/RomPatcher.js/','/RomPatcher.js/index.html',
-	'/RomPatcher.js/manifest.json',
 	'/RomPatcher.js/style/app_icon_16.png',
 	'/RomPatcher.js/style/app_icon_114.png',
 	'/RomPatcher.js/style/app_icon_144.png',
