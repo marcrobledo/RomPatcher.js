@@ -1,4 +1,4 @@
-/* MODDED VERSION OF MarcFile.js v20181020 - Marc Robledo 2014-2018 - http://www.marcrobledo.com/license */
+/* MODDED VERSION OF MarcFile.js v20230202 - Marc Robledo 2014-2023 - http://www.marcrobledo.com/license */
 
 function MarcFile(source, onLoad){	
 	if(typeof source==='object' && source.files) /* get first file only if source is input with multiple files */
@@ -143,6 +143,13 @@ MarcFile.prototype.save=function(){
 		}
 	}
 	saveAs(blob,this.fileName);
+}
+
+
+MarcFile.prototype.getExtension=function(){
+	var ext=this.fileName? this.fileName.toLowerCase().match(/\.(\w+)$/) : '';
+
+	return ext? ext[1] : '';
 }
 
 

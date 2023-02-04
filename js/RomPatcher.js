@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20221110 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20230202 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -141,7 +141,7 @@ function fetchPatch(customPatchIndex, compressedFileIndex){
 				patchFile=CUSTOM_PATCHER[customPatchIndex].fetchedFile=new MarcFile(arrayBuffer);
 				patchFile.fileName=customPatch.file.replace(/^.*[\/\\]/g,'');
 
-				if(patchFile.readString(4).startsWith(ZIP_MAGIC))
+				if(patchFile.getExtension()==='zip' && patchFile.readString(4).startsWith(ZIP_MAGIC))
 					ZIPManager.parseFile(CUSTOM_PATCHER[customPatchIndex].fetchedFile, compressedFileIndex);
 				else
 					parseCustomPatch(CUSTOM_PATCHER[customPatchIndex]);
@@ -161,7 +161,7 @@ function fetchPatch(customPatchIndex, compressedFileIndex){
 				patchFile=CUSTOM_PATCHER[customPatchIndex].fetchedFile=new MarcFile(xhr.response);
 				patchFile.fileName=customPatch.file.replace(/^.*[\/\\]/g,'');
 
-				if(patchFile.readString(4).startsWith(ZIP_MAGIC))
+				if(patchFile.getExtension()==='zip' && patchFile.readString(4).startsWith(ZIP_MAGIC))
 					ZIPManager.parseFile(CUSTOM_PATCHER[customPatchIndex].fetchedFile, compressedFileIndex);
 				else
 					parseCustomPatch(CUSTOM_PATCHER[customPatchIndex]);
@@ -184,7 +184,7 @@ function _parseROM(){
 	el('checkbox-addheader').checked=false;
 	el('checkbox-removeheader').checked=false;
 
-	if(romFile.readString(4).startsWith(ZIP_MAGIC)){
+	if(romFile.getExtension()==='zip' && romFile.readString(4).startsWith(ZIP_MAGIC)){
 		ZIPManager.parseFile(romFile);
 		setTabApplyEnabled(false);
 	}else{
@@ -653,7 +653,7 @@ function _readPatchFile(){
 	patchFile.littleEndian=false;
 
 	var header=patchFile.readString(6);
-	if(header.startsWith(ZIP_MAGIC)){
+	if(patchFile.getExtension()==='zip' && header.startsWith(ZIP_MAGIC)){
 		patch=false;
 		validateSource();
 		setTabApplyEnabled(false);
