@@ -28,15 +28,12 @@ APSGBA.prototype.validateSource=function(sourceFile){
 	if(sourceFile.fileSize!==this.sourceSize)
 		return false;
 
-	var originalEndianness=sourceFile.littleEndian;
-	sourceFile.littleEndian=true;
 	for(var i=0; i<this.records.length; i++){
 		sourceFile.seek(this.records[i].offset);
 		var bytes=sourceFile.readBytes(APS_GBA_BLOCK_SIZE);
 		if(crc16(sourceFile, this.records[i].offset, APS_GBA_BLOCK_SIZE) !== this.records[i].sourceCrc16)
 			return false
 	}
-	sourceFile.littleEndian=originalEndianness;
 
 	return true
 }
