@@ -4,7 +4,7 @@ self.importScripts(
 	'./MarcFile.js',
 	'./crc.js',
 	'./formats/ips.js',
-	'./formats/aps.js',
+	'./formats/aps_n64.js',
 	'./formats/ups.js',
 	'./formats/bps.js',
 	'./formats/ppf.js',

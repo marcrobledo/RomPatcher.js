@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20230202 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20230331 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -663,8 +663,10 @@ function _readPatchFile(){
 			patch=parseIPSFile(patchFile);
 		}else if(header.startsWith(UPS_MAGIC)){
 			patch=parseUPSFile(patchFile);
-		}else if(header.startsWith(APS_MAGIC)){
+		}else if(header.startsWith(APS_N64_MAGIC)){
 			patch=parseAPSFile(patchFile);
+		}else if(header.startsWith(APS_GBA_MAGIC)){
+			patch=APSGBA.fromFile(patchFile);
 		}else if(header.startsWith(BPS_MAGIC)){
 			patch=parseBPSFile(patchFile);
 		}else if(header.startsWith(RUP_MAGIC)){

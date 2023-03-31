@@ -5,7 +5,7 @@ A ROM patcher made in HTML5.
 * Supported formats:
    * IPS
    * UPS
-   * APS
+   * APS (N64/GBA)
    * BPS
    * RUP
    * PPF

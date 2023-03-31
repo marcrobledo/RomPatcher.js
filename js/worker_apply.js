@@ -1,10 +1,11 @@
-/* Rom Patcher JS v20200502 - Marc Robledo 2016-2020 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20230331 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
 
 self.importScripts(
 	'./MarcFile.js',
 	'./crc.js',
 	'./formats/ips.js',
-	'./formats/aps.js',
+	'./formats/aps_n64.js',
+	'./formats/aps_gba.js',
 	'./formats/ups.js',
 	'./formats/bps.js',
 	'./formats/rup.js',
@@ -26,8 +27,10 @@ self.onmessage = event => { // listen for messages from the main thread
 		patch=parseIPSFile(patchFile);
 	}else if(header.startsWith(UPS_MAGIC)){
 		patch=parseUPSFile(patchFile);
-	}else if(header.startsWith(APS_MAGIC)){
+	}else if(header.startsWith(APS_N64_MAGIC)){
 		patch=parseAPSFile(patchFile);
+	}else if(header.startsWith(APS_GBA_MAGIC)){
+		patch=APSGBA.fromFile(patchFile);
 	}else if(header.startsWith(BPS_MAGIC)){
 		patch=parseBPSFile(patchFile);
 	}else if(header.startsWith(RUP_MAGIC)){

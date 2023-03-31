@@ -1,7 +1,7 @@
 /* APS (N64) module for Rom Patcher JS v20180930 - Marc Robledo 2017-2018 - http://www.marcrobledo.com/license */
 /* File format specification: https://github.com/btimofeev/UniPatcher/wiki/APS-(N64) */
 
-const APS_MAGIC='APS10';
+const APS_N64_MAGIC='APS10';
 const APS_RECORD_RLE=0x0000;
 const APS_RECORD_SIMPLE=0x01;
 const APS_N64_MODE=0x01;
@@ -61,7 +61,7 @@ APS.prototype.export=function(fileName){
 	tempFile=new MarcFile(patchFileSize);
 	tempFile.littleEndian=true;
 	tempFile.fileName=fileName+'.aps';
-	tempFile.writeString(APS_MAGIC, APS_MAGIC.length);
+	tempFile.writeString(APS_N64_MAGIC, APS_N64_MAGIC.length);
 	tempFile.writeU8(this.headerType);
 	tempFile.writeU8(this.encodingMethod);
 	tempFile.writeString(this.description, 50);

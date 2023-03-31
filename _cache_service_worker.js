@@ -14,7 +14,7 @@
 */
 
 var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v27b';
+var PRECACHE_VERSION='v28';
 var PRECACHE_URLS=[
 	'/RomPatcher.js/','/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
@@ -41,7 +41,8 @@ var PRECACHE_URLS=[
 	'/RomPatcher.js/js/zip.js/inflate.js',
 	'/RomPatcher.js/js/formats/ips.js',
 	'/RomPatcher.js/js/formats/ups.js',
-	'/RomPatcher.js/js/formats/aps.js',
+	'/RomPatcher.js/js/formats/aps_n64.js',
+	'/RomPatcher.js/js/formats/aps_gba.js',
 	'/RomPatcher.js/js/formats/bps.js',
 	'/RomPatcher.js/js/formats/rup.js',
 	'/RomPatcher.js/js/formats/ppf.js',
