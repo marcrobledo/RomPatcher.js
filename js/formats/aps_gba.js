@@ -68,7 +68,7 @@ APSGBA.prototype.apply=function(romFile, validate){
 	for(var i=0; i<this.records.length; i++){
 		romFile.seek(this.records[i].offset);
 		tempFile.seek(this.records[i].offset);
-		for(var j=0; j<APS_GBA_RECORD_SIZE; j++){
+		for(var j=0; j<APS_GBA_BLOCK_SIZE; j++){
 			tempFile.writeU8(romFile.readU8() ^ this.records[i].xorBytes[j]);
 		}
 
