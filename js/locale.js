@@ -2,6 +2,7 @@ const LOCALIZATION={
 	'en':{
 		'creator_mode':				'Creator mode',
 		'settings':					'Settings',
+		'language':					'Language',
 		'alternate_output_name':	'Use patch name for output',
 		'fix_checksum':				'Fix ROM header checksum',
 		'light_theme':				'Light theme',
@@ -366,6 +367,38 @@ const LOCALIZATION={
 		'error_invalid_patch':		'无效补丁',
 		'warning_too_big':			'不推荐使用大文件。'
 	},
+	'zh-tw':{
+		'creator_mode':             '創作者模式',
+		'settings':                 '設定',
+		'language':                 '語言',
+		'alternate_output_name':    '修改後ROM檔名和patch保持一致',
+		'fix_checksum':             '修正ROM檔頭校驗碼',
+		'light_theme':              '淺色主題',
+
+		'apply_patch':				'套用patch',
+		'rom_file':					'ROM檔：',
+		'patch_file':				'patch檔：',
+		'remove_header':			'刪除檔頭',
+		'add_header':				'增加臨時檔頭',
+		'compatible_formats':		'相容格式：',
+		'applying_patch':			'套用patch中……',
+		'downloading':				'下載中……',
+		'unzipping':				'解壓中……',
+
+		'create_patch':				'創建patch',
+		'original_rom':				'原始ROM：',
+		'modified_rom':				'修改後ROM：',
+		'patch_type':               'patch類型：',
+		'creating_patch':           '正在創建patch……',
+
+		'error_crc_input':          '原始ROM校驗碼不匹配',
+		'error_crc_output':         '目標ROM校驗碼不匹配',
+		'error_crc_patch':          'patch檔校驗碼不匹配',
+		'error_downloading':        '下載出錯：%s',
+		'error_unzipping':          '解壓出錯',
+		'error_invalid_patch':      '無效的patch',
+		'warning_too_big':          '不建議使用大檔。'
+	},	
 	'it':{
 		'creator_mode':				'Modalità creatore',
 		'settings':					'Impostazioni',
