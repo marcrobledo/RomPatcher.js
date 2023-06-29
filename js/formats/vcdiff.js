@@ -6,7 +6,6 @@
 	some code and ideas borrowed from:
 	https://hack64.net/jscripts/libpatch.js?6
 */
-
 //const VCDIFF_MAGIC=0xd6c3c400;
 const VCDIFF_MAGIC='\xd6\xc3\xc4';
 /*
@@ -17,7 +16,10 @@ const XDELTA_100_MAGIC='%XDZ002';
 const XDELTA_104_MAGIC='%XDZ003';
 const XDELTA_110_MAGIC='%XDZ004';
 */
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {VCDIFF_MAGIC, parseVCDIFF};
+	MarcFile = require("../MarcFile").MarcFile;
+}
 
 function VCDIFF(patchFile){
 	this.file=patchFile;

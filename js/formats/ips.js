@@ -1,12 +1,16 @@
 /* IPS module for Rom Patcher JS v20220417 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
 
-
-
 const IPS_MAGIC='PATCH';
 const IPS_MAX_SIZE=0x1000000; //16 megabytes
 const IPS_RECORD_RLE=0x0000;
 const IPS_RECORD_SIMPLE=0x01;
+
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {IPS_MAGIC, IPS_MAX_SIZE, IPS_RECORD_RLE, IPS_RECORD_SIMPLE, IPS, parseIPSFile};
+}
+
+
 
 function IPS(){
 	this.records=[];

@@ -1,6 +1,11 @@
 /* MODDED VERSION OF MarcFile.js v20230202 - Marc Robledo 2014-2023 - http://www.marcrobledo.com/license */
 
-function MarcFile(source, onLoad){	
+if(typeof module !== "undefined" && module.exports){
+	exports.MarcFile = MarcFile;
+	// saveAs = (blob,fileName) => fs.writeFileSync(fileName, blob.arrayBuffer())
+}
+
+function MarcFile(source, onLoad){
 	if(typeof source==='object' && source.files) /* get first file only if source is input with multiple files */
 		source=source.files[0];
 
@@ -9,27 +14,34 @@ function MarcFile(source, onLoad){
 	this._lastRead=null;
 
 	if(typeof source==='object' && source.name && source.size){ /* source is file */
-		if(typeof window.FileReader!=='function')
-			throw new Error('Incompatible Browser');
-
 		this.fileName=source.name;
 		this.fileType=source.type;
 		this.fileSize=source.size;
+		try {
+			if (typeof window.FileReader !== 'function')
+				throw new Error('Incompatible Browser');
+			this._fileReader=new FileReader();
+			this._fileReader.addEventListener('load',function(){
+				this.marcFile._u8array=new Uint8Array(this.result);
+				this.marcFile._dataView=new DataView(this.result);
 
-		this._fileReader=new FileReader();
-		this._fileReader.marcFile=this;
-		this._fileReader.addEventListener('load',function(){
-			this.marcFile._u8array=new Uint8Array(this.result);
-			this.marcFile._dataView=new DataView(this.result);
-
-			if(onLoad)
-				onLoad.call();
-		},false);
-
-		this._fileReader.readAsArrayBuffer(source);
-
+				if(onLoad)
+					onLoad.call();
+			},false);
 
 
+			this._fileReader.marcFile=this;
+
+			this._fileReader.readAsArrayBuffer(source);
+		}catch (e){
+			if(!(e instanceof ReferenceError))
+				throw e;
+			this._fileReader = {}
+			this._u8array = new Uint8Array(source.data.buffer);
+			this._dataView=new DataView(source.data.buffer);
+			this.source = source;
+			MarcFile.prototype.readString = () => source.data.toString();
+		}
 	}else if(typeof source==='object' && typeof source.fileName==='string' && typeof source.littleEndian==='boolean'){ /* source is MarcFile */
 		this.fileName=source.fileName;
 		this.fileType=source.fileType;
@@ -127,22 +139,26 @@ MarcFile.prototype.copyToFile=function(target, offsetSource, len, offsetTarget){
 
 
 MarcFile.prototype.save=function(){
-	var blob;
-	try{
-		blob=new Blob([this._u8array],{type:this.fileType});
-	}catch(e){
-		//old browser, use BlobBuilder
-		window.BlobBuilder=window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-		if(e.name==='InvalidStateError' && window.BlobBuilder){
-			var bb=new BlobBuilder();
-			bb.append(this._u8array.buffer);
-			blob=bb.getBlob(this.fileType);
-		}else{
-			throw new Error('Incompatible Browser');
-			return false;
+	if(typeof module !== "undefined" && module.exports)
+		require('fs').writeFileSync(this.fileName, Buffer.from(this._u8array.buffer));
+	else {
+		var blob;
+		try {
+			blob = new Blob([this._u8array], {type: this.fileType});
+		} catch (e) {
+			//old browser, use BlobBuilder
+			window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+			if (e.name === 'InvalidStateError' && window.BlobBuilder) {
+				var bb = new BlobBuilder();
+				bb.append(this._u8array.buffer);
+				blob = bb.getBlob(this.fileType);
+			} else {
+				throw new Error('Incompatible Browser');
+				return false;
+			}
 		}
+		saveAs(blob, this.fileName);
 	}
-	saveAs(blob,this.fileName);
 }
 
 

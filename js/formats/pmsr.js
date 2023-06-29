@@ -5,7 +5,9 @@ const PMSR_MAGIC='PMSR';
 const YAY0_MAGIC='Yay0';
 const PAPER_MARIO_USA10_CRC32=0xa7f5cd7e;
 const PAPER_MARIO_USA10_FILE_SIZE=41943040;
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {PMSR_MAGIC, parseMODFile};
+}
 
 function PMSR(){
 	this.targetSize=0;

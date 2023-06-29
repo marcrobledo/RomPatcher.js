@@ -6,7 +6,9 @@ const BPS_ACTION_SOURCE_READ=0;
 const BPS_ACTION_TARGET_READ=1;
 const BPS_ACTION_SOURCE_COPY=2;
 const BPS_ACTION_TARGET_COPY=3;
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {BPS_MAGIC, parseBPSFile};
+}
 
 function BPS(){
 	this.sourceSize=0;

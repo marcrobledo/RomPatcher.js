@@ -2,7 +2,9 @@
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 const UPS_MAGIC='UPS1';
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {UPS_MAGIC, UPS, parseUPSFile};
+}
 function UPS(){
 	this.records=[];
 	this.sizeInput=0;

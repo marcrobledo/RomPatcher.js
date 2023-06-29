@@ -124,3 +124,7 @@ function crc16(marcFile, offset, len){
 
 	return crc & 0xffff;
 }
+
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {md5};
+}
