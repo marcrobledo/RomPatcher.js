@@ -370,7 +370,6 @@ const LOCALIZATION={
 	'zh-tw':{
 		'creator_mode':             '創作者模式',
 		'settings':                 '設定',
-		'language':                 '語言',
 		'alternate_output_name':    '修改後ROM檔名和patch保持一致',
 		'fix_checksum':             '修正ROM檔頭校驗碼',
 		'light_theme':              '淺色主題',
