@@ -2,7 +2,6 @@ const LOCALIZATION={
 	'en':{
 		'creator_mode':				'Creator mode',
 		'settings':					'Settings',
-		'language':					'Language',
 		'alternate_output_name':	'Use patch name for output',
 		'fix_checksum':				'Fix ROM header checksum',
 		'light_theme':				'Light theme',
