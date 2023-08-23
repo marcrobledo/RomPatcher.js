@@ -63,7 +63,7 @@ IPS.prototype.export=function(fileName){
 	}
 
 	tempFile.writeString('EOF');
-	if(rec.truncate)
+	if(rec && rec.truncate)
 		tempFile.writeU24(rec.truncate);
 
 
