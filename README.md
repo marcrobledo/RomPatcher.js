@@ -17,3 +17,11 @@ A ROM patcher made in HTML5.
 * unzips files automatically
 * made in Vanilla JS
 * can be run in any modern web browser, including mobile
+
+
+
+## Known sites that use Rom Patcher JS
+* [Romhacking.net](https://www.romhacking.net/)
+* [Smash Remix](https://smash64.online/remix/)
+* [Radical Red](https://patch.radicalred.net/)
+* [Rocket Edition](https://rocket-edition.com/download/)
