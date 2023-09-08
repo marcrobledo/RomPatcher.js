@@ -60,7 +60,6 @@ const LOCALIZATION={
 		'error_crc_patch':			'Checksum de parche no válida',
 		'error_downloading':		'Error descargando %s',
 		'error_unzipping':			'Error descomprimiendo archivo',
-		'error_unzipping':			'Error descomprimiendo archivo',
 		'error_invalid_patch':		'Archivo de parche no válido',
 		'warning_too_big':			'No se recomienda usar archivos muy grandes.'
 	},
