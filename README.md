@@ -25,3 +25,4 @@ A ROM patcher made in HTML5.
 * [Smash Remix](https://smash64.online/remix/)
 * [Radical Red](https://patch.radicalred.net/)
 * [Rocket Edition](https://rocket-edition.com/download/)
+* [SnapCameraPreservation](https://snapchatreverse.jaku.tv/snap/)
