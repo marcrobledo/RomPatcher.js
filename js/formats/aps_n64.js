@@ -5,7 +5,9 @@ const APS_N64_MAGIC='APS10';
 const APS_RECORD_RLE=0x0000;
 const APS_RECORD_SIMPLE=0x01;
 const APS_N64_MODE=0x01;
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {APS_N64_MAGIC, parseAPSFile};
+}
 function APS(){
 	this.records=[];
 	this.headerType=0;

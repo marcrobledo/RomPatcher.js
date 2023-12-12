@@ -1,0 +1,6 @@
+*.gba
+*.sav
+*.sgm
+*.iml
+.idea
+node_modules

@@ -6,7 +6,9 @@ const RUP_COMMAND_END=0x00;
 const RUP_COMMAND_OPEN_NEW_FILE=0x01;
 const RUP_COMMAND_XOR_RECORD=0x02;
 const RUP_ROM_TYPES=['raw','nes','fds','snes','n64','gb','sms','mega','pce','lynx'];
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {RUP_MAGIC, parseRUPFile};
+}
 
 function RUP(){
 	this.author='';
