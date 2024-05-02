@@ -215,9 +215,10 @@ const LOCALIZATION={
 	},
 	'de':{
 		'creator_mode':				'Erstellmodus',
-		'settings':					'Settings',
-		'alternate_output_name':	'Use patch name for output',
-		'light_theme':				'Light theme',
+		'settings':					'Einstellungen',
+		'alternate_output_name':	'Output ist Name vom Patch',
+		'fix_checksum':				'Prüfsumme im ROM Header korrigieren',
+		'light_theme':				'Helles Design',
 
 		'apply_patch':				'Patch anwenden',
 		'rom_file':					'ROM-Datei:',
@@ -228,6 +229,7 @@ const LOCALIZATION={
 		'applying_patch':			'Patch wird angewandt...',
 		'downloading':				'Herunterladen...',
 		'unzipping':				'Entpacken...',
+		'fix_checksum_prompt':		'Prüfsumme im ROM Header korrigieren?',
 
 		'create_patch':				'Patch erstellen',
 		'original_rom':				'Originale ROM:',
