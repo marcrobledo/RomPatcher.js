@@ -1,0 +1,36 @@
+{
+  "name": "rompatcher",
+  "description": "A ROM patcher made in HTML5 built with tauri",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.14",
+    "vite": "^5.2.0"
+  },
+  "author": {
+    "name": "Marc Robledo",
+    "url": "https://www.marcrobledo.com/"
+  },
+  "contributors": [
+    {
+      "name": "Iranon",
+      "url": "https://github.com/Iranon"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "ips",
+    "patcher",
+    "rom",
+    "romhacking",
+    "ups"
+  ],
+  "homepage": "https://www.marcrobledo.com/RomPatcher.js/"
+}
