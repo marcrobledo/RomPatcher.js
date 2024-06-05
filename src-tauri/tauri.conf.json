@@ -4,7 +4,8 @@
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
     "devPath": "http://localhost:5555",
-    "distDir": "../dist"
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "rompatcher",
@@ -12,7 +13,17 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "dialog": {
+        "ask": false,
+        "confirm": false,
+        "message": false,
+        "open": false,
+        "save": true
+      },
+      "fs": {
+        "scope": [],
+        "writeFile": true
+      }
     },
     "bundle": {
       "active": true,

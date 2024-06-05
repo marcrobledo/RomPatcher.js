@@ -704,56 +704,34 @@ function createPatch(sourceFile, modifiedFile, mode){
 		return false;
 	}
 
+	try{
+		sourceFile.seek(0);
+		modifiedFile.seek(0);
 
-	if(CAN_USE_WEB_WORKERS){
-		setTabCreateEnabled(false);
-
-		setMessage('create', 'creating_patch', 'loading');
-
-		webWorkerCreate.postMessage(
-			{
-				sourceFileU8Array:sourceFile._u8array,
-				modifiedFileU8Array:modifiedFile._u8array,
-				modifiedFileName:modifiedFile.fileName,
-				patchMode:mode
-			},[
-				sourceFile._u8array.buffer,
-				modifiedFile._u8array.buffer
-			]
-		);
-		
-		romFile1=new MarcFile(el('input-file-rom1'));
-		romFile2=new MarcFile(el('input-file-rom2'));
-	}else{
-		try{
-			sourceFile.seek(0);
-			modifiedFile.seek(0);
-
-			var newPatch;
-			if(mode==='ips'){
-				newPatch=createIPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='bps'){
-				newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
-			}else if(mode==='ups'){
-				newPatch=createUPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='aps'){
-				newPatch=createAPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='rup'){
-				newPatch=createRUPFromFiles(sourceFile, modifiedFile);
-			}else{
-				setMessage('create', 'error_invalid_patch', 'error');
-			}
-
-
-			if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
-				newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
-			}else{
-				setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
-			}
-
-		}catch(e){
-			setMessage('create', 'Error: '+_(e.message), 'error');
+		var newPatch;
+		if(mode==='ips'){
+			newPatch=createIPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='bps'){
+			newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
+		}else if(mode==='ups'){
+			newPatch=createUPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='aps'){
+			newPatch=createAPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='rup'){
+			newPatch=createRUPFromFiles(sourceFile, modifiedFile);
+		}else{
+			setMessage('create', 'error_invalid_patch', 'error');
 		}
+
+
+		if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
+			newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
+		}else{
+			setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
+		}
+
+	}catch(e){
+		setMessage('create', 'Error: '+_(e.message), 'error');
 	}
 }
 
