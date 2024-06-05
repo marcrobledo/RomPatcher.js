@@ -67,10 +67,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
         "resizable": true,
         "title": "RomPatcher",
-        "width": 800
+        "height": 800,
+        "width": 900
       }
     ]
   }
