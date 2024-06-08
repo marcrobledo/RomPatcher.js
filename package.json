@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "chalk": "^5.2.0",
+    "commander": "^11.0.0",
+    "conf": "^11.0.1"
+  },
+  "name": "rompatcher",
+  "description": "A ROM patcher made in HTML5.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
