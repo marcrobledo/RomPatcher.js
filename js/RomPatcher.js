@@ -648,8 +648,6 @@ function _getHeaderChecksumInfo(file){
 }
 
 
-const BPS_MAGIC = "BPS1"; // Verifique o valor correto para a mágica do BPS
-
 function _readPatchFile(){
 	setTabApplyEnabled(false);
 	patchFile.littleEndian=false;
@@ -681,7 +679,7 @@ function _readPatchFile(){
 			patch=parseVCDIFF(patchFile);
 		}else{
 			patch=null;
-			setMessage('apply', 'Unsupported patch format', 'error');
+			setMessage('apply', 'error_invalid_patch', 'error');
 		}
 		validateSource();
 		setTabApplyEnabled(true);
