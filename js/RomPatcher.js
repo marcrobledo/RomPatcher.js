@@ -681,7 +681,6 @@ function _readPatchFile(){
 			patch=null;
 			setMessage('apply', 'error_invalid_patch', 'error');
 		}
-
 		validateSource();
 		setTabApplyEnabled(true);
 	}
