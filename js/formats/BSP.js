@@ -1,4 +1,4 @@
-/* BSP module for Rom Patcher JS v20220417 - Vagner Matheus 2016-2024 */
+/* BSP module for Rom Patcher JS v20240613 - Vagner Matheus 2016-2024 */
 const BSP_MAGIC = 'BSP';
 const BSP_VERSION = 1;
 const BSP_MAX_SIZE = 0x1000000; // 16 megabytes
