@@ -1,4 +1,4 @@
-/* ZIP module for Rom Patcher JS v20220319 - Marc Robledo 2016-2022 - http://www.marcrobledo.com/license */
+/* ZIP module for Rom Patcher JS v20230721 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 
 const ZIP_MAGIC='\x50\x4b\x03\x04';
 
@@ -51,6 +51,16 @@ var ZIPManager=(function(){
 								filteredEntries.push(zipEntries[i]);
 							}
 						}
+						/* sort patch files by name and folder */
+						filteredEntries
+							.sort(function(file1, file2){
+								return file1.filename.toLowerCase().localeCompare(file2.filename.toLowerCase());
+							})
+							.sort(function(file1, file2){
+								var file1Folder=file1.filename.indexOf('/')===-1? 0 : 1;
+								var file2Folder=file2.filename.indexOf('/')===-1? 0 : 1;
+								return file1Folder - file2Folder;
+							});
 
 
 
