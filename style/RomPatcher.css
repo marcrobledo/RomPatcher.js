@@ -230,7 +230,7 @@ button.no-text.with-icon:before{margin-right:0px}
 
 
 
-#rom-info{font-family:'Roboto Mono',monospace;color:#888;font-size:12px;
+#rom-info, #row-expected-source-info{font-family:'Roboto Mono',monospace;color:#888;font-size:12px;
 	-moz-user-select:text;
 	-webkit-user-select: text;
 	-ms-user-select:text;

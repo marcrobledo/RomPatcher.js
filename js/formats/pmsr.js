@@ -1,4 +1,4 @@
-/* PMSR (Paper Mario Star Rod) module for Rom Patcher JS v20200225 - Marc Robledo 2020 - http://www.marcrobledo.com/license */
+/* PMSR (Paper Mario Star Rod) module for Rom Patcher JS v20240721 - Marc Robledo 2020-2024 - http://www.marcrobledo.com/license */
 /* File format specification: http://origami64.net/attachment.php?aid=790 (dead link) */
 
 const PMSR_MAGIC='PMSR';
@@ -24,6 +24,12 @@ PMSR.prototype.toString=function(){
 
 PMSR.prototype.validateSource=function(romFile){
 	return romFile.fileSize===PAPER_MARIO_USA10_FILE_SIZE && crc32(romFile)===PAPER_MARIO_USA10_CRC32;
+}
+PMSR.prototype.getValidationInfo=function(){
+	return [{
+		'type':'CRC32',
+		'value':'a7f5cd7e'
+	}]
 }
 PMSR.prototype.apply=function(romFile, validate){
 	if(validate && !this.validateSource(romFile)){

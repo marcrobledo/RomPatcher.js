@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20230406 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20240721 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 
 const TOO_BIG_ROM_SIZE=67108863;
 const HEADERS_INFO=[
@@ -112,7 +112,13 @@ function parseCustomPatch(customPatch){
 		if(typeof customPatch.crc==='number'){
 			patch.validateSource=function(romFile,headerSize){
 				return customPatch.crc===crc32(romFile, headerSize)
-			}
+			};
+			patch.getValidationInfo=function(){
+				return [{
+					'type':'CRC32',
+					'value':padZeroes(customPatch.crc,4)
+				}]
+			};
 		}else if(typeof customPatch.crc==='object'){
 			patch.validateSource=function(romFile,headerSize){
 				for(var i=0; i<customPatch.crc.length; i++)
@@ -120,6 +126,14 @@ function parseCustomPatch(customPatch){
 						return true;
 				return false;
 			}
+			patch.getValidationInfo=function(){
+				return customPatch.crc.map(function(crc){
+					return {
+						'type':'CRC32',
+						'value':padZeroes(crc,4)
+					}
+				});
+			};
 		}
 		validateSource();
 	}
@@ -680,6 +694,33 @@ function _readPatchFile(){
 		}else{
 			patch=null;
 			setMessage('apply', 'error_invalid_patch', 'error');
+		}
+		if(patch && patch.getValidationInfo){
+			const validationInfos=patch.getValidationInfo();
+			el('row-expected-source-info').className='row m-b';
+			el('row-expected-source-info').innerHTML='';
+
+			validationInfos.forEach(function(validationInfo){
+				var leftCol=document.createElement('div');
+				leftCol.className='leftcol text-right';
+				leftCol.innerHTML=_('expected_source').replace('%s', validationInfo.type);
+				var rightCol=document.createElement('div');
+				rightCol.className='rightcol';
+				/*
+				var a=document.createElement('a');
+				a.href='https://www.google.com/search?q=%22'+validationInfo.value+'%22';
+				a.target='_blank';
+				a.className='clickable';
+				a.innerHTML=validationInfo.value;
+				rightCol.appendChild(a);
+				*/
+				rightCol.innerHTML=validationInfo.value;
+				el('row-expected-source-info').appendChild(leftCol);
+				el('row-expected-source-info').appendChild(rightCol);
+			});
+		}else{
+			el('row-expected-source-info').className='row m-b hide';
+			el('row-expected-source-info').innerHTML='';
 		}
 		validateSource();
 		setTabApplyEnabled(true);
