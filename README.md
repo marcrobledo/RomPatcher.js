@@ -1,5 +1,5 @@
 # Rom Patcher JS
-A ROM patcher made in HTML5.
+A ROM patcher made in HTML5 and built with [Tauri](https://tauri.app/).
 
 **Features:**
 * Supported formats:
@@ -27,3 +27,12 @@ A ROM patcher made in HTML5.
 * [Rocket Edition](https://rocket-edition.com/download/)
 * [SnapCameraPreservation](https://snapchatreverse.jaku.tv/snap/)
 * [Pokemon Clover](https://poclo.net/download)
+
+
+## For devs:
+
+>*[Node.js](https://nodejs.org/) and [Rust](https://www.rust-lang.org/) required*
+
+**Run `npm i` in order to install node modules**.
+
+#### Run Vite dev server with `npm run dev` and build Tauri release with `npm run tauri build`.

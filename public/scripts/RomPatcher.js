@@ -10,84 +10,7 @@ const HEADERS_INFO=[
 ];
 
 
-
-/* service worker */
-const FORCE_HTTPS=true;
-if(FORCE_HTTPS && location.protocol==='http:')
-	location.href=window.location.href.replace('http:','https:');
-else if(location.protocol==='https:' && 'serviceWorker' in navigator && window.location.hostname==='www.marcrobledo.com')
-	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', {scope: '/RomPatcher.js/'});
-
-
-
 var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
-
-var CAN_USE_WEB_WORKERS=true;
-var webWorkerApply,webWorkerCreate,webWorkerCrc;
-try{
-	webWorkerApply=new Worker('./js/worker_apply.js');
-	webWorkerApply.onmessage = event => { // listen for events from the worker
-		//retrieve arraybuffers back from webworker
-		if(!el('checkbox-removeheader').checked && !el('checkbox-addheader').checked){ //when adding/removing header we don't need the arraybuffer back since we made a copy previously
-			romFile._u8array=event.data.romFileU8Array;
-			romFile._dataView=new DataView(romFile._u8array.buffer);
-		}
-		patchFile._u8array=event.data.patchFileU8Array;
-		patchFile._dataView=new DataView(patchFile._u8array.buffer);
-				
-		if(event.data.patchedRomU8Array)
-			preparePatchedRom(romFile, new MarcFile(event.data.patchedRomU8Array.buffer), headerSize);
-
-		setTabApplyEnabled(true);
-		if(event.data.errorMessage)
-			setMessage('apply', _(event.data.errorMessage.replace('Error: ','')), 'error');
-		else
-			setMessage('apply');
-	};
-	webWorkerApply.onerror = event => { // listen for events from the worker
-		setTabApplyEnabled(true);
-		setMessage('apply', _(event.message.replace('Error: ','')), 'error');
-	};
-
-
-
-	webWorkerCreate=new Worker('./js/worker_create.js');
-	webWorkerCreate.onmessage = event => { // listen for events from the worker
-		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
-		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
-		newPatchFile.save();
-
-		setMessage('create');
-		setTabCreateEnabled(true);
-	};
-	webWorkerCreate.onerror = event => { // listen for events from the worker
-		setTabCreateEnabled(true);
-		setMessage('create', _(event.message.replace('Error: ','')), 'error');
-	};
-
-
-
-	webWorkerCrc=new Worker('./js/worker_crc.js');
-	webWorkerCrc.onmessage = event => { // listen for events from the worker
-		//console.log('received_crc');
-		el('crc32').innerHTML=padZeroes(event.data.crc32, 4);
-		el('md5').innerHTML=padZeroes(event.data.md5, 16);
-		romFile._u8array=event.data.u8array;
-		romFile._dataView=new DataView(event.data.u8array.buffer);
-
-		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
-			sha1(romFile);
-		}
-
-		validateSource();
-		setTabApplyEnabled(true);
-	};
-	webWorkerCrc.onerror = event => { // listen for events from the worker
-		setMessage('apply', event.message.replace('Error: ',''), 'error');
-	};
-}catch(e){
-	CAN_USE_WEB_WORKERS=false;
-}
 
 
 /* Shortcuts */
@@ -300,16 +223,11 @@ var AppSettings={
 /* initialize app */
 addEvent(window,'load',function(){
 	/* zip-js web worker */
-	if(CAN_USE_WEB_WORKERS){
-		zip.useWebWorkers=true;
-		zip.workerScriptsPath='./js/zip.js/';
-	}else{
-		zip.useWebWorkers=false;
+	zip.useWebWorkers=false;
 
-		var script=document.createElement('script');
-		script.src='./js/zip.js/inflate.js';
-		document.getElementsByTagName('head')[0].appendChild(script);
-	}
+	var script=document.createElement('script');
+	script.src='scripts/zip.js/inflate.js';
+	document.getElementsByTagName('head')[0].appendChild(script);
 
 	/* load settings */
 	AppSettings.load();
@@ -546,26 +464,17 @@ function updateChecksums(file, startOffset, force){
 	el('crc32').innerHTML='Calculating...';
 	el('md5').innerHTML='Calculating...';
 
-	if(CAN_USE_WEB_WORKERS){
-		setTabApplyEnabled(false);
-		webWorkerCrc.postMessage({u8array:file._u8array, startOffset:startOffset}, [file._u8array.buffer]);
+	window.setTimeout(function(){
+		el('crc32').innerHTML=padZeroes(crc32(file, startOffset), 4);
+		el('md5').innerHTML=padZeroes(md5(file, startOffset), 16);
 
-		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
-			el('sha1').innerHTML='Calculating...';
-		}
-	}else{
-		window.setTimeout(function(){
-			el('crc32').innerHTML=padZeroes(crc32(file, startOffset), 4);
-			el('md5').innerHTML=padZeroes(md5(file, startOffset), 16);
+		validateSource();
+		setTabApplyEnabled(true);
+	}, 30);
 
-			validateSource();
-			setTabApplyEnabled(true);
-		}, 30);
-
-		if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
-			el('sha1').innerHTML='Calculating...';
-			sha1(file);
-		}
+	if(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest){
+		el('sha1').innerHTML='Calculating...';
+		sha1(file);
 	}
 }
 
@@ -805,31 +714,14 @@ function applyPatch(p,r,validateChecksums){
 			}
 		}
 
-		if(CAN_USE_WEB_WORKERS){
-			setMessage('apply', 'applying_patch', 'loading');
-			setTabApplyEnabled(false);
+		setMessage('apply', 'applying_patch', 'loading');
 
-			webWorkerApply.postMessage(
-				{
-					romFileU8Array:r._u8array,
-					patchFileU8Array:patchFile._u8array,
-					validateChecksums:validateChecksums
-				},[
-					r._u8array.buffer,
-					patchFile._u8array.buffer
-				]
-			);
+		try{
+			p.apply(r, validateChecksums);
+			preparePatchedRom(r, p.apply(r, validateChecksums), headerSize);
 
-		}else{
-			setMessage('apply', 'applying_patch', 'loading');
-
-			try{
-				p.apply(r, validateChecksums);
-				preparePatchedRom(r, p.apply(r, validateChecksums), headerSize);
-
-			}catch(e){
-				setMessage('apply', 'Error: '+_(e.message), 'error');
-			}
+		}catch(e){
+			setMessage('apply', 'Error: '+_(e.message), 'error');
 		}
 
 	}else{
@@ -852,56 +744,34 @@ function createPatch(sourceFile, modifiedFile, mode){
 		return false;
 	}
 
+	try{
+		sourceFile.seek(0);
+		modifiedFile.seek(0);
 
-	if(CAN_USE_WEB_WORKERS){
-		setTabCreateEnabled(false);
-
-		setMessage('create', 'creating_patch', 'loading');
-
-		webWorkerCreate.postMessage(
-			{
-				sourceFileU8Array:sourceFile._u8array,
-				modifiedFileU8Array:modifiedFile._u8array,
-				modifiedFileName:modifiedFile.fileName,
-				patchMode:mode
-			},[
-				sourceFile._u8array.buffer,
-				modifiedFile._u8array.buffer
-			]
-		);
-		
-		romFile1=new MarcFile(el('input-file-rom1'));
-		romFile2=new MarcFile(el('input-file-rom2'));
-	}else{
-		try{
-			sourceFile.seek(0);
-			modifiedFile.seek(0);
-
-			var newPatch;
-			if(mode==='ips'){
-				newPatch=createIPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='bps'){
-				newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
-			}else if(mode==='ups'){
-				newPatch=createUPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='aps'){
-				newPatch=createAPSFromFiles(sourceFile, modifiedFile);
-			}else if(mode==='rup'){
-				newPatch=createRUPFromFiles(sourceFile, modifiedFile);
-			}else{
-				setMessage('create', 'error_invalid_patch', 'error');
-			}
-
-
-			if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
-				newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
-			}else{
-				setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
-			}
-
-		}catch(e){
-			setMessage('create', 'Error: '+_(e.message), 'error');
+		var newPatch;
+		if(mode==='ips'){
+			newPatch=createIPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='bps'){
+			newPatch=createBPSFromFiles(sourceFile, modifiedFile, (sourceFile.fileSize<=4194304));
+		}else if(mode==='ups'){
+			newPatch=createUPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='aps'){
+			newPatch=createAPSFromFiles(sourceFile, modifiedFile);
+		}else if(mode==='rup'){
+			newPatch=createRUPFromFiles(sourceFile, modifiedFile);
+		}else{
+			setMessage('create', 'error_invalid_patch', 'error');
 		}
+
+
+		if(crc32(modifiedFile)===crc32(newPatch.apply(sourceFile))){
+			newPatch.export(modifiedFile.fileName.replace(/\.[^\.]+$/,'')).save();
+		}else{
+			setMessage('create', 'Unexpected error: verification failed. Patched file and modified file mismatch. Please report this bug.', 'error');
+		}
+
+	}catch(e){
+		setMessage('create', 'Error: '+_(e.message), 'error');
 	}
 }
 
