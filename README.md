@@ -26,6 +26,7 @@ A ROM patcher made in HTML5 and built with [Tauri](https://tauri.app/).
 * [Radical Red](https://patch.radicalred.net/)
 * [Rocket Edition](https://rocket-edition.com/download/)
 * [SnapCameraPreservation](https://snapchatreverse.jaku.tv/snap/)
+* [Pokemon Clover](https://poclo.net/download)
 
 
 ## For devs:

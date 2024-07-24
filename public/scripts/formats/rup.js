@@ -1,4 +1,4 @@
-/* RUP module for Rom Patcher JS v20180930 - Marc Robledo 2018 - http://www.marcrobledo.com/license */
+/* RUP module for Rom Patcher JS v20240721 - Marc Robledo 2018-2024 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/288/ */
 
 const RUP_MAGIC='NINJA2';
@@ -53,6 +53,16 @@ RUP.prototype.validateSource=function(romFile,headerSize){
 		}
 	}
 	return false;
+}
+RUP.prototype.getValidationInfo=function(){
+	var ret=[];
+	for(var i=0; i<this.files.length; i++){
+		ret.push({
+			'type':'MD5',
+			'value':this.files[i].sourceMD5
+		});
+	}
+	return ret;
 }
 RUP.prototype.apply=function(romFile, validate){
 	var validFile;

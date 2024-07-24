@@ -1,4 +1,4 @@
-/* UPS module for Rom Patcher JS v20220315 - Marc Robledo 2017-2022 - http://www.marcrobledo.com/license */
+/* UPS module for Rom Patcher JS v20240721 - Marc Robledo 2017-2024 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/392/ */
 
 const UPS_MAGIC='UPS1';
@@ -52,6 +52,10 @@ UPS.prototype.export=function(fileName){
 	return tempFile
 }
 UPS.prototype.validateSource=function(romFile,headerSize){return crc32(romFile,headerSize)===this.checksumInput}
+UPS.prototype.getValidationInfo=function(){return [{
+	'type':'CRC32',
+	'value':padZeroes(this.checksumInput,4)
+}];}
 UPS.prototype.apply=function(romFile, validate){
 	if(validate && !this.validateSource(romFile)){
 		throw new Error('error_crc_input');

@@ -1,4 +1,4 @@
-/* BPS module for Rom Patcher JS v20180930 - Marc Robledo 2016-2018 - http://www.marcrobledo.com/license */
+/* BPS module for Rom Patcher JS v20240721 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
 const BPS_MAGIC='BPS1';
@@ -25,6 +25,12 @@ BPS.prototype.toString=function(){
 	return s
 }
 BPS.prototype.validateSource=function(romFile,headerSize){return this.sourceChecksum===crc32(romFile, headerSize)}
+BPS.prototype.getValidationInfo=function(){
+	return [{
+		'type':'CRC32',
+		'value':padZeroes(this.sourceChecksum,4)
+	}]
+}
 BPS.prototype.apply=function(romFile, validate){
 	if(validate && !this.validateSource(romFile)){
 		throw new Error('error_crc_input');
