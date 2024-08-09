@@ -2,12 +2,14 @@
 /* File format specification: https://www.romhacking.net/utilities/353/  */
 
 
-
 const PPF_MAGIC='PPF';
 const PPF_IMAGETYPE_BIN=0x00;
 const PPF_IMAGETYPE_GI=0x01;
 const PPF_BEGIN_FILE_ID_DIZ_MAGIC='@BEG';//@BEGIN_FILE_ID.DIZ
 
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {PPF_MAGIC, parsePPFFile};
+}
 function PPF(){
 	this.version=3;
 	this.imageType=PPF_IMAGETYPE_BIN;

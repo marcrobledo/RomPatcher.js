@@ -2,6 +2,9 @@
 
 const ZIP_MAGIC='\x50\x4b\x03\x04';
 
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {ZIP_MAGIC, ZIPManager};
+}
 var ZIPManager=(function(){
 	const FILTER_PATCHES=/\.(ips|ups|bps|aps|rup|ppf|mod|xdelta|vcdiff)$/i;
 	//const FILTER_ROMS=/(?<!\.(txt|diz|rtf|docx?|xlsx?|html?|pdf|jpe?g|gif|png|bmp|webp|zip|rar|7z))$/i; //negative lookbehind is not compatible with Safari https://stackoverflow.com/a/51568859

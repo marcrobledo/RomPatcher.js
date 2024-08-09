@@ -4,7 +4,9 @@
 const APS_GBA_MAGIC='APS1';
 const APS_GBA_BLOCK_SIZE=0x010000; //64Kb
 const APS_GBA_RECORD_SIZE=4 + 2 + 2 + APS_GBA_BLOCK_SIZE;
-
+if(typeof module !== "undefined" && module.exports){
+	module.exports = {APS_GBA_MAGIC, APSGBA};
+}
 function APSGBA(){
 	this.sourceSize=0;
 	this.targetSize=0;
