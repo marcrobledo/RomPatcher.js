@@ -1,54 +1,53 @@
 /*
-	Cache Service Worker template by mrc 2019
-	mostly based in:
-	https://github.com/GoogleChrome/samples/blob/gh-pages/service-worker/basic/service-worker.js
-	https://github.com/chriscoyier/Simple-Offline-Site/blob/master/js/service-worker.js
-	https://gist.github.com/kosamari/7c5d1e8449b2fbc97d372675f16b566e	
+	Cache Service Worker for Rom Patcher JS by Marc Robledo
+	https://github.com/marcrobledo/RomPatcher.js
 	
-	Note for GitHub Pages:
-	there can be an unexpected behaviour (cache not updating) when site is accessed from
-	https://user.github.io/repo/ (without index.html) in some browsers (Firefox)
-	use absolute paths if hosted in GitHub Pages in order to avoid it
-	also invoke sw with an absolute path:
-	navigator.serviceWorker.register('/repo/_cache_service_worker.js', {scope: '/repo/'})
+	Used to cache the webapp files for offline use
 */
 
-var PRECACHE_ID='rom-patcher-js';
-var PRECACHE_VERSION='v291';
-var PRECACHE_URLS=[
-	'/RomPatcher.js/','/RomPatcher.js/index.html',
+var PRECACHE_ID = 'rom-patcher-js';
+var PRECACHE_VERSION = 'v30beta1';
+var PRECACHE_URLS = [
+	'/RomPatcher.js/', '/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
-	'/RomPatcher.js/style/app_icon_16.png',
-	'/RomPatcher.js/style/app_icon_114.png',
-	'/RomPatcher.js/style/app_icon_144.png',
-	'/RomPatcher.js/style/app_icon_192.png',
-	'/RomPatcher.js/style/app_icon_maskable.png',
-	'/RomPatcher.js/style/logo.png',
-	'/RomPatcher.js/style/RomPatcher.css',
-	'/RomPatcher.js/style/icon_close.svg',
-	'/RomPatcher.js/style/icon_github.svg',
-	'/RomPatcher.js/style/icon_heart.svg',
-	'/RomPatcher.js/style/icon_settings.svg',
-	'/RomPatcher.js/js/RomPatcher.js',
-	'/RomPatcher.js/js/locale.js',
-	'/RomPatcher.js/js/worker_apply.js',
-	'/RomPatcher.js/js/worker_create.js',
-	'/RomPatcher.js/js/worker_crc.js',
-	'/RomPatcher.js/js/MarcFile.js',
-	'/RomPatcher.js/js/crc.js',
-	'/RomPatcher.js/js/zip.js/zip.js',
-	'/RomPatcher.js/js/zip.js/z-worker.js',
-	'/RomPatcher.js/js/zip.js/inflate.js',
-	'/RomPatcher.js/js/formats/ips.js',
-	'/RomPatcher.js/js/formats/ups.js',
-	'/RomPatcher.js/js/formats/aps_n64.js',
-	'/RomPatcher.js/js/formats/aps_gba.js',
-	'/RomPatcher.js/js/formats/bps.js',
-	'/RomPatcher.js/js/formats/rup.js',
-	'/RomPatcher.js/js/formats/ppf.js',
-	'/RomPatcher.js/js/formats/pmsr.js',
-	'/RomPatcher.js/js/formats/vcdiff.js',
-	'/RomPatcher.js/js/formats/zip.js'
+	/* Rom Patcher JS core (code) */
+	'/RomPatcher.js/rom-patcher-js/RomPatcher.js',
+	'/RomPatcher.js/rom-patcher-js/RomPatcher.webapp.js',
+	'/RomPatcher.js/rom-patcher-js/RomPatcher.webworker.apply.js',
+	'/RomPatcher.js/rom-patcher-js/RomPatcher.webworker.create.js',
+	'/RomPatcher.js/rom-patcher-js/RomPatcher.webworker.crc.js',
+	'/RomPatcher.js/rom-patcher-js/modules/BinFile.js',
+	'/RomPatcher.js/rom-patcher-js/modules/HashCalculator.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.ips.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.bps.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.ups.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.aps_n64.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.aps_gba.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.rup.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.ppf.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.pmsr.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.vcdiff.js',
+	'/RomPatcher.js/rom-patcher-js/modules/zip.js/z-worker.js',
+	'/RomPatcher.js/rom-patcher-js/modules/zip.js/zip.min.js',
+	'/RomPatcher.js/rom-patcher-js/modules/zip.js/inflate.js',
+	/* Rom Patcher JS core (web assets) */
+	'/RomPatcher.js/rom-patcher-js/assets/icon_alert_orange.svg',
+	'/RomPatcher.js/rom-patcher-js/assets/icon_check_circle_green.svg',
+	'/RomPatcher.js/rom-patcher-js/assets/icon_upload.svg',
+	'/RomPatcher.js/rom-patcher-js/assets/icon_x_circle_red.svg',
+	/* webapp assets */
+	'/RomPatcher.js/webapp/webapp.js',
+	'/RomPatcher.js/webapp/style.css',
+	'/RomPatcher.js/webapp/app_icon_16.png',
+	'/RomPatcher.js/webapp/app_icon_114.png',
+	'/RomPatcher.js/webapp/app_icon_144.png',
+	'/RomPatcher.js/webapp/app_icon_192.png',
+	'/RomPatcher.js/webapp/app_icon_maskable.png',
+	'/RomPatcher.js/webapp/logo.png',
+	'/RomPatcher.js/webapp/icon_close.svg',
+	'/RomPatcher.js/webapp/icon_github.svg',
+	'/RomPatcher.js/webapp/icon_heart.svg',
+	'/RomPatcher.js/webapp/icon_settings.svg'
 ];
 
 
@@ -56,7 +55,7 @@ var PRECACHE_URLS=[
 // install event (fired when sw is first installed): opens a new cache
 self.addEventListener('install', evt => {
 	evt.waitUntil(
-		caches.open('precache-'+PRECACHE_ID+'-'+PRECACHE_VERSION)
+		caches.open('precache-' + PRECACHE_ID + '-' + PRECACHE_VERSION)
 			.then(cache => cache.addAll(PRECACHE_URLS))
 			.then(self.skipWaiting())
 	);
@@ -67,10 +66,10 @@ self.addEventListener('install', evt => {
 self.addEventListener('activate', evt => {
 	evt.waitUntil(
 		caches.keys().then(cacheNames => {
-			return cacheNames.filter(cacheName => (cacheName.startsWith('precache-'+PRECACHE_ID+'-') && !cacheName.endsWith('-'+PRECACHE_VERSION)));
+			return cacheNames.filter(cacheName => (cacheName.startsWith('precache-' + PRECACHE_ID + '-') && !cacheName.endsWith('-' + PRECACHE_VERSION)));
 		}).then(cachesToDelete => {
 			return Promise.all(cachesToDelete.map(cacheToDelete => {
-				console.log('delete '+cacheToDelete);
+				console.log('Delete cache: ' + cacheToDelete);
 				return caches.delete(cacheToDelete);
 			}));
 		}).then(() => self.clients.claim())
@@ -80,12 +79,12 @@ self.addEventListener('activate', evt => {
 
 // fetch event (fired when requesting a resource): returns cached resource when possible
 self.addEventListener('fetch', evt => {
-	if(evt.request.url.startsWith(self.location.origin)){ //skip cross-origin requests
+	if (evt.request.url.startsWith(self.location.origin)) { //skip cross-origin requests
 		evt.respondWith(
 			caches.match(evt.request).then(cachedResource => {
 				if (cachedResource) {
 					return cachedResource;
-				}else{
+				} else {
 					return fetch(evt.request);
 				}
 			})

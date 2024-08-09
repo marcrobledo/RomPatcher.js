@@ -1,0 +1,629 @@
+/* Rom Patcher JS CSS template by Marc Robledo v20220323 */
+
+/* @FONT-FACES */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300');
+
+
+body{
+	--rom-patcher-color-background:#31343a;
+	--rom-patcher-color-primary:#2a9ca5;
+	--rom-patcher-color-primary-hover:#3aacb5;
+	--rom-patcher-color-primary-active:#297b81;
+	--rom-patcher-color-primary-focus:#a8fff3;
+
+	--rom-patcher-color-danger:#ff0030;
+	--rom-patcher-color-warning:#ff7800;
+
+	--rom-patcher-color-spinner:#41bdc7;
+
+	--rom-patcher-color-muted:#888;
+	--rom-patcher-color-outer-btn:#fff;
+	--rom-patcher-color-outer-btn-hover:#2b2e33;
+
+	--rom-patcher-color-footer:#767b86;
+	--rom-patcher-color-footer-link:#969ba6;
+	--rom-patcher-color-footer-link-border:#464b56;
+	--rom-patcher-color-footer-hover:#fff;
+	--rom-patcher-color-footer-hover-border:#41d5ff;
+
+	--rom-patcher-color-switch:#fff;
+	--rom-patcher-color-switch-background:#474c56;
+	--rom-patcher-color-switch-background-enabled:#41bdc7;
+
+	margin:0;
+	font:15px 'Open Sans',sans-serif;
+	cursor:default;
+	line-height:1.8;
+	background-color:var(--rom-patcher-color-background);
+	color:#3c3c3c;
+	-moz-user-select:none;
+	-webkit-user-select: none;
+	-ms-user-select:none;
+	-o-user-select:none;
+	user-select:none;
+}
+/* body.dragging-files{
+	color:red !important;
+	pointer-events: none;
+} */
+
+/* flex main column */
+html, body{height:100%}
+#column{
+	display: flex;
+	flex-wrap: nowrap;
+	height: 100%;
+	flex-direction: column;
+}
+header{margin: 1% 0 4%}
+header h1{display:none}
+footer{padding: 50px 0 20px}
+#wrapper{flex-basis:100%}
+
+
+.clickable{cursor:pointer}
+.hide{display:none !important}
+.text-center{text-align:center}
+.text-right{text-align:right}
+.text-truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-b{margin-bottom:8px}
+/* flex box */
+.row{
+	display:flex;
+	flex-flow:row wrap; /* this is the same as flex-direction:row;flex-wrap:wrap; */
+	align-items:center; /* vertical align */
+	justify-content:space-between
+}
+.row>div:first-child{width:25%}
+.row>div:last-child{width:73%}
+.row.row-lg>div:first-child{width:70%}
+.row.row-lg>div:last-child{width:30%}
+
+
+
+
+
+
+
+/* icons */
+.icon{
+	display:inline-block;
+	vertical-align:middle;
+	width:16px;height:16px
+}
+
+
+
+
+
+
+
+
+/* header+footer */
+header{text-align:center}
+header h1{margin:0}
+header img{max-width:90%; height:192px;}
+
+footer{
+	text-align:center;
+	color:var(--rom-patcher-color-footer);
+	font-size:85%;
+}
+footer a{
+	color:var(--rom-patcher-color-footer-link);
+	text-decoration:none;
+	border-bottom:1px solid var(--rom-patcher-color-footer-link-border);
+}
+footer a:hover{
+	color:var(--rom-patcher-color-footer-hover);
+	border-color:var(--rom-patcher-color-footer-hover-border);
+}
+
+
+
+hr{border:none;border-top:1px dotted #bbb;margin:15px 0}
+
+
+/* outer buttons */
+.btn-transparent{
+	background-color:transparent;
+	color:var(--rom-patcher-color-outer-btn);
+	cursor:pointer;
+	text-align:center;
+}
+.btn-transparent:hover,.btn-transparent:focus{
+	background-color:var(--rom-patcher-color-outer-btn-hover);
+	cursor:pointer;
+}
+.btn-transparent img{
+	height:16px;
+	display:inline-block;
+	vertical-align:middle;
+}
+
+/* Switch mode */
+#switch-container{
+	text-align:right;	
+	margin-bottom:10px;
+	font-size:88%;
+}
+#switch-create-button{
+	border-radius:2px;
+	padding: 6px 8px;
+	transition:background-color .1s;
+}
+.switch{
+	display:inline-block;
+	vertical-align:middle;
+	width:30px;height:16px;
+	border-radius:8px;
+	position:relative;
+	transition:background-color .2s;
+	background-color:#babfbf;
+}
+#switch-create-button .switch.disabled{background-color:var(--rom-patcher-color-switch-background);}
+#dialog-settings>.rom-patcher-dialog .switch{transition:opacity .1s;}
+#dialog-settings>.rom-patcher-dialog .switch:hover{cursor:pointer;opacity:.7}
+.switch:before{
+	position:absolute;
+	background-color:var(--rom-patcher-color-switch);
+	height:10px;width:10px;
+	content:" ";
+	border-radius:6px;
+	top:3px;
+	left:4px;
+	transition:left .2s;
+}
+.switch.enabled:before{
+	left:16px;
+}
+.switch.enabled{background-color:var(--rom-patcher-color-switch-background-enabled);}
+
+
+
+
+.tab{background-color:#f9fafa;padding:30px 15px;border-radius: 3px}
+
+
+.buttons{
+	margin-top:12px;
+}
+
+
+
+/* forms */
+input[type=file], input[type=checkbox], select{
+	box-sizing:border-box;
+	max-width:100%;
+	font-family:inherit;
+	font-size:100%;
+	outline:none;
+	border:none;
+	border-radius:3px;
+	background-color:#edefef;
+}
+input[type=file]:focus:not(:disabled),
+select:focus:not(:disabled),
+input[type=checkbox].styled:focus:not(:disabled){
+	box-shadow: var(--rom-patcher-color-primary-focus) 0 0 0 2px;
+}
+input[type=file].w100, select.w100{width:100%}
+input[type=file]{padding:6px 10px}
+input[type=file]::file-selector-button{display:none}
+select{
+	padding:6px 18px 6px 10px;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	text-overflow:'';
+
+	background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeD0iMTJweCIgeT0iMHB4IiB3aWR0aD0iMjRweCIgaGVpZ2h0PSIzcHgiIHZpZXdCb3g9IjAgMCA2IDMiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDYgMyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBvbHlnb24gcG9pbnRzPSI1Ljk5MiwwIDIuOTkyLDMgLTAuMDA4LDAgIi8+PC9zdmc+");
+	background-position:100% center;
+	background-repeat:no-repeat;
+}
+select::-ms-expand{display:none}
+input[type=file]:hover:not(:disabled),select:hover:not(:disabled){cursor:pointer;background-color:#dee1e1}
+input[type=file]:disabled,select:disabled{color:var(--rom-patcher-color-muted)}
+
+/* select:focus > option{background-color:#fff} */
+
+
+
+
+
+input[type=file].empty,
+input[type=file]:not(:disabled):not(.empty):hover{
+	padding-left:32px;
+	background-repeat: no-repeat;
+	background-position: 8px center;
+	background-size: 16px;
+	background-image: url(../rom-patcher-js/assets/icon_upload.svg);
+}
+
+input[type=file].valid{
+	background-color:#d6ffc8;
+	padding-right:28px;
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	background-size: 16px;
+	background-image: url(../rom-patcher-js/assets/icon_check_circle_green.svg);
+}
+input[type=file].valid:not(:disabled):not(.empty):hover{
+	background-color:#adf795;
+	background-position: 8px center, right 12px center;
+	background-size: 16px, 16px;
+	background-image:  url(../rom-patcher-js/assets/icon_upload.svg), url(../rom-patcher-js/assets/icon_check_circle_green.svg);
+}
+input[type=file].invalid{
+	background-color:#ffc8c8;
+	padding-right:28px;
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	background-size: 16px;
+	background-image: url(../rom-patcher-js/assets/icon_x_circle_red.svg);
+}
+input[type=file].invalid:not(:disabled):not(.empty):hover{
+	background-color:#ffa3a3;
+	background-position: 8px center, right 12px center;
+	background-size: 16px, 16px;
+	background-image:  url(../rom-patcher-js/assets/icon_upload.svg), url(../rom-patcher-js/assets/icon_x_circle_red.svg);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* buttons */
+button{
+	font-family:inherit;
+	font-size:100%;
+	min-width:120px;
+	border-radius:3px;border:0;
+	outline:none;
+
+	padding:10px 20px;
+	margin:0 5px;
+
+	background-color:var(--rom-patcher-color-primary);
+	color:white;
+
+	transition:background-color .15s;
+
+	box-sizing:border-box
+}
+button:not(:disabled){
+	cursor:pointer;
+}
+button:disabled{opacity:.35 !important;cursor:not-allowed}
+.tab button:not(:disabled):hover{
+	background-color:var(--rom-patcher-color-primary-hover);
+}
+.tab button:not(:disabled):active{
+	background-color:var(--rom-patcher-color-primary-active);
+	transform:translateY(1px)
+}
+
+
+
+
+
+
+
+
+
+
+.text-selectable{
+	-moz-user-select:text;
+	-webkit-user-select: text;
+	-ms-user-select:text;
+	-o-user-select:text;
+	user-select:text;
+	cursor:text;
+}
+.text-mono{
+	font-family:'Roboto Mono', monospace;
+	color: var(--rom-patcher-color-muted);
+	font-size:12px;
+}
+.text-muted{
+	color: var(--rom-patcher-color-muted);
+}
+
+#rom-patcher-span-crc32 span.clickable{text-decoration:underline}
+#rom-patcher-span-crc32 span.clickable:hover{cursor:pointer;color:black}
+
+
+#rom-patcher-row-info-rom,
+#rom-patcher-row-alter-header,
+#rom-patcher-row-patch-description,
+#rom-patcher-row-patch-requirements,
+#rom-patcher-row-error-message,
+#patch-builder-row-error-message{
+	display:none
+}
+#rom-patcher-row-info-rom.show,
+#rom-patcher-row-alter-header.show,
+#rom-patcher-row-patch-description.show,
+#rom-patcher-row-patch-requirements.show{
+	display:flex
+}
+#rom-patcher-row-error-message.show,
+#patch-builder-row-error-message.show{
+	display:block
+}
+
+#rom-patcher-patch-description{font-size: 85%;}
+
+
+#rom-patcher-select-file-patch{width:100%}
+
+#rom-patcher-error-message,
+#patch-builder-error-message {
+	color: var(--rom-patcher-color-danger);
+	padding-left: 20px;
+	background-image: url(../rom-patcher-js/assets/icon_x_circle_red.svg);
+	background-repeat: no-repeat;
+	background-position: left center;
+}
+#rom-patcher-error-message.warning,
+#patch-builder-error-message.warning {
+	color: var(--rom-patcher-color-warning);
+	background-image: url(../rom-patcher-js/assets/icon_alert_orange.svg);
+}
+
+
+/* loading spinner */
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
+.rom-patcher-spinner{
+	width:20px;
+	height:20px;
+	display:inline-block;
+	position:relative;
+	-webkit-animation:spin 1s linear infinite;
+	-moz-animation:spin 1s linear infinite;
+	animation:spin 1s ease-in-out infinite;
+	vertical-align:middle;
+}
+.rom-patcher-spinner:before{
+	width:6px;
+	height:6px;
+	background-color:var(--rom-patcher-color-spinner);
+	border-radius:3px;
+	display:inline-block;
+	content:"";
+	position:absolute;
+	top:0;
+	left:50%;
+	margin-left:-3px;
+}
+
+
+#rom-patcher-button-apply .rom-patcher-spinner:before{
+	background-color:white;
+}
+
+
+
+#wrapper{
+	box-sizing:border-box;
+	max-width:95%;
+	width:600px;
+	margin:0 auto
+}
+
+
+.rom-patcher-container-input{
+	position:relative
+}
+.rom-patcher-container-input input.loading,
+.rom-patcher-container-input select.loading{
+	padding-left:32px;
+}
+.rom-patcher-container-input input.loading + .rom-patcher-spinner,
+.rom-patcher-container-input select.loading + .rom-patcher-spinner{
+	position:absolute;
+	top:50%;
+	margin-top: -10px;
+	left:8px;
+}
+
+
+
+/* dialogs */
+.rom-patcher-dialog::backdrop,
+#rom-patcher-dialog-zip-backdrop{
+	background-color:rgba(0,0,0,.75);
+	backdrop-filter:blur(3px);
+/*
+	transition: overlay 0.35s allow-discrete, display 0.35s allow-discrete, opacity 0.35s;
+	opacity: 0;
+}
+.rom-patcher-dialog[open]::backdrop {
+	opacity: 1;
+
+	@starting-style {
+		opacity: 0;
+	}
+*/
+}
+#rom-patcher-dialog-zip-backdrop {
+	/* fallback for browsers not compatible with <dialog> */
+	justify-content: center;
+	align-items: center;
+}
+
+
+.rom-patcher-dialog{
+	vertical-align:middle;
+	margin:auto;
+	background-color:white;
+	color:#999;
+	box-sizing:border-box;
+	box-shadow:rgba(0,0,0,.7) 0 0 24px;
+	padding:20px;
+	border-radius:3px;
+	border:none;
+/*
+	transition: overlay 0.35s allow-discrete, display 0.35s allow-discrete, opacity 0.35s;
+	opacity: 0;
+}
+.rom-patcher-dialog[open] {
+	opacity: 1;
+
+	@starting-style {
+		opacity: 0;
+	}
+*/
+}
+
+/* settings dialog */
+#dialog-settings{
+	min-width:400px;
+	max-width:90%;
+}
+#dialog-settings-button-close{
+	padding:8px;
+	border-radius:30px;
+	margin-right:-8px;
+	margin-top:-8px;
+	transition:background-color .2s;
+	height:24px;
+}
+#dialog-settings-button-close:hover{
+	cursor:pointer;
+	background-color:#f4f4f4;
+}
+input[type=checkbox].styled{
+	-moz-appearance:none;
+	-webkit-appearance:none;
+	appearance:none;
+	width: 20px;
+	height: 20px;
+	background-color:transparent;
+	border-radius:3px;
+	display:inline-block;
+	vertical-align:middle;
+	position:relative;
+	border: 2px solid var(--rom-patcher-color-primary);
+	
+	background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjMuMiIgZmlsbD0ibm9uZSIgZD0iTSAxLjE5LDcuMTAgNi4wNywxMi4wNiAxNC44OCwzLjMyIi8+PC9zdmc+');
+	background-repeat:no-repeat;
+	background-position:center center;
+	background-size:0px;
+	transition: background-color .2s, background-size .2s;
+}
+input[type=checkbox].styled:hover:not(:disabled){
+	cursor:pointer;
+	border-color:var(--rom-patcher-color-primary-hover);
+}
+input[type=checkbox].styled:hover:checked:not(:disabled){
+	background-color:var(--rom-patcher-color-primary-hover);
+}
+
+input[type=checkbox].styled:checked{
+	background-color:var(--rom-patcher-color-primary);
+	background-size:12px;
+}
+
+
+/* ZIP dialog */
+#rom-patcher-dialog-zip{
+	min-width:360px;
+}
+#rom-patcher-dialog-zip-message{
+	text-align:center
+}
+#rom-patcher-dialog-zip-file-list{
+	list-style:none;
+	padding:0;
+	margin: 0;
+	max-height:300px;
+	overflow-y:auto;
+}
+#rom-patcher-dialog-zip-file-list li{
+	color:#3c3c3c;
+	padding: 2px 8px;
+}
+#rom-patcher-dialog-zip-file-list li:hover{
+	background-color:#eee;
+	cursor:pointer;
+	color: black;
+	border-radius: 3px;
+}
+
+
+
+
+/* light theme */
+body.theme-light{
+	--rom-patcher-color-background:#eeeceb;
+	--rom-patcher-color-primary:#ff9f36;
+	--rom-patcher-color-primary-hover:#ffbe78;
+	--rom-patcher-color-primary-active:#ff8400;
+	--rom-patcher-color-primary-focus:#ffebb4;
+
+	--rom-patcher-color-spinner:#ff941e;
+
+	--rom-patcher-color-outer-btn:#575b66;
+	--rom-patcher-color-outer-btn-hover:#e6e3e1;
+
+	--rom-patcher-color-footer:#a89d97;
+	--rom-patcher-color-footer-link:#8c817c;
+	--rom-patcher-color-footer-link-border:#e3d4cc;
+	--rom-patcher-color-footer-hover:#484543;
+	--rom-patcher-color-footer-hover-border:#ffac41;
+
+	--rom-patcher-color-switch:#fff;
+	--rom-patcher-color-switch-background:#cec5bd;
+	--rom-patcher-color-switch-background-enabled:#ff941e;
+}
+body.theme-light header img{filter: hue-rotate(98rad) brightness(97.9%) saturate(160%)}
+body.theme-light footer img.icon.settings, body.theme-light footer img.icon.github{filter: invert(0%) brightness(30%);}
+
+
+/* pastel theme */
+body.theme-pastel{
+	--rom-patcher-color-background:#1d2433;
+	--rom-patcher-color-primary:#e65a53;
+	--rom-patcher-color-primary-hover:#f4736d;
+	--rom-patcher-color-primary-active:#d9413a;
+
+	--rom-patcher-color-spinner:#ff941e;
+
+	--rom-patcher-color-outer-btn:#fff;
+	--rom-patcher-color-outer-btn-hover:#2b2e33;
+
+	--rom-patcher-color-footer:#767b86;
+	--rom-patcher-color-footer-link:#969ba6;
+	--rom-patcher-color-footer-link-border:#464b56;
+	--rom-patcher-color-footer-hover:#fff;
+	--rom-patcher-color-footer-hover-border:#41d5ff;
+
+	/* to-do */
+}
+body.theme-pastel header img{filter: hue-rotate(22rad) brightness(81.9%) saturate(228%)}
+
+/*
+body.theme-pastel .switch.enabled{background-color:#;}
+body.theme-pastel #switch-create.disabled{background-color:#cec5bd;}
+body.theme-pastel .spinner:before{background-color:#ff941e}
+*/
+
+
+/* responsive */
+@media only screen and (max-width:641px){
+	#wrapper{font-size:14px}
+	#rom-patcher-rom-info{font-size:11px}
+	header img{max-height:96px}
+	#dialog-settings, #rom-patcher-dialog-zip{min-width: auto;}
+}

@@ -1,0 +1,19 @@
+{
+	"//" : [
+		"not using type:module (for now) to ensure compatibility with old both browsers and Node",
+		"latest chalk version works only as a ES6 module, so we force the usage of the last CommonJS compatible version"
+	],
+	"dependencies": {
+		"chalk": "4.1.2",
+		"commander": "^11.0.0"
+	},
+	"name": "rom-patcher",
+	"description": "A ROM patcher made in Javascript.",
+	"version": "3.0.0",
+	"main": "index.js",
+	"scripts": {
+		"test": "node test.js"
+	},
+	"author": "Marc Robledo",
+	"license": "MIT"
+}

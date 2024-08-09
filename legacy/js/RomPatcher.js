@@ -12,20 +12,22 @@ const HEADERS_INFO=[
 
 
 /* service worker */
+/*
 const FORCE_HTTPS=true;
 if(FORCE_HTTPS && location.protocol==='http:')
 	location.href=window.location.href.replace('http:','https:');
 else if(location.protocol==='https:' && 'serviceWorker' in navigator && window.location.hostname==='www.marcrobledo.com')
 	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', {scope: '/RomPatcher.js/'});
-
+*/
 
 
 var romFile, patchFile, patch, romFile1, romFile2, tempFile, headerSize, oldHeader;
 
 var CAN_USE_WEB_WORKERS=true;
+var WEBWORKERS_PATH='./js/';
 var webWorkerApply,webWorkerCreate,webWorkerCrc;
 try{
-	webWorkerApply=new Worker('./js/worker_apply.js');
+	webWorkerApply=new Worker(WEBWORKERS_PATH + 'worker_apply.js');
 	webWorkerApply.onmessage = event => { // listen for events from the worker
 		//retrieve arraybuffers back from webworker
 		if(!el('checkbox-removeheader').checked && !el('checkbox-addheader').checked){ //when adding/removing header we don't need the arraybuffer back since we made a copy previously
@@ -51,7 +53,7 @@ try{
 
 
 
-	webWorkerCreate=new Worker('./js/worker_create.js');
+	webWorkerCreate=new Worker(WEBWORKERS_PATH + 'worker_create.js');
 	webWorkerCreate.onmessage = event => { // listen for events from the worker
 		var newPatchFile=new MarcFile(event.data.patchFileU8Array);
 		newPatchFile.fileName=romFile2.fileName.replace(/\.[^\.]+$/,'')+'.'+el('select-patch-type').value;
@@ -67,7 +69,7 @@ try{
 
 
 
-	webWorkerCrc=new Worker('./js/worker_crc.js');
+	webWorkerCrc=new Worker(WEBWORKERS_PATH + 'worker_crc.js');
 	webWorkerCrc.onmessage = event => { // listen for events from the worker
 		//console.log('received_crc');
 		el('crc32').innerHTML=padZeroes(event.data.crc32, 4);
@@ -257,6 +259,8 @@ var UI={
 	}
 };
 
+
+var APP_SETTINGS_ID='rom-patcher-js-settings-legacy';
 var AppSettings={
 	langCode:(typeof navigator.userLanguage==='string')? navigator.userLanguage.substr(0,2) : 'en',
 	outputFileNameMatch:false,
@@ -264,9 +268,9 @@ var AppSettings={
 	lightTheme:false,
 
 	load:function(){
-		if(typeof localStorage!=='undefined' && localStorage.getItem('rompatcher-js-settings')){
+		if(typeof localStorage!=='undefined' && localStorage.getItem(APP_SETTINGS_ID)){
 			try{
-				var loadedSettings=JSON.parse(localStorage.getItem('rompatcher-js-settings'));
+				var loadedSettings=JSON.parse(localStorage.getItem(APP_SETTINGS_ID));
 
 				if(typeof loadedSettings.langCode==='string' && typeof LOCALIZATION[loadedSettings.langCode]){
 					this.langCode=loadedSettings.langCode;
@@ -293,7 +297,7 @@ var AppSettings={
 
 	save:function(){
 		if(typeof localStorage!=='undefined')
-			localStorage.setItem('rompatcher-js-settings', JSON.stringify(this));
+			localStorage.setItem(APP_SETTINGS_ID, JSON.stringify(this));
 	}
 };
 
@@ -302,12 +306,12 @@ addEvent(window,'load',function(){
 	/* zip-js web worker */
 	if(CAN_USE_WEB_WORKERS){
 		zip.useWebWorkers=true;
-		zip.workerScriptsPath='./js/zip.js/';
+		zip.workerScriptsPath=WEBWORKERS_PATH + 'zip.js/';
 	}else{
 		zip.useWebWorkers=false;
 
 		var script=document.createElement('script');
-		script.src='./js/zip.js/inflate.js';
+		script.src=WEBWORKERS_PATH + 'zip.js/inflate.js';
 		document.getElementsByTagName('head')[0].appendChild(script);
 	}
 

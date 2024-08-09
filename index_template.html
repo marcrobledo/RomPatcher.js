@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html translate="no">
+
+<head>
+	<title>Rom Patcher JS - Custom patcher template</title>
+	<meta http-equiv="content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
+
+
+	<!-- Rom Patcher JS needed CSS/JS files -->
+	<link type="text/css" rel="stylesheet" href="./rom-patcher-js/style.css" media="all" />
+	<script type="text/javascript" src="./rom-patcher-js/modules/BinFile.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/HashCalculator.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ips.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ups.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.aps_n64.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.aps_gba.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.bps.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.rup.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ppf.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.pmsr.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.vcdiff.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/modules/zip.js/zip.min.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/RomPatcher.js"></script>
+	<script type="text/javascript" src="./rom-patcher-js/RomPatcher.webapp.js"></script>
+
+	<!-- Rom Patcher JS initizlization -->
+	<script type="text/javascript">
+		window.addEventListener('load', function (evt) {
+			try {
+				RomPatcherWeb.initialize({
+					language: 'en', //default: en
+				}, {
+					file: './my_patch.zip', //zip containing patches
+					name: 'Game (English v1.0)',
+					description: 'English fan translation for Game',
+					outputName: 'Game (English v1.0)', //patched ROM name
+				});
+			} catch (err) {
+				document.getElementById('rom-patcher-container').innerHTML = err.message;
+				document.getElementById('rom-patcher-container').style.color = 'red';
+			}
+		});
+	</script>
+</head>
+
+<body style="font: 15px 'Open Sans', sans-serif; background-color: #31343a; color: #e4e4e6;">
+	<header style="text-align: center">
+		<h1>Rom Patcher JS</h1>
+		<p>
+			This is a template that shows off Rom Patcher JS embeding capabilities. You can use this template to embed
+			Rom Patcher JS in your website.<br />
+			Take a look at the <a
+				href="https://github.com/marcrobledo/RomPatcher.js/blob/master/custom_patcher_template.html"
+				target="_blank">sourcecode</a> to see how it's done.
+		</p>
+	</header>
+
+
+	<!-- Rom Patcher JS container -->
+	<!--
+			The following elements are required for Rom Patcher JS to work:
+				#rom-patcher-input-file-rom
+				#rom-patcher-input-file-patch
+				#rom-patcher-button-apply
+			The rest of elements are informative and can be removed, though it's recommended to keep them for a better user experience.
+		-->
+	<div id="rom-patcher-container">
+		<div class="rom-patcher-row margin-bottom" id="rom-patcher-row-file-rom">
+			<div class="text-right"><label for="rom-patcher-input-file-rom" data-localize="yes">ROM file:</label></div>
+			<div class="rom-patcher-container-input">
+				<input type="file" id="rom-patcher-input-file-rom" class="empty" />
+			</div>
+		</div>
+		<div class="margin-bottom text-selectable text-mono text-muted" id="rom-patcher-rom-info">
+			<div class="rom-patcher-row">
+				<div class="text-right">CRC32:</div>
+				<div class="text-truncate"><span id="rom-patcher-span-crc32"></span></div>
+			</div>
+			<div class="rom-patcher-row">
+				<div class="text-right">MD5:</div>
+				<div class="text-truncate"><span id="rom-patcher-span-md5"></span></div>
+			</div>
+			<div class="rom-patcher-row">
+				<div class="text-right">SHA-1:</div>
+				<div class="text-truncate"><span id="rom-patcher-span-sha1"></span></div>
+			</div>
+			<div class="rom-patcher-row" id="rom-patcher-row-info-rom">
+				<div class="text-right">ROM:</div>
+				<div class="text-truncate"><span id="rom-patcher-span-rom-info"></span></div>
+			</div>
+		</div>
+
+		<div class="rom-patcher-row margin-bottom" id="rom-patcher-row-file-patch">
+			<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label>
+			</div>
+			<div class="rom-patcher-container-input">
+				<input type="file" id="rom-patcher-input-file-patch" class="empty"
+					accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.vcdiff,.zip" />
+			</div>
+		</div>
+		<div class="rom-patcher-row margin-bottom" id="rom-patcher-row-patch-description">
+			<div class="text-right text-mono text-muted" data-localize="yes">Description:</div>
+			<div class="text-truncate" id="rom-patcher-patch-description"></div>
+		</div>
+		<div class="rom-patcher-row margin-bottom text-selectable text-mono text-muted"
+			id="rom-patcher-row-patch-requirements">
+			<div class="text-right text-mono" id="rom-patcher-patch-requirements-type">ROM requirements:</div>
+			<div class="text-truncate" id="rom-patcher-patch-requirements-value"></div>
+		</div>
+
+		<div class="text-center" id="rom-patcher-row-apply">
+			<div id="rom-patcher-row-error-message" class="margin-bottom"><span id="rom-patcher-error-message"></span>
+			</div>
+			<button id="rom-patcher-button-apply" data-localize="yes" disabled>Apply patch</button>
+		</div>
+	</div>
+
+	<div id="rom-patcher-powered" class="text-center">
+		<a href="https://github.com/marcrobledo/RomPatcher.js" target="_blank"><img
+				src="rom-patcher-js/assets/powered_by_rom_patcher_js.png" loading="lazy" />Powered by Rom Patcher JS</a>
+	</div>
+</body>
+
+</html>
