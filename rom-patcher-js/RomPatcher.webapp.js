@@ -295,13 +295,13 @@ var RomPatcherWeb = (function () {
 			return fallback || 0;
 		},
 		setFakeFile: function (id, fileName) {
-			if (document.getElementById('rom-patcher-' + id)) {
+			if (document.getElementById('rom-patcher-input-file-' + id)) {
 				try {
 					/* add a fake file to the input file, so it shows the chosen file name */
 					const fakeFile = new File(new Uint8Array(0), fileName);
 					const dataTransfer = new DataTransfer();
 					dataTransfer.items.add(fakeFile);
-					document.getElementById('rom-patcher-' + id).files = dataTransfer.files;
+					document.getElementById('rom-patcher-input-file-' + id).files = dataTransfer.files;
 				} catch (ex) {
 					console.warning('File API constructor is not supported');
 				}
@@ -636,7 +636,7 @@ var RomPatcherWeb = (function () {
 			}
 
 			if (transferFakeFile) {
-				htmlElements.setFakeFile('input-file-rom', romFile.fileName);
+				htmlElements.setFakeFile('rom', romFile.fileName);
 			}
 		},
 
@@ -744,7 +744,7 @@ var RomPatcherWeb = (function () {
 						}
 
 						if (transferFakeFile) {
-							htmlElements.setFakeFile('input-file-patch', binFile.fileName);
+							htmlElements.setFakeFile('patch', binFile.fileName);
 						}
 					} else {
 						_setToastError(_('Invalid patch file'));
@@ -762,7 +762,7 @@ var RomPatcherWeb = (function () {
 
 		refreshRomFileName: function () {
 			if (romFile)
-				htmlElements.setFakeFile('input-file-rom', romFile.fileName);
+				htmlElements.setFakeFile('rom', romFile.fileName);
 		},
 
 		pickEmbededFile: function (fileName) {
@@ -1059,7 +1059,7 @@ const ZIPManager = (function (romPatcherWeb) {
 					onUnzip(binFile, true);
 				} else {
 					_setPatchInputSpinner(false);
-					onUnzip(binFile);
+					onUnzip(binFile, true);
 				}
 			};
 			fileReader.readAsArrayBuffer(blob);
