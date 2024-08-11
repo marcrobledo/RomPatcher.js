@@ -25,7 +25,7 @@ A ROM patcher made in Javascript.
 Modders and hackers can embed Rom Patcher JS in their websites to provide an online ROM patcher for their patches, allowing users to patch ROMs without downloading any files.<br/>
 
 - File [`index_template.html`](https://github.com/marcrobledo/RomPatcher.js/blob/master/index_template.html) includes a simple working example
-- Read [the wiki](https://github.com/marcrobledo/RomPatcher.js/wiki) for more detailed instructions
+- Read [the wiki](https://github.com/marcrobledo/RomPatcher.js/wiki/Embedding-Rom-Patcher-JS) for more detailed instructions
 
 
 &nbsp;
@@ -36,7 +36,7 @@ Install dependencies:
 Patch a ROM:
 > node index.js patch "my_rom.bin" "my_patch.ips"
 
-Create a patch:
+Create an IPS patch:
 > node index.js create "original_rom.bin" modified_rom.bin"
 
 Show all options:

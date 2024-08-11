@@ -208,7 +208,10 @@ select:focus:not(:disabled),
 input[type=checkbox].styled:focus:not(:disabled){
 	box-shadow: var(--rom-patcher-color-primary-focus) 0 0 0 2px;
 }
-input[type=file].w100, select.w100{width:100%}
+#rom-patcher-container input[type=file],
+#rom-patcher-container select,
+#patch-builder-container input[type=file]
+{width:100%}
 input[type=file]{padding:6px 10px}
 input[type=file]::file-selector-button{display:none}
 select{

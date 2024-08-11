@@ -184,14 +184,19 @@ VCDIFF.fromFile=function(file){
 
 function VCDIFF_Parser(binFile, offset)
 {
-    BinFile.call(this, 0);
 	this.fileSize=binFile.fileSize;
 	this._u8array=binFile._u8array;
-	this._dataView=binFile._dataView;
     this.offset=offset || 0;
-}
 
-VCDIFF_Parser.prototype=Object.create(BinFile.prototype);
+	/* reimplement readU8, readU32 and skip from BinFile */
+	/* in web implementation, there are no guarantees BinFile will be dynamically loaded before this one */
+	/* so we cannot rely on cloning BinFile.prototype */
+	this.readU8 = binFile.readU8;
+	this.readU32 = binFile.readU32;
+	this.skip = binFile.skip;
+	this.isEOF = binFile.isEOF;
+	this.seek = binFile.seek;
+}
 VCDIFF_Parser.prototype.read7BitEncodedInt=function(){
 	var num=0, bits = 0;
 

@@ -14,24 +14,27 @@
 		- ROM:   Super Mario Land 2 - 6 Golden Coins (USA, Europe).gb [CRC32=d5ec24e4]
 	- BPS test
 		- Patch: https://www.romhacking.net/translations/6297/
-		- ROM:  Samurai Kid (Japan).gbc [CRC32=44a9ddfb]	
+		- ROM:   Samurai Kid (Japan).gbc [CRC32=44a9ddfb]	
 	- UPS test
 		- Patch: https://mother3.fobby.net/
-		- ROM:  Mother 3 (Japan).gba [CRC32=42ac9cb9]
+		- ROM:   Mother 3 (Japan).gba [CRC32=42ac9cb9]
 	- APS test
 		- Patch: http://dorando.emuverse.com/projects/eduardo_a2j/zelda-ocarina-of-time.html
-		- ROM:  Legend of Zelda, The - Ocarina of Time (USA).z64 [CRC32=7e107c35]
+		- ROM:   Legend of Zelda, The - Ocarina of Time (USA).z64 [CRC32=7e107c35]
 	- RUP test
 		- Patch: https://www.romhacking.net/translations/843/
-		- ROM:  Uchuu no Kishi - Tekkaman Blade (Japan).sfc [CRC32=cd16c529]
+		- ROM:   Uchuu no Kishi - Tekkaman Blade (Japan).sfc [CRC32=cd16c529]
+	- xdelta test
+		- Patch: https://www.romhacking.net/hacks/2871/
+		- ROM:   New Super Mario Bros. (USA, Australia).nds [CRC32=0197576a]
 */
 
 const chalk=require('chalk');
 const { existsSync }=require('fs');
 
-const BinFile = require('./app/modules/BinFile');
-const HashCalculator = require('./app/modules/HashCalculator');
-const RomPatcher = require('./app/RomPatcher');
+const BinFile = require('./rom-patcher-js/modules/BinFile');
+const HashCalculator = require('./rom-patcher-js/modules/HashCalculator');
+const RomPatcher = require('./rom-patcher-js/RomPatcher');
 
 
 
@@ -77,9 +80,16 @@ const TEST_PATCHES=[
 		patchCrc32:0x621ab323,
 		patchDownload:'https://www.romhacking.net/hacks/4633/',
 		outputCrc32:0xe83e9b0a
+	},{
+		title:'NSMB Hack Domain Infusion',
+		romFile:'New Super Mario Bros. (USA, Australia).nds',
+		romCrc32:0x0197576a,
+		patchFile:'nsmb_infusion10a.xdelta',
+		patchCrc32:0xa211f97c,
+		patchDownload:'https://www.romhacking.net/hacks/2871/',
+		outputCrc32:0x9cecd976
 	}
 ];
-
 
 const _test=function(title, testFunction){
 	try{

@@ -34,21 +34,6 @@
 
 	<link type="text/css" rel="stylesheet" href="./webapp/style.css" media="all"/>
 
-
-
-	<script type="text/javascript" src="./rom-patcher-js/modules/BinFile.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/HashCalculator.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ips.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ups.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.aps_n64.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.aps_gba.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.bps.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.rup.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.ppf.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.pmsr.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/RomPatcher.format.vcdiff.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/modules/zip.js/zip.min.js"></script>
-	<script type="text/javascript" src="./rom-patcher-js/RomPatcher.js"></script>
 	<script type="text/javascript" src="./rom-patcher-js/RomPatcher.webapp.js"></script>
 	<script type="text/javascript" src="./webapp/webapp.js"></script>
 </head>
@@ -67,7 +52,7 @@
 			<div class="row m-b" id="rom-patcher-row-file-rom">
 				<div class="text-right"><label for="rom-patcher-input-file-rom" data-localize="yes">ROM file:</label></div>
 				<div class="rom-patcher-container-input">
-					<input type="file" id="rom-patcher-input-file-rom" class="w100 empty" />
+					<input type="file" id="rom-patcher-input-file-rom" class="empty" disabled />
 				</div>
 			</div>
 			<div class="row m-b" id="rom-patcher-row-alter-header">
@@ -98,7 +83,7 @@
 			<div class="row m-b" id="rom-patcher-row-file-patch">
 				<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label></div>
 				<div class="rom-patcher-container-input">
-					<input type="file" id="rom-patcher-input-file-patch" class="w100 empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.vcdiff,.zip" />
+					<input type="file" id="rom-patcher-input-file-patch" class="empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.vcdiff,.zip" disabled />
 				</div>
 			</div>
 			<div class="row m-b" id="rom-patcher-row-patch-description">
@@ -120,21 +105,21 @@
 			<div class="row m-b">
 				<div class="text-right"><label for="patch-builder-input-file-original" data-localize="yes" >Original ROM:</label></div>
 				<div>
-					<input type="file" id="patch-builder-input-file-original" class="w100 empty" />
+					<input type="file" id="patch-builder-input-file-original" class="empty" disabled />
 				</div>
 			</div>
 
 			<div class="row m-b">
 				<div class="text-right"><label for="patch-builder-input-file-modified" data-localize="yes">Modified ROM:</label></div>
 				<div>
-					<input type="file" id="patch-builder-input-file-modified" class="w100 empty" />
+					<input type="file" id="patch-builder-input-file-modified" class="empty" disabled />
 				</div>
 			</div>
 
 			<div class="row m-b">
 				<div class="text-right"><label for="patch-builder-select-patch-type" data-localize="yes">Patch type:</label></div>
 				<div>
-					<select id="patch-builder-select-patch-type">
+					<select id="patch-builder-select-patch-type" disabled>
 						<option value="ips">IPS</option>
 						<option value="bps">BPS</option>
 						<option value="ppf">PPF</option>
@@ -147,7 +132,7 @@
 
 			<div class="buttons text-center">
 				<div id="patch-builder-row-error-message" class="m-b"><span id="patch-builder-error-message"></span></div>
-				<button id="patch-builder-button-create" disabled data-localize="yes">Create patch</button>
+				<button id="patch-builder-button-create" disabled data-localize="yes" disabled>Create patch</button>
 			</div>
 		</div>
 	</div>
@@ -166,7 +151,7 @@
 		<button id="button-settings" class="btn-transparent"><img src="./webapp/icon_settings.svg" loading="lazy" class="icon settings" /> <span data-localize="yes">Settings</span></button>
 	</div>
 
-	Rom Patcher JS <small>v3.0 <a style="color:rgb(255, 197, 7)" href="legacy/" rel="nofollow">Beta 1</a></small> by <a href="/">Marc Robledo</a>
+	Rom Patcher JS <small>v3.0 <a style="color:rgb(255, 197, 7)" href="legacy/" rel="nofollow">RC1</a></small> by <a href="/">Marc Robledo</a>
 	<br />
 	<img src="./webapp/icon_github.svg" loading="lazy" class="icon github" /> <a href="https://github.com/marcrobledo/RomPatcher.js/" target="_blank">See on GitHub</a>
 	<img src="./webapp/icon_heart.svg" loading="lazy" class="icon heart" /> <a href="https://www.paypal.me/marcrobledo/5" target="_blank" rel="nofollow">Donate</a>

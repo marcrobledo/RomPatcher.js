@@ -101,6 +101,9 @@ window.addEventListener('load', function (evt) {
 	});
 
 	document.getElementById('switch-create-button').addEventListener('click', function () {
+		if(!RomPatcherWeb.isInitialized())
+			throw new Error('Rom Patcher JS is not initialized yet');
+
 		if (/disabled/.test(document.getElementById('switch-create').className)) {
 			try{
 				if(!PatchBuilderWeb.isInitialized())
