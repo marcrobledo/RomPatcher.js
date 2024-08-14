@@ -356,6 +356,22 @@
 
 
 
+#rom-patcher-container  #rom-patcher-select-patch{
+	display:none
+}
+#rom-patcher-container  #rom-patcher-select-patch.single{
+	background-image: none;
+	background-color: transparent;
+	color: inherit !important;
+	padding-left: 0;
+}
+
+
+
+
+
+
+
 
 
 

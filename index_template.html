@@ -18,6 +18,7 @@
 			try {
 				RomPatcherWeb.initialize({
 					language: 'en', //default: en
+					requireValidation: false
 				}, {
 					file: './my_patch.zip', //zip containing patches
 					name: 'Game (English v1.0)',
@@ -49,7 +50,7 @@
 	<!--
 		The following elements are required for Rom Patcher JS to work:
 			#rom-patcher-input-file-rom
-			#rom-patcher-input-file-patch
+			#rom-patcher-select-patch
 			#rom-patcher-button-apply
 		The rest of elements are informative and can be removed, though it's recommended to keep them for a better user experience.
 	-->
@@ -83,8 +84,7 @@
 			<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label>
 			</div>
 			<div class="rom-patcher-container-input">
-				<input type="file" id="rom-patcher-input-file-patch" class="empty"
-					accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.vcdiff,.zip" disabled />
+				<select id="rom-patcher-select-patch"></select>
 			</div>
 		</div>
 		<div class="rom-patcher-row margin-bottom" id="rom-patcher-row-patch-description">
