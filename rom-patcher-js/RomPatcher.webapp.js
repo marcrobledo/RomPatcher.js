@@ -231,10 +231,10 @@ var RomPatcherWeb = (function () {
 			spinner.className = 'rom-patcher-spinner';
 
 			const htmlInputFile = htmlElements.get(elementId);
-			if (htmlInputFile){
-				if(elementId === 'select-patch'){
+			if (htmlInputFile) {
+				if (elementId === 'select-patch') {
 					htmlInputFile.parentElement.insertBefore(spinner, htmlElements.get('span-loading-embeded-patch'));
-				}else{
+				} else {
 					htmlInputFile.parentElement.appendChild(spinner);
 				}
 			}
@@ -390,14 +390,14 @@ var RomPatcherWeb = (function () {
 			var patchedRom = new BinFile(event.data.patchedRomU8Array.buffer);
 			patchedRom.fileName = event.data.patchedRomFileName;
 
-			if(currentEmbededPatches){
+			if (currentEmbededPatches) {
 				const optionalPatches = currentEmbededPatches.filter((embededPatchInfo) => embededPatchInfo.optional);
-				if(optionalPatches.length){
+				if (optionalPatches.length) {
 					const originalFileName = patchedRom.fileName;
-					for(var i=0; i<optionalPatches.length; i++){
+					for (var i = 0; i < optionalPatches.length; i++) {
 						/* could be improved by using webWorkerApply to apply optional patches */
-						if(optionalPatches[i].checkbox.checked)
-							patchedRom = RomPatcher.applyPatch(patchedRom, optionalPatches[i].parsedPatch, {requireValidation:false, fixChecksum: true});
+						if (optionalPatches[i].checkbox.checked)
+							patchedRom = RomPatcher.applyPatch(patchedRom, optionalPatches[i].parsedPatch, { requireValidation: false, fixChecksum: true });
 					}
 					patchedRom.fileName = originalFileName;
 				}
@@ -523,6 +523,7 @@ var RomPatcherWeb = (function () {
 
 		/* check if zip-js web worker is available */
 		if (typeof zip !== 'object' || typeof zip.useWebWorkers !== 'boolean') {
+			console.error('Rom Patcher JS: zip.js web worker not found');
 			throw new Error('Rom Patcher JS: zip.js web worker not found');
 		}
 		zip.useWebWorkers = true;
@@ -536,6 +537,7 @@ var RomPatcherWeb = (function () {
 				new BinFile(this, RomPatcherWeb.provideRomFile);
 			});
 		} else {
+			console.error('Rom Patcher JS: input#rom-patcher-input-file-rom[type=file] not found');
 			throw new Error('Rom Patcher JS: input#rom-patcher-input-file-rom[type=file] not found');
 		}
 		if (validEmbededPatch) {
@@ -546,6 +548,7 @@ var RomPatcherWeb = (function () {
 					this._unzipSelectedPatch(zippedEntryIndex);
 				});
 			} else {
+				console.error('Rom Patcher JS: select#rom-patcher-select-patch not found');
 				throw new Error('Rom Patcher JS: select#rom-patcher-select-patch not found');
 			}
 			const loadingSpan = document.createElement('span');
@@ -564,6 +567,7 @@ var RomPatcherWeb = (function () {
 					new BinFile(this, RomPatcherWeb.providePatchFile);
 				});
 			} else {
+				console.error('Rom Patcher JS: input#rom-patcher-input-file-patch[type=file] not found');
 				throw new Error('Rom Patcher JS: input#rom-patcher-input-file-patch[type=file] not found');
 			}
 		}
@@ -571,6 +575,7 @@ var RomPatcherWeb = (function () {
 		if (htmlButtonApply && htmlButtonApply.tagName === 'BUTTON') {
 			htmlButtonApply.addEventListener('click', RomPatcherWeb.applyPatch);
 		} else {
+			console.error('Rom Patcher JS: button#rom-patcher-button-apply not found');
 			throw new Error('Rom Patcher JS: button#rom-patcher-button-apply not found');
 		}
 		const htmlCheckboxAlterHeader = htmlElements.get('checkbox-alter-header');
@@ -840,17 +845,17 @@ var RomPatcherWeb = (function () {
 		},
 
 		pickEmbededFile: function (fileName) {
-			if(!currentEmbededPatches)
+			if (!currentEmbededPatches)
 				throw new Error('No embeded patches available');
 			else if (typeof fileName !== 'string')
 				throw new Error('Invalid embeded patch file name');
 
 			const selectPatch = htmlElements.get('select-patch');
-			for(var i=0; i<selectPatch.children.length; i++){
-				if(selectPatch.children[i].patchFileName === fileName){
-					if(selectPatch.value != selectPatch.children[i].value){
+			for (var i = 0; i < selectPatch.children.length; i++) {
+				if (selectPatch.children[i].patchFileName === fileName) {
+					if (selectPatch.value != selectPatch.children[i].value) {
 						selectPatch.value = selectPatch.children[i].value;
-	
+
 						/* create and dispatch change event */
 						const evt = new Event('change');
 						selectPatch.dispatchEvent(evt);
@@ -906,12 +911,12 @@ var RomPatcherWeb = (function () {
 			});
 		},
 		setEmbededPatches: function (embededPatchInfo) {
-			if(!currentEmbededPatches)
+			if (!currentEmbededPatches)
 				throw new Error('Rom Patcher JS: not in embeded patch mode');
 
 			/* embeded patches */
 			var validEmbededPatch = _checkEmbededPatchParameter(embededPatchInfo);
-			if(!validEmbededPatch)
+			if (!validEmbededPatch)
 				throw new Error('Rom Patcher JS: invalid embeded patch parameter');
 
 			_fetchPatchFile(validEmbededPatch);
@@ -1350,7 +1355,7 @@ const ZIPManager = (function (romPatcherWeb) {
 								option.patchFileName = selectablePatches[i].filename;
 								htmlElements.get('select-patch').appendChild(option);
 							}
-							htmlElements.get('select-patch')._unzipSelectedPatch = function(fileIndex){
+							htmlElements.get('select-patch')._unzipSelectedPatch = function (fileIndex) {
 								_unzipEntry(selectablePatches[fileIndex], romPatcherWeb.providePatchFile);
 							};
 
