@@ -508,6 +508,15 @@ var RomPatcherWeb = (function () {
 		return false;
 	}
 
+	const _dragEventContainsFiles = function (evt) {
+		if (evt.dataTransfer.types) {
+			for (var i = 0; i < evt.dataTransfer.types.length; i++) {
+				if (evt.dataTransfer.types[i] === 'Files')
+					return true;
+			}
+		}
+		return false;
+	}
 	const _initialize = function (newSettings, embededPatchInfo) {
 		/* embeded patches */
 		var validEmbededPatch = _checkEmbededPatchParameter(embededPatchInfo);
