@@ -736,106 +736,110 @@ var RomPatcherWeb = (function () {
 				if (ZIPManager.isZipFile(binFile)) {
 					ZIPManager.unzipPatches(binFile._u8array.buffer);
 				} else {
-					const parsedPatch = RomPatcher.parsePatchFile(binFile);
-					if (parsedPatch) {
-						patch = parsedPatch;
-						_setPatchInputSpinner(false);
-
-						const embededPatchInfo = _getEmbededPatchInfo(binFile.fileName);
-						if (embededPatchInfo) {
-							/* custom crc32s validation */
-							if (embededPatchInfo.inputCrc32) {
-								patch.validateSource = function (romFile, headerSize) {
-									for (var i = 0; i < embededPatchInfo.inputCrc32.length; i++) {
-										if (embededPatchInfo.inputCrc32[i] === romFile.hashCRC32(headerSize))
-											return true;
+					try{
+						const parsedPatch = RomPatcher.parsePatchFile(binFile);
+						if (parsedPatch) {
+							patch = parsedPatch;
+							_setPatchInputSpinner(false);
+	
+							const embededPatchInfo = _getEmbededPatchInfo(binFile.fileName);
+							if (embededPatchInfo) {
+								/* custom crc32s validation */
+								if (embededPatchInfo.inputCrc32) {
+									patch.validateSource = function (romFile, headerSize) {
+										for (var i = 0; i < embededPatchInfo.inputCrc32.length; i++) {
+											if (embededPatchInfo.inputCrc32[i] === romFile.hashCRC32(headerSize))
+												return true;
+										}
+										return false;
 									}
-									return false;
+									patch.getValidationInfo = function () {
+										return {
+											'type': 'CRC32',
+											'value': embededPatchInfo.inputCrc32
+										}
+									};
 								}
-								patch.getValidationInfo = function () {
-									return {
-										'type': 'CRC32',
-										'value': embededPatchInfo.inputCrc32
+	
+								/* custom description */
+								if (embededPatchInfo.description) {
+									patch.getDescription = function () {
+										return embededPatchInfo.description;
 									}
-								};
+								}
 							}
-
-							/* custom description */
-							if (embededPatchInfo.description) {
-								patch.getDescription = function () {
-									return embededPatchInfo.description;
-								}
-							}
-						}
-
-						/* toggle ROM requirements */
-						if (htmlElements.get('row-patch-requirements') && htmlElements.get('patch-requirements-value')) {
-							if (typeof patch.getValidationInfo === 'function' && patch.getValidationInfo()) {
-								var validationInfo = patch.getValidationInfo();
-								if (Array.isArray(validationInfo) || !validationInfo.type) {
-									validationInfo = {
-										type: 'ROM',
-										value: validationInfo
-									}
-								}
-								htmlElements.setText('patch-requirements-value', '');
-
-								htmlElements.setText('patch-requirements-type', validationInfo.type === 'ROM' ? _('Required ROM:') : _('Required %s:').replace('%s', validationInfo.type));
-
-								if (!Array.isArray(validationInfo.value))
-									validationInfo.value = [validationInfo.value];
-
-								validationInfo.value.forEach(function (value) {
-									var line = document.createElement('div');
-									if (typeof value !== 'string') {
-										if (validationInfo.type === 'CRC32') {
-											value = value.toString(16);
-											while (value.length < 8)
-												value = '0' + value;
-										} else {
-											value = value.toString();
+	
+							/* toggle ROM requirements */
+							if (htmlElements.get('row-patch-requirements') && htmlElements.get('patch-requirements-value')) {
+								if (typeof patch.getValidationInfo === 'function' && patch.getValidationInfo()) {
+									var validationInfo = patch.getValidationInfo();
+									if (Array.isArray(validationInfo) || !validationInfo.type) {
+										validationInfo = {
+											type: 'ROM',
+											value: validationInfo
 										}
 									}
-									/*
-									var a=document.createElement('a');
-									a.href='https://www.google.com/search?q=%22'+value+'%22';
-									a.target='_blank';
-									a.className='clickable';
-									a.innerHTML=value;
-									line.appendChild(a);
-									*/
-									line.innerHTML = value;
-									htmlElements.get('patch-requirements-value').appendChild(line);
-								});
-								htmlElements.addClass('row-patch-requirements', 'show');
-							} else {
-								htmlElements.setText('patch-requirements-value', '');
-								htmlElements.removeClass('row-patch-requirements', 'show');
+									htmlElements.setText('patch-requirements-value', '');
+	
+									htmlElements.setText('patch-requirements-type', validationInfo.type === 'ROM' ? _('Required ROM:') : _('Required %s:').replace('%s', validationInfo.type));
+	
+									if (!Array.isArray(validationInfo.value))
+										validationInfo.value = [validationInfo.value];
+	
+									validationInfo.value.forEach(function (value) {
+										var line = document.createElement('div');
+										if (typeof value !== 'string') {
+											if (validationInfo.type === 'CRC32') {
+												value = value.toString(16);
+												while (value.length < 8)
+													value = '0' + value;
+											} else {
+												value = value.toString();
+											}
+										}
+										/*
+										var a=document.createElement('a');
+										a.href='https://www.google.com/search?q=%22'+value+'%22';
+										a.target='_blank';
+										a.className='clickable';
+										a.innerHTML=value;
+										line.appendChild(a);
+										*/
+										line.innerHTML = value;
+										htmlElements.get('patch-requirements-value').appendChild(line);
+									});
+									htmlElements.addClass('row-patch-requirements', 'show');
+								} else {
+									htmlElements.setText('patch-requirements-value', '');
+									htmlElements.removeClass('row-patch-requirements', 'show');
+								}
 							}
-						}
-
-						/* toggle patch description */
-						if (typeof patch.getDescription === 'function' && patch.getDescription()) {
-							htmlElements.setText('patch-description', patch.getDescription()/* .replace(/\n/g, '<br/>') */);
-							//htmlElements.setTitle('patch-description', patch.getDescription());
-							htmlElements.addClass('row-patch-description', 'show');
+	
+							/* toggle patch description */
+							if (typeof patch.getDescription === 'function' && patch.getDescription()) {
+								htmlElements.setText('patch-description', patch.getDescription()/* .replace(/\n/g, '<br/>') */);
+								//htmlElements.setTitle('patch-description', patch.getDescription());
+								htmlElements.addClass('row-patch-description', 'show');
+							} else {
+								htmlElements.setText('patch-description', '');
+								//htmlElements.setTitle('patch-description', '');
+								htmlElements.removeClass('row-patch-description', 'show');
+							}
+	
+							RomPatcherWeb.validateCurrentRom(_getChecksumStartOffset());
+	
+							if (typeof settings.onloadpatch === 'function') {
+								settings.onloadpatch(binFile, embededPatchInfo, parsedPatch);
+							}
+	
+							if (transferFakeFile) {
+								htmlElements.setFakeFile('patch', binFile.fileName);
+							}
 						} else {
-							htmlElements.setText('patch-description', '');
-							//htmlElements.setTitle('patch-description', '');
-							htmlElements.removeClass('row-patch-description', 'show');
+							_setToastError(_('Invalid patch file'));
 						}
-
-						RomPatcherWeb.validateCurrentRom(_getChecksumStartOffset());
-
-						if (typeof settings.onloadpatch === 'function') {
-							settings.onloadpatch(binFile, embededPatchInfo, parsedPatch);
-						}
-
-						if (transferFakeFile) {
-							htmlElements.setFakeFile('patch', binFile.fileName);
-						}
-					} else {
-						_setToastError(_('Invalid patch file'));
+					}catch(ex){
+						_setToastError(ex.message);
 					}
 				}
 			}
