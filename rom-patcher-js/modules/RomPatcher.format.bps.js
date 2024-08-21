@@ -1,4 +1,4 @@
-/* BPS module for Rom Patcher JS v20240721 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
+/* BPS module for Rom Patcher JS v20240821 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
 const BPS_MAGIC='BPS1';
@@ -238,9 +238,9 @@ BPS.buildFromRoms=function(original, modified, deltaMode){
 		patch.actions=createBPSFromFilesLinear(original, modified);
 	}
 
-	var patchFile=patch.export();
 	patch.sourceChecksum=original.hashCRC32();
 	patch.targetChecksum=modified.hashCRC32();
+	var patchFile=patch.export();
 	patch.patchChecksum=patchFile.hashCRC32(0, patchFile.fileSize - 4);
 	return patch;
 }
