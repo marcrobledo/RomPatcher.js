@@ -114,11 +114,11 @@ const TEST_DATA = (new Uint8Array([
 _test('HashCalculator integrity', function () {
 	if (HashCalculator.md5(TEST_DATA) !== '55c76e7e683fd7cd63c673c5df3efa6e')
 		throw new Error('invalid MD5');
-	if (HashCalculator.crc32(TEST_DATA).toString(16) !== '903a031b')
+	if (HashCalculator.crc32(TEST_DATA) !== 0x903a031b)
 		throw new Error('invalid CRC32');
-	if (HashCalculator.adler32(TEST_DATA).toString(16) !== 'ef984205')
+	if (HashCalculator.adler32(TEST_DATA) !== 0xef984205)
 		throw new Error('invalid ADLER32');
-	if (HashCalculator.crc16(TEST_DATA).toString(16) !== '96e4')
+	if (HashCalculator.crc16(TEST_DATA) !== 0x96e4)
 		throw new Error('invalid SHA1');
 });
 
@@ -134,11 +134,9 @@ const MODIFIED_TEST_DATA = (new Uint8Array([
 		const patchedFile = RomPatcher.applyPatch(originalFile, patch, { requireValidation: true });
 
 		if (patchFormat === 'bps') {
-			const patchFile = patch.export();
-			const patchChecksum = patchFile.hashCRC32(0, patchFile.fileSize - 4);
-			if (patch.patchChecksum !== patchChecksum)
+			if (patch.patchChecksum !== patch.calculateFileChecksum())
 				throw new Error('invalid patch checksum');
-			else if (patchFile.hashCRC32() !== 0x2144df1c)
+			else if (patch.export().hashCRC32() !== 0x2144df1c)
 				throw new Error('invalid BPS crc32');
 		}
 

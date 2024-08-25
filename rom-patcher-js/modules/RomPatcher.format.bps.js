@@ -26,6 +26,10 @@ BPS.prototype.toString=function(){
 	s+='\n#Actions: '+this.actions.length;
 	return s
 }
+BPS.prototype.calculateFileChecksum = function () {
+	var patchFile = this.export();
+	return patchFile.hashCRC32(0, patchFile.fileSize - 4);
+}
 BPS.prototype.validateSource=function(romFile,headerSize){return this.sourceChecksum===romFile.hashCRC32(headerSize)}
 BPS.prototype.getValidationInfo=function(){
 	return {
@@ -121,7 +125,7 @@ BPS.fromFile=function(file){
 	patch.targetChecksum=file.readU32();
 	patch.patchChecksum=file.readU32();
 
-	if(patch.patchChecksum!==file.hashCRC32(0, file.fileSize - 4)){
+	if (patch.patchChecksum !== patch.calculateFileChecksum()) {
 		throw new Error('Patch checksum mismatch');
 	}
 
@@ -240,8 +244,7 @@ BPS.buildFromRoms=function(original, modified, deltaMode){
 
 	patch.sourceChecksum=original.hashCRC32();
 	patch.targetChecksum=modified.hashCRC32();
-	var patchFile=patch.export();
-	patch.patchChecksum=patchFile.hashCRC32(0, patchFile.fileSize - 4);
+	patch.patchChecksum = patch.calculateFileChecksum();
 	return patch;
 }
 
