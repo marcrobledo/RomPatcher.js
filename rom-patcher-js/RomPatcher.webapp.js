@@ -318,7 +318,8 @@ var RomPatcherWeb = (function () {
 			return fallback || 0;
 		},
 		setFakeFile: function (id, fileName) {
-			if (document.getElementById('rom-patcher-input-file-' + id)) {
+			const isBrowserSafari = /Safari/i.test(navigator.userAgent); /* safari does not show fake file name: https://pqina.nl/blog/set-value-to-file-input/#but-safari */
+			if (!isBrowserSafari && document.getElementById('rom-patcher-input-file-' + id)) {
 				try {
 					/* add a fake file to the input file, so it shows the chosen file name */
 					const fakeFile = new File(new Uint8Array(0), fileName);
