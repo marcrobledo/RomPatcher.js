@@ -1,5 +1,5 @@
 /*
-* BinFile.js (last update: 2024-02-27)
+* BinFile.js (last update: 2024-08-21)
 * by Marc Robledo, https://www.marcrobledo.com
 * 
 * a JS class for reading/writing sequentially binary data from/to a file
@@ -188,7 +188,7 @@ BinFile.prototype.slice = function (offset, len, doNotClone) {
 	else if (len === 0)
 		throw new Error('zero length provided for slicing');
 	else
-		offset = Math.floor(offset);
+		len = Math.floor(len);
 
 	if (offset === 0 && len === this.fileSize && doNotClone)
 		return this;

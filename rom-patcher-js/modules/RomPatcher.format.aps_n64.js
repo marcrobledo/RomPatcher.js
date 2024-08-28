@@ -204,7 +204,6 @@ APS.buildFromRoms=function(original, modified){
 			}else{
 				patch.addRecord(offset, differentBytes);
 			}
-			//NO se puede comentar??? why????
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* BPS module for Rom Patcher JS v20240721 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
+/* BPS module for Rom Patcher JS v20240821 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
 /* File format specification: https://www.romhacking.net/documents/746/ */
 
 const BPS_MAGIC='BPS1';
@@ -25,6 +25,10 @@ BPS.prototype.toString=function(){
 	s+='\nMetadata: '+this.metaData;
 	s+='\n#Actions: '+this.actions.length;
 	return s
+}
+BPS.prototype.calculateFileChecksum = function () {
+	var patchFile = this.export();
+	return patchFile.hashCRC32(0, patchFile.fileSize - 4);
 }
 BPS.prototype.validateSource=function(romFile,headerSize){return this.sourceChecksum===romFile.hashCRC32(headerSize)}
 BPS.prototype.getValidationInfo=function(){
@@ -121,7 +125,7 @@ BPS.fromFile=function(file){
 	patch.targetChecksum=file.readU32();
 	patch.patchChecksum=file.readU32();
 
-	if(patch.patchChecksum!==file.hashCRC32(0, file.fileSize - 4)){
+	if (patch.patchChecksum !== patch.calculateFileChecksum()) {
 		throw new Error('Patch checksum mismatch');
 	}
 
@@ -238,10 +242,9 @@ BPS.buildFromRoms=function(original, modified, deltaMode){
 		patch.actions=createBPSFromFilesLinear(original, modified);
 	}
 
-	var patchFile=patch.export();
 	patch.sourceChecksum=original.hashCRC32();
 	patch.targetChecksum=modified.hashCRC32();
-	patch.patchChecksum=patchFile.hashCRC32(0, patchFile.fileSize - 4);
+	patch.patchChecksum = patch.calculateFileChecksum();
 	return patch;
 }
 
