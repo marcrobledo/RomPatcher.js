@@ -37,7 +37,7 @@
 
 const ROM_PATCHER_JS_PATH = './rom-patcher-js/';
 
-var RomPatcherWeb = (function () {
+const RomPatcherWeb = (function () {
 	const SCRIPT_DEPENDENCIES = [
 		'modules/BinFile.js',
 		'modules/HashCalculator.js',
@@ -103,25 +103,54 @@ var RomPatcherWeb = (function () {
 			parsedPatch.outputExtension = embededPatchInfo.outputExtension;
 		}
 
-		if (typeof embededPatchInfo.inputCrc32 !== 'undefined') {
-			if (!Array.isArray(embededPatchInfo.inputCrc32))
-				embededPatchInfo.inputCrc32 = [embededPatchInfo.inputCrc32];
+		if (typeof embededPatchInfo.inputMd5 !== 'undefined') {
+			if (!Array.isArray(embededPatchInfo.inputMd5))
+				embededPatchInfo.inputMd5 = [embededPatchInfo.inputMd5];
 
-			const validCrcs = embededPatchInfo.inputCrc32.map(function (crc32) {
-				if (typeof crc32 === 'string' && /^(0x)?[0-9a-fA-F]{8}$/i.test(crc32.trim())) {
-					return parseInt(crc32.replace('0x', ''), 16);
-				} else if (typeof crc32 === 'number') {
-					return crc32 >>> 0;
+			const validMd5s = embededPatchInfo.inputMd5.reduce(function (acc, md5) {
+				if (typeof md5 === 'string' && /^(0x)?[0-9a-fA-F]{32}$/i.test(md5.trim())) {
+					acc.push(md5.trim().toLowerCase());
 				} else {
-					return null;
+					console.warn('Rom Patcher JS: inputMd5 must be a string (32 characters long, characters allowed: 0-9, a-f)');
 				}
-			}).filter(function (crc32) {
-				return typeof crc32 === 'number';
-			});
-			if (validCrcs.length) {
-				parsedPatch.inputCrc32 = validCrcs;
+				return acc;
+			}, []);
+
+			if (validMd5s.length) {
+				parsedPatch.inputValidation = {
+					'type': 'MD5',
+					'value': validMd5s
+				};
 			} else {
-				console.warn('Invalid inputCrc32 for embeded patch', embededPatchInfo);
+				console.warn('Rom Patcher JS: invalid inputMd5 for embeded patch', embededPatchInfo.inputMd5);
+			}
+		}
+		if (typeof embededPatchInfo.inputCrc32 !== 'undefined') {
+			if (!parsedPatch.inputValidation) {
+				if (!Array.isArray(embededPatchInfo.inputCrc32))
+					embededPatchInfo.inputCrc32 = [embededPatchInfo.inputCrc32];
+
+				const validCrcs = embededPatchInfo.inputCrc32.reduce(function (acc, crc32) {
+					if (typeof crc32 === 'string' && /^(0x)?[0-9a-fA-F]{8}$/i.test(crc32.trim())) {
+						acc.push(parseInt(crc32.trim().replace('0x', ''), 16));
+					} else if (typeof crc32 === 'number') {
+						acc.push((crc32 >>> 0) & 0xffffffff);
+					} else {
+						console.warn('Rom Patcher JS: invalid inputCrc32 value');
+					}
+					return acc;
+				}, []);
+
+				if (validCrcs.length) {
+					parsedPatch.inputValidation = {
+						'type': 'CRC32',
+						'value': validCrcs
+					};
+				} else {
+					console.warn('Rom Patcher JS: invalid inputCrc32 for embeded patch', embededPatchInfo.inputCrc32);
+				}
+			} else {
+				console.warn('Rom Patcher JS: a valid inputMd5 was provided, inputCrc32 will be ignored', embededPatchInfo);
 			}
 		}
 
@@ -521,6 +550,9 @@ var RomPatcherWeb = (function () {
 	const _initialize = function (newSettings, embededPatchInfo) {
 		/* embeded patches */
 		var validEmbededPatch = _checkEmbededPatchParameter(embededPatchInfo);
+		if (newSettings && typeof newSettings.file === 'string') {
+			console.warn('Rom Patcher JS: embeded patch info was provided in settings and will be ignored, must be passed as second parameter');
+		}
 
 
 
@@ -737,31 +769,40 @@ var RomPatcherWeb = (function () {
 				if (ZIPManager.isZipFile(binFile)) {
 					ZIPManager.unzipPatches(binFile._u8array.buffer);
 				} else {
-					try{
+					try {
 						const parsedPatch = RomPatcher.parsePatchFile(binFile);
 						if (parsedPatch) {
 							patch = parsedPatch;
 							_setPatchInputSpinner(false);
-	
+
 							const embededPatchInfo = _getEmbededPatchInfo(binFile.fileName);
 							if (embededPatchInfo) {
-								/* custom crc32s validation */
-								if (embededPatchInfo.inputCrc32) {
-									patch.validateSource = function (romFile, headerSize) {
-										for (var i = 0; i < embededPatchInfo.inputCrc32.length; i++) {
-											if (embededPatchInfo.inputCrc32[i] === romFile.hashCRC32(headerSize))
-												return true;
+								/* custom input validation */
+								if (embededPatchInfo.inputValidation) {
+									if (embededPatchInfo.inputValidation.type === 'CRC32') {
+										patch.validateSource = function (romFile, headerSize) {
+											for (var i = 0; i < embededPatchInfo.inputValidation.value.length; i++) {
+												if (embededPatchInfo.inputValidation.value[i] === romFile.hashCRC32(headerSize))
+													return true;
+											}
+											return false;
 										}
-										return false;
+									} else if (embededPatchInfo.inputValidation.type === 'MD5') {
+										patch.validateSource = function (romFile, headerSize) {
+											for (var i = 0; i < embededPatchInfo.inputValidation.value.length; i++) {
+												if (embededPatchInfo.inputValidation.value[i] === romFile.hashMD5(headerSize))
+													return true;
+											}
+											return false;
+										}
+									} else {
+										throw new Error('Rom Patcher JS: Invalid inputValidation type');
 									}
 									patch.getValidationInfo = function () {
-										return {
-											'type': 'CRC32',
-											'value': embededPatchInfo.inputCrc32
-										}
+										return embededPatchInfo.inputValidation
 									};
 								}
-	
+
 								/* custom description */
 								if (embededPatchInfo.description) {
 									patch.getDescription = function () {
@@ -769,7 +810,7 @@ var RomPatcherWeb = (function () {
 									}
 								}
 							}
-	
+
 							/* toggle ROM requirements */
 							if (htmlElements.get('row-patch-requirements') && htmlElements.get('patch-requirements-value')) {
 								if (typeof patch.getValidationInfo === 'function' && patch.getValidationInfo()) {
@@ -781,12 +822,12 @@ var RomPatcherWeb = (function () {
 										}
 									}
 									htmlElements.setText('patch-requirements-value', '');
-	
+
 									htmlElements.setText('patch-requirements-type', validationInfo.type === 'ROM' ? _('Required ROM:') : _('Required %s:').replace('%s', validationInfo.type));
-	
+
 									if (!Array.isArray(validationInfo.value))
 										validationInfo.value = [validationInfo.value];
-	
+
 									validationInfo.value.forEach(function (value) {
 										var line = document.createElement('div');
 										if (typeof value !== 'string') {
@@ -815,7 +856,7 @@ var RomPatcherWeb = (function () {
 									htmlElements.removeClass('row-patch-requirements', 'show');
 								}
 							}
-	
+
 							/* toggle patch description */
 							if (typeof patch.getDescription === 'function' && patch.getDescription()) {
 								htmlElements.setText('patch-description', patch.getDescription()/* .replace(/\n/g, '<br/>') */);
@@ -826,20 +867,20 @@ var RomPatcherWeb = (function () {
 								//htmlElements.setTitle('patch-description', '');
 								htmlElements.removeClass('row-patch-description', 'show');
 							}
-	
+
 							RomPatcherWeb.validateCurrentRom(_getChecksumStartOffset());
-	
+
 							if (typeof settings.onloadpatch === 'function') {
 								settings.onloadpatch(binFile, embededPatchInfo, parsedPatch);
 							}
-	
+
 							if (transferFakeFile) {
 								htmlElements.setFakeFile('patch', binFile.fileName);
 							}
 						} else {
 							_setToastError(_('Invalid patch file'));
 						}
-					}catch(ex){
+					} catch (ex) {
 						_setToastError(ex.message);
 					}
 				}
@@ -1489,26 +1530,7 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 		}
 	};
 
-	const webWorkerCreate = new Worker(ROM_PATCHER_JS_PATH + 'RomPatcher.webworker.create.js');
-	webWorkerCreate.onmessage = event => { // listen for events from the worker
-		//retrieve arraybuffers back from webworker
-		originalRom._u8array = event.data.originalRomU8Array;
-		modifiedRom._u8array = event.data.modifiedRomU8Array;
-
-		_setElementsStatus(true);
-		_setCreateButtonSpinner(false);
-
-		const patchFile = new BinFile(event.data.patchFileU8Array.buffer);
-		patchFile.fileName = modifiedRom.getName() + '.' + document.getElementById('patch-builder-select-patch-type').value;
-		patchFile.save();
-
-		_setToastError();
-	};
-	webWorkerCreate.onerror = event => { // listen for events from the worker
-		_setElementsStatus(true);
-		_setCreateButtonSpinner(false);
-		_setToastError('webWorkerCreate error: ' + event.message);
-	};
+	var webWorkerCreate;
 
 	var initialized = false;
 	return {
@@ -1521,6 +1543,45 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 				throw new Error('Patch Builder JS was already initialized');
 			else if (!romPatcherWeb.isInitialized())
 				throw new Error('Rom Patcher JS must be initialized before Patch Builder JS');
+
+
+			if (!document.getElementById('patch-builder-button-create') || document.getElementById('patch-builder-button-create').tagName !== 'BUTTON') {
+				console.error('Patch Builder JS: button#patch-builder-button-create not found');
+				throw new Error('Patch Builder JS: button#patch-builder-button-create not found');
+			}
+			if (!document.getElementById('patch-builder-select-patch-type') || document.getElementById('patch-builder-select-patch-type').tagName !== 'SELECT') {
+				console.error('Patch Builder JS: select#patch-builder-select-patch-type not found');
+				throw new Error('Patch Builder JS: select#patch-builder-select-patch-type not found');
+			}
+			if (!document.getElementById('patch-builder-input-file-original') || document.getElementById('patch-builder-input-file-original').tagName !== 'INPUT' || document.getElementById('patch-builder-input-file-original').type !== 'file') {
+				console.error('Patch Builder JS: input[type=file]#patch-builder-input-file-original not found');
+				throw new Error('Patch Builder JS: input[type=file]#patch-builder-input-file-original not found');
+			}
+			if (!document.getElementById('patch-builder-input-file-modified') || document.getElementById('patch-builder-input-file-modified').tagName !== 'INPUT' || document.getElementById('patch-builder-input-file-modified').type !== 'file') {
+				console.error('Patch Builder JS: input[type=file]#patch-builder-input-file-modified not found');
+				throw new Error('Patch Builder JS: input[type=file]#patch-builder-input-file-modified not found');
+			}
+
+			webWorkerCreate = new Worker(ROM_PATCHER_JS_PATH + 'RomPatcher.webworker.create.js');
+			webWorkerCreate.onmessage = event => { // listen for events from the worker
+				//retrieve arraybuffers back from webworker
+				originalRom._u8array = event.data.originalRomU8Array;
+				modifiedRom._u8array = event.data.modifiedRomU8Array;
+		
+				_setElementsStatus(true);
+				_setCreateButtonSpinner(false);
+		
+				const patchFile = new BinFile(event.data.patchFileU8Array.buffer);
+				patchFile.fileName = modifiedRom.getName() + '.' + document.getElementById('patch-builder-select-patch-type').value;
+				patchFile.save();
+		
+				_setToastError();
+			};
+			webWorkerCreate.onerror = event => { // listen for events from the worker
+				_setElementsStatus(true);
+				_setCreateButtonSpinner(false);
+				_setToastError('webWorkerCreate error: ' + event.message);
+			};
 
 			document.getElementById('patch-builder-button-create').disabled = true;
 
