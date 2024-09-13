@@ -130,7 +130,7 @@ window.addEventListener('load', function (evt) {
 		RomPatcherWeb.initialize(initialSettings);
 	} catch (err) {
 		var message = err.message;
-		if (/incompatible browser/i.test(message))
+		if (/incompatible browser/i.test(message) || /variable RomPatcherWeb/i.test(message))
 			message = 'Your browser is outdated and it is not compatible with the latest version of Rom Patcher JS.<br/><a href="legacy/">Try the legacy version</a>';
 
 		document.getElementById('rom-patcher-container').innerHTML = message;

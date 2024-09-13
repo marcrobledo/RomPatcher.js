@@ -71,6 +71,8 @@ const RomPatcherWeb = (function () {
 	};
 	var romFile, patch;
 
+	const isBrowserSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent); /* Safari userAgent does not include word Chrome, Chrome includes both! */
+	const isBrowserMobile = /Mobile(\/\S+)? /.test(navigator.userAgent);
 
 	/* embeded patches */
 	var currentEmbededPatches = null;
@@ -347,8 +349,7 @@ const RomPatcherWeb = (function () {
 			return fallback || 0;
 		},
 		setFakeFile: function (id, fileName) {
-			const isBrowserSafari = /Safari/i.test(navigator.userAgent); /* safari does not show fake file name: https://pqina.nl/blog/set-value-to-file-input/#but-safari */
-			if (!isBrowserSafari && document.getElementById('rom-patcher-input-file-' + id)) {
+			if (!isBrowserSafari && document.getElementById('rom-patcher-input-file-' + id)) { /* safari does not show fake file name: https://pqina.nl/blog/set-value-to-file-input/#but-safari */
 				try {
 					/* add a fake file to the input file, so it shows the chosen file name */
 					const fakeFile = new File(new Uint8Array(0), fileName);
@@ -575,9 +576,19 @@ const RomPatcherWeb = (function () {
 		const htmlInputFileRom = htmlElements.get('input-file-rom');
 		if (htmlInputFileRom && htmlInputFileRom.tagName === 'INPUT' && htmlInputFileRom.type === 'file') {
 			htmlInputFileRom.addEventListener('change', function (evt) {
-				htmlElements.disableAll();
-				new BinFile(this, RomPatcherWeb.provideRomFile);
+				if (this.files && this.files.length) {
+					htmlElements.disableAll();
+					new BinFile(this, RomPatcherWeb.provideRomFile);
+				} else if (romFile) {
+					/* Webkit browsers trigger the change event when user cancels file selection and resets the input file value */
+					/* since we keep a cached copy of ROM file as a BinFile, we do not lose data but the input text, so we try to set it back */
+					/* Firefox keeps the previously selected file and does not trigger the change event */
+					htmlElements.setFakeFile('rom', romFile.fileName);
+				}
 			});
+
+			if (!isBrowserSafari)
+				htmlInputFileRom.classList.add('no-file-selector-button');
 		} else {
 			console.error('Rom Patcher JS: input#rom-patcher-input-file-rom[type=file] not found');
 			throw new Error('Rom Patcher JS: input#rom-patcher-input-file-rom[type=file] not found');
@@ -605,12 +616,28 @@ const RomPatcherWeb = (function () {
 			const htmlInputFilePatch = htmlElements.get('input-file-patch');
 			if (htmlInputFilePatch && htmlInputFilePatch.tagName === 'INPUT' && htmlInputFilePatch.type === 'file') {
 				htmlInputFilePatch.addEventListener('change', function (evt) {
-					htmlElements.disableAll();
-					new BinFile(this, RomPatcherWeb.providePatchFile);
+					if (this.files && this.files.length) {
+						htmlElements.disableAll();
+						new BinFile(this, RomPatcherWeb.providePatchFile);
+					} else if (patch && patch._originalPatchFile) {
+						/* Webkit browsers trigger the change event when user cancels file selection and resets the input file value */
+						/* since we keep a cached copy of patch file as a BinFile, we do not lose data but the input text, so we try to set it back */
+						/* Firefox keeps the previously selected file and does not trigger the change event */
+						htmlElements.setFakeFile('patch', patch._originalPatchFile.fileName);
+					}
 				});
+
+				if (!isBrowserSafari)
+					htmlInputFilePatch.classList.add('no-file-selector-button');
 			} else {
 				console.error('Rom Patcher JS: input#rom-patcher-input-file-patch[type=file] not found');
 				throw new Error('Rom Patcher JS: input#rom-patcher-input-file-patch[type=file] not found');
+			}
+
+			/* dirty fix for iOS Safari, which only supports mimetypes in <input> accept attribute */
+			/* accept attribute compatibility: https://caniuse.com/input-file-accept */
+			if (isBrowserSafari && isBrowserMobile) {
+				htmlInputFilePatch.accept = 'application/zip, application/octet-stream, application/x-zip-compressed, multipart/x-zip';
 			}
 		}
 		const htmlButtonApply = htmlElements.get('button-apply');
@@ -1481,6 +1508,8 @@ const ZIPManager = (function (romPatcherWeb) {
 const PatchBuilderWeb = (function (romPatcherWeb) {
 	var originalRom, modifiedRom;
 
+	const isBrowserSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent); /* Safari userAgent does not include word Chrome, Chrome includes both! */
+
 	/* localization */
 	const _ = function (str) {
 		const language = romPatcherWeb.getCurrentLanguage();
@@ -1561,20 +1590,24 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 				console.error('Patch Builder JS: input[type=file]#patch-builder-input-file-modified not found');
 				throw new Error('Patch Builder JS: input[type=file]#patch-builder-input-file-modified not found');
 			}
+			if (!isBrowserSafari) {
+				document.getElementById('patch-builder-input-file-original').classList.add('no-file-selector-button');
+				document.getElementById('patch-builder-input-file-modified').classList.add('no-file-selector-button');
+			}
 
 			webWorkerCreate = new Worker(ROM_PATCHER_JS_PATH + 'RomPatcher.webworker.create.js');
 			webWorkerCreate.onmessage = event => { // listen for events from the worker
 				//retrieve arraybuffers back from webworker
 				originalRom._u8array = event.data.originalRomU8Array;
 				modifiedRom._u8array = event.data.modifiedRomU8Array;
-		
+
 				_setElementsStatus(true);
 				_setCreateButtonSpinner(false);
-		
+
 				const patchFile = new BinFile(event.data.patchFileU8Array.buffer);
 				patchFile.fileName = modifiedRom.getName() + '.' + document.getElementById('patch-builder-select-patch-type').value;
 				patchFile.save();
-		
+
 				_setToastError();
 			};
 			webWorkerCreate.onerror = event => { // listen for events from the worker
@@ -1586,16 +1619,18 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 			document.getElementById('patch-builder-button-create').disabled = true;
 
 			document.getElementById('patch-builder-input-file-original').addEventListener('change', function () {
-				_setElementsStatus(false);
-				this.classList.remove('empty');
-				originalRom = new BinFile(this.files[0], function (evt) {
-					_setElementsStatus(true);
+				if (this.files && this.files.length) {
+					_setElementsStatus(false);
+					this.classList.remove('empty');
+					originalRom = new BinFile(this.files[0], function (evt) {
+						_setElementsStatus(true);
 
-					if (RomPatcher.isRomTooBig(originalRom))
-						_setToastError(_('Using big files is not recommended'), 'warning');
-					else if (ZIPManager.isZipFile(originalRom))
-						_setToastError(_('Patch creation is not compatible with zipped ROMs'), 'warning');
-				});
+						if (RomPatcher.isRomTooBig(originalRom))
+							_setToastError(_('Using big files is not recommended'), 'warning');
+						else if (ZIPManager.isZipFile(originalRom))
+							_setToastError(_('Patch creation is not compatible with zipped ROMs'), 'warning');
+					});
+				}
 			});
 			document.getElementById('patch-builder-input-file-modified').addEventListener('change', function () {
 				_setElementsStatus(false);

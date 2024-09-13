@@ -213,7 +213,7 @@ input[type=checkbox].styled:focus:not(:disabled){
 #patch-builder-container input[type=file]
 {width:100%}
 input[type=file]{padding:6px 10px}
-input[type=file]::file-selector-button{display:none}
+input[type=file].no-file-selector-button::file-selector-button{display:none}
 select{
 	padding:6px 18px 6px 10px;
 	-webkit-appearance:none;

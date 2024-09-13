@@ -152,7 +152,7 @@
 	padding: 6px 10px
 }
 
-#rom-patcher-container input[type=file]::file-selector-button {
+#rom-patcher-container input[type=file].no-file-selector-button::file-selector-button {
 	display: none
 }
 
