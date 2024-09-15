@@ -23,7 +23,7 @@
 
 const chalk=require('chalk');
 const { program } = require('commander')
-const RomPatcher = require('./app/RomPatcher');
+const RomPatcher = require('./rom-patcher-js/RomPatcher');
 
 
 program
