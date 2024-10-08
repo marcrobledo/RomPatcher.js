@@ -58,13 +58,17 @@ program
     .description('creates a patch based on two ROMs')
     .argument('<original_rom_file>', 'the original ROM')
     .argument('<modified_rom_file>','the modified ROM')
-    .option('-f, --format','patch format (allowed values: ips [default], bps, ppf, ups, aps, rup)')
+    .option('-f, --format <format>','patch format (allowed values: ips [default], bps, ppf, ups, aps, rup)')
     .action(function(originalRomPath, modifiedRomPath, options) {
+		console.log(options);
 		try{
 			const originalFile=new BinFile(originalRomPath);
 			const modifiedFile=new BinFile(modifiedRomPath);
 
 			const patch=RomPatcher.createPatch(originalFile, modifiedFile, options.format);
+			const patchFile=patch.export();
+			patchFile.setName(modifiedFile.getName());
+			patchFile.save();
 		}catch(err){
 			console.log(chalk.bgBlue('Error: ' + err.message));
 		}
