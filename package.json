@@ -8,11 +8,14 @@
 		"commander": "^11.0.0"
 	},
 	"name": "rom-patcher",
-	"description": "A ROM patcher made in Javascript.",
+	"description": "A ROM patcher made in Javascript. Compatible with IPS, BPS, APS, UPS and more formats.",
 	"version": "3.0.0",
 	"main": "index.js",
 	"scripts": {
 		"test": "node test.js"
+	},
+	"bin": {
+		"RomPatcher": "./index.js"
 	},
 	"author": "Marc Robledo",
 	"license": "MIT"

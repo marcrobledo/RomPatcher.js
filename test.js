@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
 	Test battery for Rom Patcher JS 
 	https://github.com/marcrobledo/RomPatcher.js
