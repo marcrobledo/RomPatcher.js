@@ -219,6 +219,8 @@ const RomPatcher = (function () {
 
 			if (options.outputSuffix) {
 				patchedRom.fileName = romFile.fileName.replace(/\.([^\.]*?)$/, ' (patched).$1');
+				if(patchedRom.unpatched)
+					patchedRom.fileName = patchedRom.fileName.replace(' (patched)', ' (unpatched)');
 			} else if (patch._originalPatchFile) {
 				patchedRom.fileName = patch._originalPatchFile.fileName.replace(/\.\w+$/i, (/\.\w+$/i.test(romFile.fileName) ? romFile.fileName.match(/\.\w+$/i)[0] : ''));
 			} else {

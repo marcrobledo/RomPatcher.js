@@ -1,4 +1,4 @@
-/* RUP module for Rom Patcher JS v20240721 - Marc Robledo 2018-2024 - http://www.marcrobledo.com/license */
+/* RUP module for Rom Patcher JS v20241102 - Marc Robledo 2018-2024 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/288/ */
 
 const RUP_MAGIC='NINJA2';
@@ -40,7 +40,11 @@ RUP.prototype.toString=function(){
 		s+='\nTarget file size: '+file.targetFileSize;
 		s+='\nSource MD5: '+file.sourceMD5;
 		s+='\nTarget MD5: '+file.targetMD5;
-		s+='\nOverflow text: '+file.overflowText;
+		if(file.overflowMode==='A'){
+			s+='\nOverflow mode: Append ' + file.overflowData.length + ' bytes';
+		}else if(file.overflowMode==='M'){
+			s+='\nOverflow mode: Minify ' + file.overflowData.length + ' bytes';
+		}
 		s+='\n#records: '+file.records.length;
 	}
 	return s
@@ -50,8 +54,11 @@ RUP.prototype.toString=function(){
 RUP.prototype.validateSource=function(romFile,headerSize){
 	var md5string=romFile.hashMD5(headerSize);
 	for(var i=0; i<this.files.length; i++){
-		if(this.files[i].sourceMD5===md5string){
-			return this.files[i];
+		if(this.files[i].sourceMD5===md5string || this.files[i].targetMD5===md5string){
+			return {
+				file:this.files[i],
+				undo:this.files[i].targetMD5===md5string
+			};
 		}
 	}
 	return false;
@@ -77,31 +84,53 @@ RUP.prototype.apply=function(romFile, validate){
 		if(!validFile)
 			throw new Error('Source ROM checksum mismatch');
 	}else{
-		validFile=this.files[0];
+		validFile={
+			file:this.files[0],
+			undo:this.files[0].targetMD5===romFile.hashMD5()
+		};
 	}
 
+	var undo=validFile.undo;
+	var patch=validFile.file;
 
-
-	tempFile=new BinFile(validFile.targetFileSize);
+	tempFile=new BinFile(!undo? patch.targetFileSize : patch.sourceFileSize);
 	/* copy original file */
 	romFile.copyTo(tempFile, 0);
 
 
-	for(var i=0; i<validFile.records.length; i++){
-		var offset=validFile.records[i].offset;
+	for(var i=0; i<patch.records.length; i++){
+		var offset=patch.records[i].offset;
 		romFile.seek(offset);
 		tempFile.seek(offset);
-		for(var j=0; j<validFile.records[i].xor.length; j++){
+		for(var j=0; j<patch.records[i].xor.length; j++){
 			tempFile.writeU8(
-				(romFile.isEOF()?0x00:romFile.readU8()) ^ validFile.records[i].xor[j]
+				(romFile.isEOF()?0x00:romFile.readU8()) ^ patch.records[i].xor[j]
 			);
 		}
 	}
 
+	/* add overflow data if needed */
+	if(patch.overflowMode==='A' && !undo){ /* append */
+		tempFile.seek(patch.sourceFileSize);
+		tempFile.writeBytes(patch.overflowData.map((byte) => byte ^ 0xff));
+	}else if(patch.overflowMode==='M' && undo){ /* minify */
+		tempFile.seek(patch.targetFileSize);
+		tempFile.writeBytes(patch.overflowData.map((byte) => byte ^ 0xff));
+	}
 
-	if(validate && tempFile.hashMD5()!==validFile.targetMD5){
+
+	if(
+		validate && 
+		(
+			(!undo && tempFile.hashMD5()!==patch.targetMD5) ||
+			(undo && tempFile.hashMD5()!==patch.sourceMD5)
+		)
+	){
 		throw new Error('Target ROM checksum mismatch');
 	}
+
+	if(undo)
+		tempFile.unpatched=true;
 
 	return tempFile
 }
@@ -161,8 +190,10 @@ RUP.fromFile=function(file){
 
 
 			if(nextFile.sourceFileSize!==nextFile.targetFileSize){
-				file.skip(1); //skip 'M' (source>target) or 'A' (source<target)
-				nextFile.overflowText=file.readString(file.readVLV());
+				nextFile.overflowMode=file.readString(1); // 'M' (source>target) or 'A' (source<target)
+				if(nextFile.overflowMode!=='M' && nextFile.overflowMode!=='A')
+					throw new Error('RUP: invalid overflow mode');
+				nextFile.overflowData=file.readBytes(file.readVLV());
 			}
 
 		}else if(command===RUP_COMMAND_XOR_RECORD){
@@ -229,8 +260,8 @@ RUP.prototype.export=function(fileName){
 
 		if(file.sourceFileSize!==file.targetFileSize){
 			patchFileSize++; // M or A
-			patchFileSize+=RUP_getVLVLen(file.overflowText);
-			patchFileSize+=file.overflowText;
+			patchFileSize+=RUP_getVLVLen(file.overflowData.length);
+			patchFileSize+=file.overflowData.length;
 		}
 		for(var j=0; j<file.records.length; j++){
 			patchFileSize++; //command 0x01
@@ -279,8 +310,8 @@ RUP.prototype.export=function(fileName){
 
 		if(file.sourceFileSize!==file.targetFileSize){
 			patchFile.writeString(file.sourceFileSize>file.targetFileSize?'M':'A');
-			patchFile.writeVLV(file.overflowText.length);
-			patchFile.writeString(file.overflowText);
+			patchFile.writeVLV(file.overflowData.length);
+			patchFile.writeBytes(file.overflowData);
 		}
 
 		for(var j=0; j<file.records.length; j++){
@@ -314,9 +345,22 @@ RUP.buildFromRoms=function(original, modified){
 		targetFileSize:modified.fileSize,
 		sourceMD5:original.hashMD5(),
 		targetMD5:modified.hashMD5(),
-		overflowText:'',
+		overflowMode:null,
+		overflowData:[],
 		records:[]
 	};
+
+	if(file.sourceFileSize<file.targetFileSize){
+		modified.seek(file.sourceFileSize);
+		file.overflowMode='A';
+		file.overflowData=modified.readBytes(file.targetFileSize-file.sourceFileSize).map((byte) => byte ^ 0xff);
+		modified=modified.slice(0, file.sourceFileSize);
+	}else if(file.sourceFileSize>file.targetFileSize){
+		original.seek(file.targetFileSize);
+		file.overflowMode='M';
+		file.overflowData=original.readBytes(file.sourceFileSize-file.targetFileSize).map((byte) => byte ^ 0xff);
+		original=original.slice(0, file.targetFileSize);
+	}
 
 
 	original.seek(0);
