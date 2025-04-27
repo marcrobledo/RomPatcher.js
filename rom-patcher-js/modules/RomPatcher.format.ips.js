@@ -13,7 +13,9 @@ const IPS_RECORD_SIMPLE=0x01;
 /* When creating patches, insert this data after everything else. */
 /* Finally, EBP doesn't seem to support truncation metadata. */
 const EBP_MAGIC_META_OPENER = 0x7B //UTF-8 '{'
-const EBP_META_DEFAULT={"author": "Unknown", "title": "Untitled", "description": "No description"}
+/* EBPatcher (linked above) expects the "patcher" field to be EBPatcher to read the metadata. Can't imagine why... */
+/* CoilSnake (EB modding tool) inserts this manually too. */
+const EBP_META_DEFAULT={"patcher": "EBPatcher", "author": "Unknown", "title": "Untitled", "description": "No description"}
 
 if(typeof module !== "undefined" && module.exports){
 	module.exports = IPS;
@@ -34,7 +36,7 @@ IPS.prototype.addRLERecord=function(o, l, b){
 }
 IPS.prototype.addEBPMetadata=function(author, title, description){
 	/* currently not used - no frontend support */
-	this.EBPmetadata=JSON.stringify({"author": author, "title": title, "description": description})
+	this.EBPmetadata=JSON.stringify({"patcher": "EBPatcher", "author": author, "title": title, "description": description})
 }
 IPS.prototype.toString=function(){
 	nSimpleRecords=0;
