@@ -242,8 +242,8 @@ const RomPatcher = (function () {
 				format = 'ips';
 
 			var patch;
-			if (format === 'ips') {
-				patch = IPS.buildFromRoms(originalFile, modifiedFile);
+			if (format === 'ips' || format === 'ebp') {
+				patch = IPS.buildFromRoms(originalFile, modifiedFile, format === 'ebp');
 			} else if (format === 'bps') {
 				patch = BPS.buildFromRoms(originalFile, modifiedFile, (originalFile.fileSize <= 4194304));
 			} else if (format === 'ppf') {

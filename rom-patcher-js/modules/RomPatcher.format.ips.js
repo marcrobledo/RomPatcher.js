@@ -6,6 +6,15 @@ const IPS_MAX_ROM_SIZE=0x1000000; //16 megabytes
 const IPS_RECORD_RLE=0x0000;
 const IPS_RECORD_SIMPLE=0x01;
 
+/* There is also support for the EBP (EarthBound Patch) format here. */
+/* EBP has no real specification, but an implementation is here: https://github.com/Lyrositor/EBPatcher */
+/* EBP is actually just IPS with some JSON metadata stuck on the end. */
+/* We can safely ignore this data when applying patches. */
+/* When creating patches, insert this data after everything else. */
+/* Finally, EBP doesn't seem to support truncation metadata. */
+const EBP_MAGIC_META_OPENER = 0x7B //UTF-8 '{'
+const EBP_META_DEFAULT={"author": "Unknown", "title": "Untitled", "description": "No description"}
+
 if(typeof module !== "undefined" && module.exports){
 	module.exports = IPS;
 }
@@ -14,12 +23,18 @@ if(typeof module !== "undefined" && module.exports){
 function IPS(){
 	this.records=[];
 	this.truncate=false;
+	this.isEBP=false;
+	this.EBPmetadata=JSON.stringify(EBP_META_DEFAULT)
 }
 IPS.prototype.addSimpleRecord=function(o, d){
 	this.records.push({offset:o, type:IPS_RECORD_SIMPLE, length:d.length, data:d})
 }
 IPS.prototype.addRLERecord=function(o, l, b){
 	this.records.push({offset:o, type:IPS_RECORD_RLE, length:l, byte:b})
+}
+IPS.prototype.addEBPMetadata=function(author, title, description){
+	/* currently not used - no frontend support */
+	this.EBPmetadata=JSON.stringify({"author": author, "title": title, "description": description})
 }
 IPS.prototype.toString=function(){
 	nSimpleRecords=0;
@@ -33,8 +48,9 @@ IPS.prototype.toString=function(){
 	var s='Simple records: '+nSimpleRecords;
 	s+='\nRLE records: '+nRLERecords;
 	s+='\nTotal records: '+this.records.length;
-	if(this.truncate)
+	if(this.truncate && !this.isEBP)
 		s+='\nTruncate at: 0x'+this.truncate.toString(16);
+	s+='\nIs EBP: '+this.isEBP
 	return s
 }
 IPS.prototype.export=function(fileName){
@@ -46,11 +62,13 @@ IPS.prototype.export=function(fileName){
 			patchFileSize+=(3+2+this.records[i].data.length); //offset+length+data
 	}
 	patchFileSize+=3; //EOF string
-	if(this.truncate)
+	if(this.truncate && !this.isEBP)
 		patchFileSize+=3; //truncate
+	if(this.isEBP)
+		patchFileSize+=this.EBPmetadata.length
 
 	tempFile=new BinFile(patchFileSize);
-	tempFile.fileName=fileName+'.ips';
+	tempFile.fileName=fileName+('.ebp' ? this.isEBP : '.ips');
 	tempFile.writeString(IPS_MAGIC);
 	for(var i=0; i<this.records.length; i++){
 		var rec=this.records[i];
@@ -66,14 +84,17 @@ IPS.prototype.export=function(fileName){
 	}
 
 	tempFile.writeString('EOF');
-	if(this.truncate)
+	if(this.truncate && !this.isEBP)
 		tempFile.writeU24(this.truncate);
 
+	if(this.isEBP) {
+		tempFile.writeString(this.EBPmetadata)
+	}
 
 	return tempFile
 }
 IPS.prototype.apply=function(romFile){
-	if(this.truncate){
+	if(this.truncate && !this.isEBP){
 		if(this.truncate>romFile.fileSize){ //expand (discussed here: https://github.com/marcrobledo/RomPatcher.js/pull/46)
 			tempFile=new BinFile(this.truncate);
 			romFile.copyTo(tempFile, 0, romFile.fileSize, 0);
@@ -136,6 +157,8 @@ IPS.fromFile=function(file){
 			}else if((file.offset+3)===file.fileSize){
 				patchFile.truncate=file.readU24();
 				break;
+			}else if (file.readU8()===EBP_MAGIC_META_OPENER) {
+				break;
 			}
 		}
 
@@ -151,10 +174,12 @@ IPS.fromFile=function(file){
 }
 
 
-IPS.buildFromRoms=function(original, modified){
+IPS.buildFromRoms=function(original, modified, asEBP=false){
 	var patch=new IPS();
 
-	if(modified.fileSize<original.fileSize){
+	patch.isEBP=asEBP
+
+	if(modified.fileSize<original.fileSize && !patch.isEBP){
 		patch.truncate=modified.fileSize;
 	}
 
@@ -204,7 +229,7 @@ IPS.buildFromRoms=function(original, modified){
 				}
 			}else{
 				if(startOffset>=IPS_MAX_ROM_SIZE){
-					throw new Error('Files are too big for IPS format');
+					throw new Error(`Files are too big for ${'EBP' ? patch.isEBP : 'IPS'} format`);
 					return null;
 				}
 

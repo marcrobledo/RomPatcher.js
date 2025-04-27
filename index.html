@@ -3,8 +3,8 @@
 <head>
 	<title>Rom Patcher JS</title>
 	<meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
-	<meta name="description" content="An online web-based ROM patcher. Supported formats: IPS, BPS, UPS, APS, RUP, PPF and xdelta."/>
-	<meta name="keywords" content="ips,ups,aps,bps,rup,ninja,ppf,xdelta,patcher,online,html5,web,rom,patch,hack,translation"/>
+	<meta name="description" content="An online web-based ROM patcher. Supported formats: IPS, BPS, UPS, APS, RUP, PPF, EBP and xdelta."/>
+	<meta name="keywords" content="ips,ebp,ups,aps,bps,rup,ninja,ppf,xdelta,patcher,online,html5,web,rom,patch,hack,translation"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
 	<link rel="manifest" href="./manifest.json"/>
 	<link rel="shortcut icon" href="./webapp/app_icon_16.png" type="image/png" sizes="16x16"/>
@@ -27,7 +27,7 @@
 	<meta name="twitter:domain" content="marcrobledo.com">
 	<meta property="og:title" content="Rom Patcher JS">
 	<meta name="twitter:title" content="Rom Patcher JS">
-	<meta name="twitter:description" content="An online web-based ROM patcher. Supported formats: IPS, BPS, UPS, APS, RUP, PPF and xdelta.">
+	<meta name="twitter:description" content="An online web-based ROM patcher. Supported formats: IPS, BPS, UPS, APS, RUP, PPF, EBP and xdelta.">
 	<meta property="og:image" content="https://www.marcrobledo.com/RomPatcher.js/webapp/thumbnail.jpg">
 	<meta name="twitter:image" content="https://www.marcrobledo.com/RomPatcher.js/webapp/thumbnail.jpg">
 	<meta name="twitter:card" content="photo">
@@ -83,7 +83,7 @@
 			<div class="row m-b" id="rom-patcher-row-file-patch">
 				<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label></div>
 				<div class="rom-patcher-container-input">
-					<input type="file" id="rom-patcher-input-file-patch" class="empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.xdelta,.vcdiff,.zip" disabled />
+					<input type="file" id="rom-patcher-input-file-patch" class="empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.mod,.ebp,.xdelta,.vcdiff,.zip" disabled />
 				</div>
 			</div>
 			<div class="row m-b" id="rom-patcher-row-patch-description">
@@ -126,6 +126,7 @@
 						<option value="ups">UPS</option>
 						<option value="aps">APS</option>
 						<option value="rup">RUP</option>
+						<option value="ebp">EBP</option>
 					</select>
 				</div>
 			</div>

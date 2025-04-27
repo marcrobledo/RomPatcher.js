@@ -14,6 +14,9 @@
 	- IPS test
 		- Patch: https://www.romhacking.net/hacks/3784/
 		- ROM:   Super Mario Land 2 - 6 Golden Coins (USA, Europe).gb [CRC32=d5ec24e4]
+	- EBP test
+		- Patch: https://forum.starmen.net/forum/Community/PKHack/NickBound/page/1#post2333521
+		- ROM:   EarthBound (USA).sfc [CRC32=dc9bb451]
 	- BPS test
 		- Patch: https://www.romhacking.net/translations/6297/
 		- ROM:   Samurai Kid (Japan).gbc [CRC32=44a9ddfb]	
@@ -50,6 +53,14 @@ const TEST_PATCHES = [
 		patchCrc32: 0x0b742316,
 		patchDownload: 'https://www.romhacking.net/hacks/3784/',
 		outputCrc32: 0xf0799017
+	}, {
+		title: 'EBP - Mother Rebound',
+		romFile: 'EarthBound (USA).sfc',
+		romCrc32: 0xdc9bb451,
+		patchFile: 'Mother_Rebound.ebp',
+		patchCrc32: 0x271719e1,
+		patchDownload: 'https://forum.starmen.net/forum/Community/PKHack/NickBound/page/1#post2333521',
+		outputCrc32: 0x5065b02f
 	}, {
 		title: 'BPS - Samurai Kid translation',
 		romFile: 'Samurai Kid (Japan).gbc',
