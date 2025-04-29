@@ -43,10 +43,11 @@ IPS.prototype.getDescription=function(){
 	if(this.EBPmetadata){
 		var description='';
 		for(var key in this.EBPmetadata){
-			if(key!=='patcher'){
-				const keyPretty=key.charAt(0).toUpperCase() + key.slice(1);
-				description+=keyPretty+': '+this.EBPmetadata[key]+'\n';
-			}
+			if(key==='patcher')
+				continue;
+
+			const keyPretty=key.charAt(0).toUpperCase() + key.slice(1);
+			description+=keyPretty+': '+this.EBPmetadata[key]+'\n';
 		}
 		return description.trim();
 	}
