@@ -242,8 +242,8 @@ const RomPatcher = (function () {
 				format = 'ips';
 
 			var patch;
-			if (format === 'ips' || format === 'ebp') {
-				patch = IPS.buildFromRoms(originalFile, modifiedFile, format === 'ebp');
+			if (format === 'ips') {
+				patch = IPS.buildFromRoms(originalFile, modifiedFile);
 			} else if (format === 'bps') {
 				patch = BPS.buildFromRoms(originalFile, modifiedFile, (originalFile.fileSize <= 4194304));
 			} else if (format === 'ppf') {
@@ -254,6 +254,8 @@ const RomPatcher = (function () {
 				patch = APS.buildFromRoms(originalFile, modifiedFile);
 			} else if (format === 'rup') {
 				patch = RUP.buildFromRoms(originalFile, modifiedFile);
+			}  else if (format === 'ebp') {
+				patch = IPS.buildFromRoms(originalFile, modifiedFile, true);
 			} else {
 				throw new Error('Invalid patch format');
 			}
