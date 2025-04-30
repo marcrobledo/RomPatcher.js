@@ -83,7 +83,7 @@ IPS.prototype.export=function(fileName){
 	if(this.truncate && !this.EBPmetadata)
 		patchFileSize+=3; //truncate
 	else if(this.EBPmetadata)
-		patchFileSize+=JSON.stringify(this.EBPmetadata);
+		patchFileSize+=JSON.stringify(this.EBPmetadata).length;
 
 	tempFile=new BinFile(patchFileSize);
 	tempFile.fileName=fileName+(this.EBPmetadata? '.ebp' : '.ips');
