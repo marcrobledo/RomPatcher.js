@@ -7,7 +7,7 @@
 *
 * MIT License
 * 
-* Copyright (c) 2016-2024 Marc Robledo
+* Copyright (c) 2016-2025 Marc Robledo
 * 
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -1559,6 +1559,23 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 		}
 	};
 
+	const _getMetadataFields = function (patchFormat) {
+		if (patchFormat === 'rup') {
+			return ['Description'];
+		} else if (patchFormat === 'ebp') {
+			return ['Author', 'Title', 'Description'];
+		}
+		return [];
+	};
+	const _buildMetadataObject = function (patchFormat) {
+		return _getMetadataFields(patchFormat).reduce((metadata, field) => {
+			const input = document.getElementById('patch-builder-input-metadata-' + field.toLowerCase().replace(/\s+/g, '-'));
+			if (input && input.value.trim())
+				metadata[field] = input.value.trim();
+			return metadata;
+		}, {});
+	};
+
 	var webWorkerCreate;
 
 	var initialized = false;
@@ -1644,18 +1661,35 @@ const PatchBuilderWeb = (function (romPatcherWeb) {
 						_setToastError(_('Patch creation is not compatible with zipped ROMs'), 'warning');
 				});
 			});
+			document.getElementById('patch-builder-select-patch-type').addEventListener('change', function () {
+				if (!document.getElementById('patch-builder-container-metadata-inputs'))
+					return;
+
+				document.getElementById('patch-builder-container-metadata-inputs').innerHTML = '';
+
+				_getMetadataFields(this.value).forEach(function (field) {
+					const input = document.createElement('input');
+					input.id = 'patch-builder-input-metadata-' + field.toLowerCase().replace(/\s+/g, '-');
+					input.className = 'patch-builder-input-metadata';
+					input.type = 'text';
+					input.placeholder = _(field);
+					document.getElementById('patch-builder-container-metadata-inputs').appendChild(input);
+				});
+			});
 			document.getElementById('patch-builder-button-create').addEventListener('click', function () {
+				const patchFormat=document.getElementById('patch-builder-select-patch-type').value;
 				_setElementsStatus(false);
 				_setCreateButtonSpinner(true);
 				webWorkerCreate.postMessage(
 					{
 						originalRomU8Array: originalRom._u8array,
 						modifiedRomU8Array: modifiedRom._u8array,
-						format: document.getElementById('patch-builder-select-patch-type').value
+						format: patchFormat,
+						metadata: _buildMetadataObject(patchFormat)
 					}, [
-					originalRom._u8array.buffer,
-					modifiedRom._u8array.buffer
-				]
+						originalRom._u8array.buffer,
+						modifiedRom._u8array.buffer
+					]
 				);
 			});
 
@@ -1780,6 +1814,9 @@ const ROM_PATCHER_LOCALE = {
 		'Modified ROM:': 'ROM modificada:',
 		'Patch type:': 'Tipo de parche:',
 		'Creating patch...': 'Creando parche...',
+		'Author': 'Autor',
+		'Title': 'Título',
+		'Description': 'Descripción',
 
 		'Source ROM checksum mismatch': 'Checksum de ROM original no válida',
 		'Target ROM checksum mismatch': 'Checksum de ROM creada no válida',
@@ -1914,6 +1951,9 @@ const ROM_PATCHER_LOCALE = {
 		'Modified ROM:': 'ROM modificada:',
 		'Patch type:': 'Tipus de pedaç:',
 		'Creating patch...': 'Creant pedaç...',
+		'Author': 'Autor',
+		'Title': 'Títol',
+		'Description': 'Descripció',
 
 		'Source ROM checksum mismatch': 'Checksum de ROM original no vàlida',
 		'Target ROM checksum mismatch': 'Checksum de ROM creada no vàlida',

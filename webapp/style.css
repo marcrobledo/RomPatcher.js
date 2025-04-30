@@ -193,7 +193,7 @@ hr{border:none;border-top:1px dotted #bbb;margin:15px 0}
 
 
 /* forms */
-input[type=file], input[type=checkbox], select{
+input[type=file], input[type=text], input[type=checkbox], select{
 	box-sizing:border-box;
 	max-width:100%;
 	font-family:inherit;
@@ -204,20 +204,24 @@ input[type=file], input[type=checkbox], select{
 	background-color:#edefef;
 }
 input[type=file]:focus:not(:disabled),
+input[type=text]:focus:not(:disabled),
 select:focus:not(:disabled),
 input[type=checkbox].styled:focus:not(:disabled){
 	box-shadow: var(--rom-patcher-color-primary-focus) 0 0 0 2px;
 }
 #rom-patcher-container input[type=file],
 #rom-patcher-container select,
-#patch-builder-container input[type=file]
+#patch-builder-container input[type=file],
+#patch-builder-container input[type=text]
 {width:100%}
-input[type=file]{padding:6px 10px}
+input[type=file],input[type=text]{padding:6px 10px}
+#patch-builder-container-metadata-inputs input[type=text]:not(:last-child){margin-bottom:8px;}
 input[type=file].no-file-selector-button::file-selector-button{display:none}
 select{
 	padding:6px 18px 6px 10px;
 	-webkit-appearance:none;
 	-moz-appearance:none;
+	appearance:none;
 	text-overflow:'';
 
 	background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeD0iMTJweCIgeT0iMHB4IiB3aWR0aD0iMjRweCIgaGVpZ2h0PSIzcHgiIHZpZXdCb3g9IjAgMCA2IDMiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDYgMyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBvbHlnb24gcG9pbnRzPSI1Ljk5MiwwIDIuOTkyLDMgLTAuMDA4LDAgIi8+PC9zdmc+");
@@ -225,7 +229,8 @@ select{
 	background-repeat:no-repeat;
 }
 select::-ms-expand{display:none}
-input[type=file]:hover:not(:disabled),select:hover:not(:disabled){cursor:pointer;background-color:#dee1e1}
+input[type=file]:hover:not(:disabled),input[type=text]:hover:not(:disabled),select:hover:not(:disabled){background-color:#dee1e1}
+input[type=file]:hover:not(:disabled),select:hover:not(:disabled){cursor:pointer;}
 input[type=file]:disabled,select:disabled{color:var(--rom-patcher-color-muted)}
 
 /* select:focus > option{background-color:#fff} */

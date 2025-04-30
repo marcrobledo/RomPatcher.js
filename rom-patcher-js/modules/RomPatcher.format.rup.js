@@ -1,4 +1,4 @@
-/* RUP module for Rom Patcher JS v20241102 - Marc Robledo 2018-2024 - http://www.marcrobledo.com/license */
+/* RUP module for Rom Patcher JS v20250430 - Marc Robledo 2018-2025 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.romhacking.net/documents/288/ */
 
 const RUP_MAGIC='NINJA2';
@@ -332,11 +332,13 @@ RUP.prototype.export=function(fileName){
 
 
 
-RUP.buildFromRoms=function(original, modified){
+RUP.buildFromRoms=function(original, modified, description){
 	var patch=new RUP();
 
 	var today=new Date();
 	patch.date=(today.getYear()+1900)+RUP.padZeroes(today.getMonth()+1, 1)+RUP.padZeroes(today.getDate(), 1);
+	if(description)
+		patch.description=description;
 
 	var file={
 		fileName:'',

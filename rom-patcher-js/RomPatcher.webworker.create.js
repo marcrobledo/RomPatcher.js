@@ -17,8 +17,9 @@ self.onmessage = event => { // listen for messages from the main thread
 	const originalFile=new BinFile(event.data.originalRomU8Array);
 	const modifiedFile=new BinFile(event.data.modifiedRomU8Array);
 	const format=event.data.format;
+	const metadata=event.data.metadata;
 
-	const patch=RomPatcher.createPatch(originalFile, modifiedFile, format);
+	const patch=RomPatcher.createPatch(originalFile, modifiedFile, format, metadata);
 	const patchFile=patch.export('my_patch');
 
 	self.postMessage(

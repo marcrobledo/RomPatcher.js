@@ -230,7 +230,7 @@ const RomPatcher = (function () {
 			return patchedRom;
 		},
 
-		createPatch: function (originalFile, modifiedFile, format) {
+		createPatch: function (originalFile, modifiedFile, format, metadata) {
 			if (!(originalFile instanceof BinFile))
 				throw new Error('Original ROM file is not an instance of BinFile');
 			else if (!(modifiedFile instanceof BinFile))
@@ -253,9 +253,10 @@ const RomPatcher = (function () {
 			} else if (format === 'aps') {
 				patch = APS.buildFromRoms(originalFile, modifiedFile);
 			} else if (format === 'rup') {
-				patch = RUP.buildFromRoms(originalFile, modifiedFile);
+				if(metadata)
+				patch = RUP.buildFromRoms(originalFile, modifiedFile, metadata && metadata.Description? metadata.Description : null);
 			}  else if (format === 'ebp') {
-				patch = IPS.buildFromRoms(originalFile, modifiedFile, true);
+				patch = IPS.buildFromRoms(originalFile, modifiedFile, metadata);
 			} else {
 				throw new Error('Invalid patch format');
 			}
