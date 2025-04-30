@@ -254,6 +254,8 @@ const RomPatcher = (function () {
 				patch = APS.buildFromRoms(originalFile, modifiedFile);
 			} else if (format === 'rup') {
 				patch = RUP.buildFromRoms(originalFile, modifiedFile);
+			}  else if (format === 'ebp') {
+				patch = IPS.buildFromRoms(originalFile, modifiedFile, true);
 			} else {
 				throw new Error('Invalid patch format');
 			}

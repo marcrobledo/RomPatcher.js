@@ -1,10 +1,14 @@
-/* IPS module for Rom Patcher JS v20230924 - Marc Robledo 2016-2023 - http://www.marcrobledo.com/license */
+/* IPS module for Rom Patcher JS v20250430 - Marc Robledo 2016-2025 - http://www.marcrobledo.com/license */
 /* File format specification: http://www.smwiki.net/wiki/IPS_file_format */
+
+/* This file also acts as EBP (EarthBound Patch) module */
+/* EBP is actually just IPS with some JSON metadata stuck on the end (implementation: https://github.com/Lyrositor/EBPatcher) */
 
 const IPS_MAGIC='PATCH';
 const IPS_MAX_ROM_SIZE=0x1000000; //16 megabytes
 const IPS_RECORD_RLE=0x0000;
 const IPS_RECORD_SIMPLE=0x01;
+
 
 if(typeof module !== "undefined" && module.exports){
 	module.exports = IPS;
@@ -14,12 +18,40 @@ if(typeof module !== "undefined" && module.exports){
 function IPS(){
 	this.records=[];
 	this.truncate=false;
+	this.EBPmetadata=null;
 }
 IPS.prototype.addSimpleRecord=function(o, d){
 	this.records.push({offset:o, type:IPS_RECORD_SIMPLE, length:d.length, data:d})
 }
 IPS.prototype.addRLERecord=function(o, l, b){
 	this.records.push({offset:o, type:IPS_RECORD_RLE, length:l, byte:b})
+}
+IPS.prototype.setEBPMetadata=function(metadataObject){
+	if(typeof metadataObject !== 'object')
+		throw new TypeError('metadataObject must be an object');
+	for(var key in metadataObject){
+		if(typeof metadataObject[key] !== 'string')
+			throw new TypeError('metadataObject values must be strings');
+	}
+
+	/* EBPatcher (linked above) expects the "patcher" field to be EBPatcher to read the metadata */
+	/* CoilSnake (EB modding tool) inserts this manually too */
+	/* So we also add it here for compatibility purposes */
+	this.EBPmetadata={patcher:'EBPatcher', ...metadataObject};
+}
+IPS.prototype.getDescription=function(){
+	if(this.EBPmetadata){
+		var description='';
+		for(var key in this.EBPmetadata){
+			if(key==='patcher')
+				continue;
+
+			const keyPretty=key.charAt(0).toUpperCase() + key.slice(1);
+			description+=keyPretty+': '+this.EBPmetadata[key]+'\n';
+		}
+		return description.trim();
+	}
+	return null;
 }
 IPS.prototype.toString=function(){
 	nSimpleRecords=0;
@@ -33,8 +65,10 @@ IPS.prototype.toString=function(){
 	var s='Simple records: '+nSimpleRecords;
 	s+='\nRLE records: '+nRLERecords;
 	s+='\nTotal records: '+this.records.length;
-	if(this.truncate)
+	if(this.truncate && !this.EBPmetadata)
 		s+='\nTruncate at: 0x'+this.truncate.toString(16);
+	else if(this.EBPmetadata)
+		s+='\nEBP Metadata: '+JSON.stringify(this.EBPmetadata);
 	return s
 }
 IPS.prototype.export=function(fileName){
@@ -46,11 +80,13 @@ IPS.prototype.export=function(fileName){
 			patchFileSize+=(3+2+this.records[i].data.length); //offset+length+data
 	}
 	patchFileSize+=3; //EOF string
-	if(this.truncate)
+	if(this.truncate && !this.EBPmetadata)
 		patchFileSize+=3; //truncate
+	else if(this.EBPmetadata)
+		patchFileSize+=JSON.stringify(this.EBPmetadata);
 
 	tempFile=new BinFile(patchFileSize);
-	tempFile.fileName=fileName+'.ips';
+	tempFile.fileName=fileName+(this.EBPmetadata? '.ebp' : '.ips');
 	tempFile.writeString(IPS_MAGIC);
 	for(var i=0; i<this.records.length; i++){
 		var rec=this.records[i];
@@ -66,14 +102,15 @@ IPS.prototype.export=function(fileName){
 	}
 
 	tempFile.writeString('EOF');
-	if(this.truncate)
+	if(this.truncate && !this.EBPmetadata)
 		tempFile.writeU24(this.truncate);
-
+	else if(this.EBPmetadata)
+		tempFile.writeString(JSON.stringify(this.EBPmetadata));
 
 	return tempFile
 }
 IPS.prototype.apply=function(romFile){
-	if(this.truncate){
+	if(this.truncate && !this.EBPmetadata){
 		if(this.truncate>romFile.fileSize){ //expand (discussed here: https://github.com/marcrobledo/RomPatcher.js/pull/46)
 			tempFile=new BinFile(this.truncate);
 			romFile.copyTo(tempFile, 0, romFile.fileSize, 0);
@@ -136,6 +173,10 @@ IPS.fromFile=function(file){
 			}else if((file.offset+3)===file.fileSize){
 				patchFile.truncate=file.readU24();
 				break;
+			}else if (file.readU8()==='{'.charCodeAt(0)) {
+				file.skip(-1);
+				patchFile.setEBPMetadata(JSON.parse(file.readString(file.fileSize-file.offset)));
+				break;
 			}
 		}
 
@@ -151,11 +192,17 @@ IPS.fromFile=function(file){
 }
 
 
-IPS.buildFromRoms=function(original, modified){
+IPS.buildFromRoms=function(original, modified, asEBP=false){
 	var patch=new IPS();
 
-	if(modified.fileSize<original.fileSize){
+	if(!asEBP && modified.fileSize<original.fileSize){
 		patch.truncate=modified.fileSize;
+	}else if(asEBP){
+		patch.setEBPMetadata(typeof asEBP==='object'? asEBP : {
+			'Author':'Unknown',
+			'Title':'Untitled',
+			'Description':'No description',
+		});
 	}
 
 	//solucion: guardar startOffset y endOffset (ir mirando de 6 en 6 hacia atrás)
@@ -204,7 +251,7 @@ IPS.buildFromRoms=function(original, modified){
 				}
 			}else{
 				if(startOffset>=IPS_MAX_ROM_SIZE){
-					throw new Error('Files are too big for IPS format');
+					throw new Error(`Files are too big for ${patch.EBPmetadata? 'EBP' : 'IPS'} format`);
 					return null;
 				}
 
