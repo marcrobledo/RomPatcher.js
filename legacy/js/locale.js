@@ -258,16 +258,16 @@ const LOCALIZATION={
 		'settings':					'Configurações',
 		'alternate_output_name':	'Usar o nome do patch na saída',
 		'fix_checksum':				'Consertar o checksum do cabeçalho da ROM',
-        'light_theme':				'Tema leve',
+        'light_theme':				'Tema claro',
 
 		'apply_patch':				'Aplicar patch',
 		'rom_file':					'Arquivo da ROM:',
 		'patch_file':				'Arquivo do patch:',
-		'expected_source':			'Expected ROM %s:',
+		'expected_source':			'ROM esperada %s:',
 		'remove_header':			'Remover cabeçalho',
 		'add_header':				'Adicionar cabeçalho temporário',
 		'compatible_formats':		'Formatos compatíveis:',
-		'applying_patch':			'Aplicando patch...',
+		'applying_patch':			'Aplicando o patch...',
 		'downloading':				'Baixando...',
 		'unzipping':				'Descompactando...',
         'fix_checksum_prompt':		'Consertar o checksum do cabeçalho da ROM?',
@@ -278,13 +278,13 @@ const LOCALIZATION={
 		'patch_type':				'Tipo de patch:',
 		'creating_patch':			'Criando o patch...',
 
-		'error_crc_input':			'O checksum da ROM original é inválido',
+		'error_crc_input':			'O checksum da ROM de origem é inválido',
 		'error_crc_output':			'O checksum da ROM alvo é inválido',
 		'error_crc_patch':			'O checksum do patch é inválido',
 		'error_downloading':		'Erro ao baixar o %s',
 		'error_unzipping':			'Erro ao descompactar o arquivo',
 		'error_invalid_patch':		'Arquivo do patch inválido',
-		'warning_too_big':			'O uso de arquivos grandes não é recomendado.'
+		'warning_too_big':			'Usar arquivos grandes não é recomendado.'
 	},
 	'ja':{
 		'creator_mode':				'作成モード',
