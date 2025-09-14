@@ -113,6 +113,14 @@ const TEST_PATCHES = [
 		patchCrc32: 0xa211f97c,
 		patchDownload: 'https://www.romhacking.net/hacks/2871/',
 		outputCrc32: 0x9cecd976
+	},  {
+		title: 'Tetris - Rosy Retrospection',
+		romFile: 'Tetris (World) (Rev 1).gb',
+		romCrc32: 0x46df91ad,
+		patchFile: 'rosy_retrospection.bdf',
+		patchCrc32: 0xcc61564a,
+		patchDownload: 'https://www.romhacking.net/hacks/5813/',
+		outputCrc32: 0x3d400209
 	}
 ];
 

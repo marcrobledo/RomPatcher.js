@@ -97,7 +97,7 @@ const RomPatcher = (function () {
 			patchFile.littleEndian = false;
 			patchFile.seek(0);
 
-			var header = patchFile.readString(6);
+			var header = patchFile.readString(8);
 			var patch = null;
 			if (header.startsWith(IPS.MAGIC)) {
 				patch = IPS.fromFile(patchFile);
@@ -117,6 +117,8 @@ const RomPatcher = (function () {
 				patch = PMSR.fromFile(patchFile);
 			} else if (header.startsWith(VCDIFF.MAGIC)) {
 				patch = VCDIFF.fromFile(patchFile);
+			} else if (header.startsWith(BDF.MAGIC)) {
+				patch = BDF.fromFile(patchFile);
 			}
 
 			if (patch)
@@ -407,4 +409,5 @@ if (typeof module !== 'undefined' && module.exports) {
 	PPF = require('./modules/RomPatcher.format.ppf');
 	PMSR = require('./modules/RomPatcher.format.pmsr');
 	VCDIFF = require('./modules/RomPatcher.format.vcdiff');
+	BDF = require('./modules/RomPatcher.format.bdf');
 }

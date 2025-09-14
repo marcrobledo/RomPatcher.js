@@ -303,6 +303,14 @@ BinFile.prototype.readU32 = function () {
 	this.offset += 4;
 	return this._lastRead >>> 0
 }
+BinFile.prototype.readU64 = function () {
+	if (this.littleEndian)
+		this._lastRead = this._u8array[this.offset] + (this._u8array[this.offset + 1] << 8) + (this._u8array[this.offset + 2] << 16) + (this._u8array[this.offset + 3] << 24) + (this._u8array[this.offset + 4] << 32) + (this._u8array[this.offset + 5] << 40) + (this._u8array[this.offset + 6] << 48) + (this._u8array[this.offset + 7] << 56);
+	else
+		this._lastRead = (this._u8array[this.offset] << 56) + (this._u8array[this.offset + 1] << 48) + (this._u8array[this.offset + 2] << 40) + (this._u8array[this.offset + 3] << 32) + (this._u8array[this.offset + 4] << 24) + (this._u8array[this.offset + 5] << 16) + (this._u8array[this.offset + 6] << 8) + this._u8array[this.offset + 7];
+	this.offset += 8;
+	return this._lastRead >>> 0
+}
 
 
 
