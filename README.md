@@ -11,6 +11,7 @@ A ROM patcher made in Javascript.
    * PPF
    * Paper Mario Star Rod (.mod)
    * VCDiff (.xdelta, .vcdiff)
+   * BSDiff (.bdf, .bspatch) (patch only)
 * can patch and create patches
 * shows ROM CRC32, MD5 and SHA-1 before patching
 * can remove headers before patching
