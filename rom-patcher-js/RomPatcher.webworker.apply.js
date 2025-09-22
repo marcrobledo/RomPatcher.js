@@ -12,7 +12,8 @@ self.importScripts(
 	'./modules/RomPatcher.format.rup.js',
 	'./modules/RomPatcher.format.ppf.js',
 	'./modules/RomPatcher.format.pmsr.js',
-	'./modules/RomPatcher.format.vcdiff.js'
+	'./modules/RomPatcher.format.vcdiff.js',
+	'./modules/RomPatcher.format.bdf.js'
 );
 
 

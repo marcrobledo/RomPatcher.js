@@ -19,6 +19,7 @@ var PRECACHE_URLS = [
 	'/RomPatcher.js/rom-patcher-js/modules/BinFile.js',
 	'/RomPatcher.js/rom-patcher-js/modules/HashCalculator.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.ips.js',
+	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.bdf.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.bps.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.ups.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.aps_n64.js',
@@ -30,6 +31,7 @@ var PRECACHE_URLS = [
 	'/RomPatcher.js/rom-patcher-js/modules/zip.js/z-worker.js',
 	'/RomPatcher.js/rom-patcher-js/modules/zip.js/zip.min.js',
 	'/RomPatcher.js/rom-patcher-js/modules/zip.js/inflate.js',
+	'/RomPatcher.js/rom-patcher-js/modules/bz2/bz2.js',
 	/* Rom Patcher JS core (web assets) */
 	'/RomPatcher.js/rom-patcher-js/assets/icon_alert_orange.svg',
 	'/RomPatcher.js/rom-patcher-js/assets/icon_check_circle_green.svg',
