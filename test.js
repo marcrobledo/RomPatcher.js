@@ -32,6 +32,9 @@
 	- EBP test
 		- Patch: https://forum.starmen.net/forum/Community/PKHack/NickBound/page/1#post2333521
 		- ROM:   EarthBound (USA).sfc [CRC32=dc9bb451]
+	- BDF test
+		- Patch: https://www.romhacking.net/hacks/5813/
+		- ROM:   Tetris (World) (Rev 1).gb [CRC32=46df91ad]
 	- xdelta test
 		- Patch: https://www.romhacking.net/hacks/2871/
 		- ROM:   New Super Mario Bros. (USA, Australia).nds [CRC32=0197576a]
@@ -89,7 +92,7 @@ const TEST_PATCHES = [
 		patchDownload: 'http://ngplus.net/InsaneDifficultyArchive/www.insanedifficulty.com/board/index9837.html?/files/file/65-final-fantasy-tactics-advance-x/',
 		outputCrc32: 0x49a5539a
 	}, {
-		title: 'Tekkaman Blade translation',
+		title: 'RUP - Tekkaman Blade translation',
 		romFile: 'Uchuu no Kishi - Tekkaman Blade (Japan).sfc',
 		romCrc32: 0x7e107c35,
 		patchFile: 'Tekkaman Blade v1.0.rup',
@@ -105,22 +108,22 @@ const TEST_PATCHES = [
 		patchCrc32: 0x271719e1,
 		patchDownload: 'https://forum.starmen.net/forum/Community/PKHack/NickBound/page/1#post2333521',
 		outputCrc32: 0x5065b02f
-	},  {
-		title: 'NSMB Hack Domain Infusion',
-		romFile: 'New Super Mario Bros. (USA, Australia).nds',
-		romCrc32: 0x0197576a,
-		patchFile: 'nsmb_infusion10a.xdelta',
-		patchCrc32: 0xa211f97c,
-		patchDownload: 'https://www.romhacking.net/hacks/2871/',
-		outputCrc32: 0x9cecd976
-	},  {
-		title: 'Tetris - Rosy Retrospection',
+	}, {
+		title: 'BDF - Tetris - Rosy Retrospection',
 		romFile: 'Tetris (World) (Rev 1).gb',
 		romCrc32: 0x46df91ad,
 		patchFile: 'rosy_retrospection.bdf',
 		patchCrc32: 0xcc61564a,
 		patchDownload: 'https://www.romhacking.net/hacks/5813/',
 		outputCrc32: 0x3d400209
+	}, {
+		title: 'VCDIFF - NSMB Hack Domain Infusion',
+		romFile: 'New Super Mario Bros. (USA, Australia).nds',
+		romCrc32: 0x0197576a,
+		patchFile: 'nsmb_infusion10a.xdelta',
+		patchCrc32: 0xa211f97c,
+		patchDownload: 'https://www.romhacking.net/hacks/2871/',
+		outputCrc32: 0x9cecd976
 	}
 ];
 

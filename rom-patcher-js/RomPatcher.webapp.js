@@ -48,9 +48,9 @@ const RomPatcherWeb = (function () {
 		'modules/RomPatcher.format.bps.js',
 		'modules/RomPatcher.format.rup.js',
 		'modules/RomPatcher.format.ppf.js',
+		'modules/RomPatcher.format.bdf.js',
 		'modules/RomPatcher.format.pmsr.js',
 		'modules/RomPatcher.format.vcdiff.js',
-		'modules/RomPatcher.format.bdf.js',
 		'modules/zip.js/zip.min.js',
 		'RomPatcher.js'
 	];
@@ -1176,7 +1176,7 @@ const ZIPManager = (function (romPatcherWeb) {
 
 	const ZIP_MAGIC = '\x50\x4b\x03\x04';
 
-	const FILTER_PATCHES = /\.(ips|ups|bps|aps|rup|ppf|mod|ebp|xdelta|vcdiff|bdf|bspatch)$/i;
+	const FILTER_PATCHES = /\.(ips|ups|bps|aps|rup|ppf|ebp|bdf|bspatch|mod|xdelta|vcdiff)$/i;
 	//const FILTER_ROMS=/(?<!\.(txt|diz|rtf|docx?|xlsx?|html?|pdf|jpe?g|gif|png|bmp|webp|zip|rar|7z))$/i; //negative lookbehind is not compatible with Safari https://stackoverflow.com/a/51568859
 	const FILTER_NON_ROMS = /(\.(txt|diz|rtf|docx?|xlsx?|html?|pdf|jpe?g|gif|png|bmp|webp|zip|rar|7z))$/i;
 

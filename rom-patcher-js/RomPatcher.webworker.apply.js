@@ -1,4 +1,4 @@
-/* Rom Patcher JS v20240302 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS v20250922 - Marc Robledo 2016-2025 - http://www.marcrobledo.com/license */
 
 self.importScripts(
 	'./RomPatcher.js',
@@ -11,9 +11,9 @@ self.importScripts(
 	'./modules/RomPatcher.format.bps.js',
 	'./modules/RomPatcher.format.rup.js',
 	'./modules/RomPatcher.format.ppf.js',
+	'./modules/RomPatcher.format.bdf.js',
 	'./modules/RomPatcher.format.pmsr.js',
-	'./modules/RomPatcher.format.vcdiff.js',
-	'./modules/RomPatcher.format.bdf.js'
+	'./modules/RomPatcher.format.vcdiff.js'
 );
 
 

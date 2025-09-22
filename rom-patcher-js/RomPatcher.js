@@ -7,7 +7,7 @@
 *
 * MIT License
 * 
-* Copyright (c) 2016-2024 Marc Robledo
+* Copyright (c) 2016-2025 Marc Robledo
 * 
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -113,12 +113,12 @@ const RomPatcher = (function () {
 				patch = RUP.fromFile(patchFile);
 			} else if (header.startsWith(PPF.MAGIC)) {
 				patch = PPF.fromFile(patchFile);
+			} else if (header.startsWith(BDF.MAGIC)) {
+				patch = BDF.fromFile(patchFile);
 			} else if (header.startsWith(PMSR.MAGIC)) {
 				patch = PMSR.fromFile(patchFile);
 			} else if (header.startsWith(VCDIFF.MAGIC)) {
 				patch = VCDIFF.fromFile(patchFile);
-			} else if (header.startsWith(BDF.MAGIC)) {
-				patch = BDF.fromFile(patchFile);
 			}
 
 			if (patch)
@@ -255,7 +255,6 @@ const RomPatcher = (function () {
 			} else if (format === 'aps') {
 				patch = APS.buildFromRoms(originalFile, modifiedFile);
 			} else if (format === 'rup') {
-				if(metadata)
 				patch = RUP.buildFromRoms(originalFile, modifiedFile, metadata && metadata.Description? metadata.Description : null);
 			}  else if (format === 'ebp') {
 				patch = IPS.buildFromRoms(originalFile, modifiedFile, metadata);
@@ -407,7 +406,7 @@ if (typeof module !== 'undefined' && module.exports) {
 	BPS = require('./modules/RomPatcher.format.bps');
 	RUP = require('./modules/RomPatcher.format.rup');
 	PPF = require('./modules/RomPatcher.format.ppf');
+	BDF = require('./modules/RomPatcher.format.bdf');
 	PMSR = require('./modules/RomPatcher.format.pmsr');
 	VCDIFF = require('./modules/RomPatcher.format.vcdiff');
-	BDF = require('./modules/RomPatcher.format.bdf');
 }
