@@ -1,0 +1,57 @@
+/* @FONT-FACES */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300');
+
+a { 
+  color: #000000; 
+  font-weight: bold;
+  text-decoration:none;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Rounds-Neue', sans-serif;
+  margin: 0;              
+}
+
+h5 {
+    font-family: 'Bang-Tamvan', sans-serif;
+    margin: 0;
+}
+
+body {
+    font-family: 'Bang-Tamvan', sans-serif;
+    margin: 0;
+    /* you can delete the line below if you'd prefer to not use an image */
+    background: linear-gradient(to left,  #ff3500 0%,#ff9945 50%,#9bff0f 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    color: black;
+    min-height: 100vh; 
+}
+
+@font-face {
+    font-family: Bang-Tamvan;
+    src: url('./assets/fonts/Bang%20Tamvan.ttf');
+}
+
+@font-face {
+    font-family: Rounds-Neue;
+    src: url('./assets/fonts/Rounds Neue/TT%20Rounds%20Neue%20Regular.ttf');
+}
+
+@font-face {
+    font-family: Rounds-Neue;
+    src: url('./assets/fonts/Rounds Neue/TT%20Rounds%20Neue%20Bold.ttf');
+    font-weight: bold;
+    }
+
+@font-face {
+    font-family: Rounds-Neue;
+    src: url('./assets/fonts/Rounds Neue/TT%20Rounds%20Neue%20Medium%20Italic.ttf');
+    font-style: italic;
+}
+
+@font-face {
+    font-family: Rounds-Neue;
+    src: url('./assets/fonts/Rounds Neue/TT%20Rounds%20Neue%20Bold%20Italic.ttf');
+    font-style: italic;
+    font-weight: bold;
+}
