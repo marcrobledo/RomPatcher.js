@@ -2,6 +2,10 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
 @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300');
 
+:root {
+    --header-image: url('./assets/images/teamaquabanner.png');
+}
+
 a { 
   color: #000000; 
   font-weight: bold;
@@ -21,10 +25,60 @@ h5 {
 body {
     font-family: 'Bang-Tamvan', sans-serif;
     margin: 0;
-    /* you can delete the line below if you'd prefer to not use an image */
-    background: linear-gradient(to left,  #ff3500 0%,#ff9945 50%,#9bff0f 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    background-color: #3f547b;
     color: black;
-    min-height: 100vh; 
+}
+
+/* the "container" is what wraps your entire website */
+/* if you want something (like the header) to be Wider than
+the other elements, you will need to move that div outside
+of the container */
+#container {
+    max-width: 900px;
+    /* this is the width of your layout! */
+    /* if you change the above value, scroll to the bottom
+    and change the media query according to the comment! */
+    margin: 0 auto;
+    /* this centers the entire page */
+}
+
+#header {
+        width: 100%;
+        /* header color here! */
+        height: 270px;
+        /* this is only for a background image! */
+        /* if you want to put images IN the header, 
+you can add them directly to the <div id="header"></div> element! */
+        background-image: var(--header-image);
+        background-size: 100%;
+}
+
+main {
+    background-color: #FFFFFF;
+    flex: 1;
+    padding: 20px;
+    order: 2;
+}
+
+a:hover {
+    color: #000000;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+#portal_id{
+    text-align: center;
+}
+
+.portal_class {
+    border-radius: 25px;
+    border: 0.3em solid #0f547b;
+    padding: 20px;
+    width: 200px;
+    height: 100px;
+    text-align:center;
+    display:inline-block;
+    margin: 10px;
 }
 
 @font-face {

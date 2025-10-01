@@ -516,3 +516,28 @@
 	text-decoration: underline;
 	opacity: 1;
 }
+
+#team-aqua-homepage {
+	margin-top: 16px;
+	font-size: 11px;
+	text-align: center;
+}
+
+#team-aqua-homepage a {
+	color: #cce;
+	padding: 4px 8px;
+	text-decoration: none;
+	opacity: .25;
+}
+
+#team-aqua-homepage a>img {
+	display: inline-block;
+	height: 16px;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+#team-aqua-homepage a:hover {
+	text-decoration: underline;
+	opacity: 1;
+}
