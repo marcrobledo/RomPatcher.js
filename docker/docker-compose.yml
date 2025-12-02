@@ -1,0 +1,10 @@
+services:
+  rompatcher:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: rompatcher
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    restart: "no"
