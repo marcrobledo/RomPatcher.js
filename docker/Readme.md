@@ -1,4 +1,4 @@
-# 📄 Docker Setup for RomPatcher.js
+# Docker Setup for RomPatcher.js
 
 ## Overview
 
