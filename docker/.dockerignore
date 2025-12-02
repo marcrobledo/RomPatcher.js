@@ -1,8 +1,0 @@
-# Ignore everything by default
-# **
-
-# But include minimal needed files/folders
-!rom-patcher-js/modules/
-!rom-patcher-js/RomPatcher.js
-!index.js
-!package.json

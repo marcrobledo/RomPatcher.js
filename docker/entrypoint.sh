@@ -32,7 +32,7 @@ for z in "$INPUT_DIR"/*.zip; do
     else
         echo "Extracting ZIP patch: $z → $TARGET_DIR"
         mkdir -p "$TARGET_DIR"
-        unzip -o "$z" -d "$TARGET_DIR"
+        unzip -o "$z" -d "$TARGET_DIR" -x "*.txt"
     fi
 done
 
@@ -50,8 +50,12 @@ for patch in "$TEMP_PATCHES"/*/* "$TEMP_PATCHES"/*; do
     PATCH_NAME="${PATCH_BASE%.*}"
     OUTPUT_FILE="$OUTPUT_DIR/$PATCH_NAME.$ROM_EXT"
 
-    echo "Applying patch: $PATCH_BASE → $OUTPUT_FILE"
-    node "$RP_DIR/index.js" patch "$ROM_FILE" "$patch" "$OUTPUT_FILE"
+    echo "Applying patch: $PATCH_BASE → $ROM_FILE"
+    node "$RP_DIR/index.js" patch "$ROM_FILE" "$patch"
+
+    result=$(ls *.v64 | head -n 1)
+    echo "Copying patched ROM $result to $OUTPUT_FILE"
+    mv "$result" "$OUTPUT_FILE"
 done
 
 echo "All patches applied. Output files are in $OUTPUT_DIR"
