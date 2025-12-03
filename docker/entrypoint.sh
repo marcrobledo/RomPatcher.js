@@ -53,8 +53,8 @@ for patch in "$TEMP_PATCHES"/*/* "$TEMP_PATCHES"/*; do
     echo "Applying patch: $PATCH_BASE → $ROM_FILE"
     node "$RP_DIR/index.js" patch "$ROM_FILE" "$patch"
 
-    result=$(ls *.v64 | head -n 1)
-    echo "Copying patched ROM $result to $OUTPUT_FILE"
+    result=$(ls *.$ROM_EXT | head -n 1)
+    echo "Moving patched ROM $result to $OUTPUT_FILE"
     mv "$result" "$OUTPUT_FILE"
 done
 
