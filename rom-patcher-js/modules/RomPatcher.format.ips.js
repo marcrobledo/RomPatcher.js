@@ -175,13 +175,22 @@ IPS.fromFile=function(file){
 				break;
 			}
 
+			const savedOffset=file.offset;
 			const nextByte=file.readU8();
-			file.skip(-1);
 			if(nextByte==='{'.charCodeAt(0)){
-				patchFile.setEBPMetadata(JSON.parse(file.readString(file.fileSize-file.offset)));
-				break;
+				file.skip(-1);
+				let metadata=null;
+				try{
+					metadata=JSON.parse(file.readString(file.fileSize-file.offset));
+				}catch{}
+				if(metadata!==null){
+					patchFile.setEBPMetadata(metadata);
+					break;
+				}
 			}
-			// 0x454F46 is a legitimate record offset, keep iterating
+			// 0x454F46 is the actual offset of a record,
+			// seek back and continue to read it normally
+			file.seek(savedOffset)
 		}
 
 		var length=file.readU16();

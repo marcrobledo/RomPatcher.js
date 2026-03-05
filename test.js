@@ -230,15 +230,17 @@ TEST_PATCHES.forEach(function (patchInfo) {
 
 
 /*
-	Test an IPS patch that modifies data at address 0x454F46, which is "EOF" in ASCII
-	This is the same byte sequence as the IPS end of file marker.
+	Test an IPS patch that modifies 31488 bytes starting at 0x454F46.
+	This results in the sequence "EOF{" in the patch file which is the
+	same sequence as the IPS end-of-file marker with some extra EBP metadata.
 */
-_test('IPS - patch record at EOF address (0x454F46)', function () {
-	const fileSize = 0x454F46 + 1;
+_test('IPS - test patching 31488 bytes at address 0x454F46 ("EOF{")', function () {
+	const fileSize = 0x454F46 + 31488;
 	const originalFile = new BinFile((new Uint8Array(fileSize)).buffer);
 	const modifiedFile = new BinFile(function() {
 		let b = new Uint8Array(fileSize);
-		b[fileSize-1] = 255;
+		b.fill(255, 0x454F46);
+		b[fileSize-1] = 254;  // make data non-uniform to avoid producing a RLE record
 		return b.buffer
 	}());
 
@@ -253,11 +255,9 @@ _test('IPS - patch record at EOF address (0x454F46)', function () {
 	const expectedBytes = [
 		80, 65, 84, 67, 72, // "PATCH"
 		69, 79, 70,         // address 0x454F46 ("EOF" -> looks like the eof marker)
-		0, 1,               // length 1
-		255,                // the data
-		69, 79, 70          // "EOF"
+		123, 0,             // length 31488 (0x7B00 -> "{\x00" -> looks like EBP metadata)
 	];
-	if (exportedPatch.fileSize !== expectedBytes.length || expectedBytes.some((b, i) => exportedPatch._u8array[i] !== b))
+	if (expectedBytes.some((b, i) => exportedPatch._u8array[i] !== b))
 		throw new Error('exported patch bytes do not match expected');
 
 	const roundtrippedPatch = RomPatcher.parsePatchFile(exportedPatch);
