@@ -173,11 +173,15 @@ IPS.fromFile=function(file){
 			}else if((file.offset+3)===file.fileSize){
 				patchFile.truncate=file.readU24();
 				break;
-			}else if (file.readU8()==='{'.charCodeAt(0)) {
-				file.skip(-1);
+			}
+
+			const nextByte=file.readU8();
+			file.skip(-1);
+			if(nextByte==='{'.charCodeAt(0)){
 				patchFile.setEBPMetadata(JSON.parse(file.readString(file.fileSize-file.offset)));
 				break;
 			}
+			// 0x454F46 is a legitimate record offset, keep iterating
 		}
 
 		var length=file.readU16();
