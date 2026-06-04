@@ -34,8 +34,17 @@
 
 	<link type="text/css" rel="stylesheet" href="./webapp/style.css" media="all"/>
 
-	<script type="text/javascript" src="./rom-patcher-js/RomPatcher.webapp.js"></script>
+	<!-- Zip library (native) -->
+	<script type="text/javascript" src="./src/zip/zip-native.min.js"></script>
+
+	<!-- Rom Patcher JS core -->
+	<script type="text/javascript" src="./src/rom-patcher-js/RomPatcher.webapp.js"></script>
+
+	<!-- Main webapp -->
 	<script type="text/javascript" src="./webapp/webapp.js"></script>
+
+	<!-- RomM extension (minimal settings first, full extension if configured) -->
+	<script type="text/javascript" src="./src/extensions/romm/settings.js"></script>
 </head>
 <body><div id="column">
 
@@ -49,6 +58,38 @@
 
 	<div class="tab">
 		<div id="rom-patcher-container">
+			<!-- PATCH FILE -->
+			<div class="row m-b" id="rom-patcher-row-file-patch">
+				<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label></div>
+				<div class="rom-patcher-container-input">
+					<input type="file" id="rom-patcher-input-file-patch" class="empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.ebp,.bdf,.bspatch,.mod,.xdelta,.vcdiff,.zip" disabled />
+				</div>
+			</div>
+			<div class="row m-b" id="rom-patcher-row-patch-description">
+				<div class="text-right text-mono" data-localize="yes">Description:</div>
+				<div class="text-truncate" id="rom-patcher-patch-description"></div>
+			</div>
+			<div class="row m-b text-selectable text-mono" id="rom-patcher-row-patch-requirements">
+				<div class="text-right text-mono" id="rom-patcher-patch-requirements-type">ROM requirements:</div>
+				<div class="text-truncate" id="rom-patcher-patch-requirements-value"></div>
+			</div>
+
+			<!-- ROM SEARCH (hash or name, toggled) -->
+			<div id="client-search-area" class="m-b" style="display:none">
+				<div class="row m-b">
+					<div class="text-right"><label>Search:</label></div>
+					<div class="rom-patcher-container-input">
+						<input type="text" id="client-search-value" placeholder="Enter CRC32, MD5 or SHA1..." style="width:100%;box-sizing:border-box" />
+						<div style="margin-top:4px">
+							<button id="client-search-button" class="rom-patcher-btn-small">Search</button>
+							<button id="client-search-toggle" class="rom-patcher-btn-small">Switch to Name</button>
+						</div>
+					</div>
+				</div>
+				<div id="client-search-results" class="m-b" style="display:none;max-height:200px;overflow-y:auto;font-size:12px"></div>
+			</div>
+
+			<!-- ROM FILE (auto-loaded or manual) -->
 			<div class="row m-b" id="rom-patcher-row-file-rom">
 				<div class="text-right"><label for="rom-patcher-input-file-rom" data-localize="yes">ROM file:</label></div>
 				<div class="rom-patcher-container-input">
@@ -80,24 +121,32 @@
 				</div>
 			</div>
 
-			<div class="row m-b" id="rom-patcher-row-file-patch">
-				<div class="text-right"><label for="rom-patcher-input-file-patch" data-localize="yes">Patch file:</label></div>
-				<div class="rom-patcher-container-input">
-					<input type="file" id="rom-patcher-input-file-patch" class="empty" accept=".ips,.ups,.bps,.aps,.rup,.ppf,.ebp,.bdf,.bspatch,.mod,.xdelta,.vcdiff,.zip" disabled />
+			<!-- OUTPUT OPTIONS & ACTIONS -->
+			<div id="client-output-section" class="m-b" style="display:none">
+				<div class="row m-b">
+					<div class="text-right"><label>Output name:</label></div>
+					<div><input type="text" id="client-output-name" placeholder="Custom output filename (no extension)" style="width:100%;box-sizing:border-box" /></div>
 				</div>
-			</div>
-			<div class="row m-b" id="rom-patcher-row-patch-description">
-				<div class="text-right text-mono" data-localize="yes">Description:</div>
-				<div class="text-truncate" id="rom-patcher-patch-description"></div>
-			</div>
-			<div class="row m-b text-selectable text-mono" id="rom-patcher-row-patch-requirements">
-				<div class="text-right text-mono" id="rom-patcher-patch-requirements-type">ROM requirements:</div>
-				<div class="text-truncate" id="rom-patcher-patch-requirements-value"></div>
+				<div class="row m-b">
+					<div></div>
+					<div><label><input type="checkbox" id="client-output-zip" class="styled" /> Zip output</label></div>
+				</div>
+				<div class="row m-b" id="client-upload-platform-row" style="display:none">
+					<div class="text-right" style="font-size:12px">Upload to:</div>
+					<div>
+						<select id="client-upload-platform" style="width:100%;box-sizing:border-box">
+							<option value="">-- Same platform as source ROM --</option>
+						</select>
+					</div>
+				</div>
 			</div>
 
 			<div class="buttons text-center">
 				<div id="rom-patcher-row-error-message" class="m-b"><span id="rom-patcher-error-message"></span></div>
-				<button id="rom-patcher-button-apply" data-localize="yes" disabled>Apply patch</button>
+				<button id="rom-patcher-button-apply" style="display:none" data-localize="yes" disabled>Apply patch</button>
+				<button id="client-btn-download" class="rom-patcher-btn-primary" disabled>Download</button>
+				<button id="client-btn-upload" class="rom-patcher-btn-primary" disabled>Upload to server</button>
+				<div id="client-progress" class="text-center text-muted m-b" style="display:none;font-size:12px"></div>
 			</div>
 		</div>
 
@@ -142,9 +191,6 @@
 			</div>
 		</div>
 	</div>
-
-
-
 </div>
 
 
@@ -206,7 +252,12 @@
 		<div><label data-localize="yes" for="settings-light-theme">Light theme</label></div>
 		<div class="text-right"><input type="checkbox" id="settings-light-theme" class="styled" /></div>
 	</div>
-</div>
+
+	<hr style="border:none;border-top:1px solid #ddd;margin:16px 0" />
+
+	<!-- Client settings container (dynamically populated by romm-settings.js or client-integration.js) -->
+	<div id="client-settings-container"></div>
+</dialog>
 
 
 </body></html>

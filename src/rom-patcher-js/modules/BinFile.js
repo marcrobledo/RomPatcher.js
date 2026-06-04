@@ -236,7 +236,7 @@ BinFile.prototype.copyTo = function (target, offsetSource, len, offsetTarget) {
 }
 
 
-BinFile.prototype.save = function () {
+	BinFile.prototype.save = function () {
 	if (BinFile.RUNTIME_ENVIROMENT === 'browser') {
 		var fileBlob = new Blob([this._u8array], { type: this.fileType });
 		var blobUrl = URL.createObjectURL(fileBlob);
@@ -244,8 +244,7 @@ BinFile.prototype.save = function () {
 		a.href = blobUrl;
 		a.download = this.fileName;
 		document.body.appendChild(a);
-		a.dispatchEvent(new MouseEvent('click'));
-		URL.revokeObjectURL(blobUrl);
+		a.click();
 		document.body.removeChild(a);
 	} else if (BinFile.RUNTIME_ENVIROMENT === 'node') {
 		nodeFs.writeFileSync(this.fileName, Buffer.from(this._u8array.buffer));

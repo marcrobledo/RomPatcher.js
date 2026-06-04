@@ -28,9 +28,7 @@ var PRECACHE_URLS = [
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.bdf.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.pmsr.js',
 	'/RomPatcher.js/rom-patcher-js/modules/RomPatcher.format.vcdiff.js',
-	'/RomPatcher.js/rom-patcher-js/modules/zip.js/z-worker.js',
-	'/RomPatcher.js/rom-patcher-js/modules/zip.js/zip.min.js',
-	'/RomPatcher.js/rom-patcher-js/modules/zip.js/inflate.js',
+	'/RomPatcher.js/zip/zip-native.min.js',
 	/* Rom Patcher JS core (web assets) */
 	'/RomPatcher.js/rom-patcher-js/assets/icon_alert_orange.svg',
 	'/RomPatcher.js/rom-patcher-js/assets/icon_check_circle_green.svg',

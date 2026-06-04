@@ -319,6 +319,68 @@ button:disabled{opacity:.35 !important;cursor:not-allowed}
 	transform:translateY(1px)
 }
 
+.rom-patcher-btn-small{
+	font-family:'Open Sans',sans-serif;
+	font-size:12px;
+	padding:4px 10px;
+	border:none;
+	border-radius:2px;
+	background-color:var(--rom-patcher-color-primary);
+	color:white;
+	transition:background-color .15s;
+}
+.rom-patcher-btn-small:not(:disabled):hover{
+	background-color:var(--rom-patcher-color-primary-hover);
+}
+.rom-patcher-btn-small:not(:disabled):active{
+	background-color:var(--rom-patcher-color-primary-active);
+	transform:translateY(1px)
+}
+.rom-patcher-btn-primary{
+	font-family:inherit;
+	font-size:100%;
+	min-width:180px;
+	border-radius:3px;border:0;
+	outline:none;
+	padding:10px 20px;
+	margin:0 5px 8px;
+	background-color:var(--rom-patcher-color-primary);
+	color:white;
+	transition:background-color .15s;
+	box-sizing:border-box
+}
+.rom-patcher-btn-primary:not(:disabled):hover{
+	background-color:var(--rom-patcher-color-primary-hover);
+	cursor:pointer;
+}
+.rom-patcher-btn-primary:not(:disabled):active{
+	background-color:var(--rom-patcher-color-primary-active);
+	transform:translateY(1px);
+}
+.rom-patcher-btn-primary:disabled{
+	opacity:.35 !important;
+	cursor:not-allowed;
+}
+#client-rom-source{
+	border-top:1px solid #ddd;
+	padding-top:12px;
+}
+#client-rom-source .text-muted{color:#888}
+#client-search-results{max-height:200px;overflow-y:auto}
+#client-search-results .client-result-item{
+	padding:6px 8px;
+	cursor:pointer;
+	border-bottom:1px solid #eee;
+	font-size:12px;
+}
+#client-search-results .client-result-item:hover{background-color:#f0f8ff}
+#client-search-results .client-result-item.selected{background-color:#e0f0ff;font-weight:bold}
+#client-output-section{
+	border-top:1px solid #ddd;
+	padding-top:12px;
+	margin-top:12px;
+}
+
 
 
 
