@@ -1,4 +1,4 @@
-/* Rom Patcher JS (complete webapp implementation) v20240809 - Marc Robledo 2016-2024 - http://www.marcrobledo.com/license */
+/* Rom Patcher JS (complete webapp implementation) v20260707 - Marc Robledo 2016-2026 - http://www.marcrobledo.com/license */
 
 
 /* service worker */
@@ -43,12 +43,7 @@ const buildSettingsForWebapp = function () {
 		language: settings.language,
 		outputSuffix: settings.outputSuffix,
 		fixChecksum: settings.fixChecksum,
-		allowDropFiles: true,
-		ondropfiles:function(evt){
-			if(currentMode === 'creator'){
-				ocument.getElementById('switch-create-button').click();
-			}
-		}
+		allowDropFiles: true
 	};
 }
 const saveSettings = function () {
