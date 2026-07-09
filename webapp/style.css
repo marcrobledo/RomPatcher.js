@@ -422,6 +422,58 @@ button:disabled{opacity:.35 !important;cursor:not-allowed}
 }
 
 
+/* donation-info */
+#donation-info{
+	display:none;
+	color: #053b47;
+	text-align: center;
+	background-color: #8bd4c3;
+	margin-bottom: 16px;
+	border-top: 1px solid #2b8a74;
+	border-bottom: 1px solid #2b8a74;
+	padding: 8px 4px;
+}
+
+#donation-info-buttons{
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	margin-top:8px;
+	gap:16px;
+}
+.btn-donation-info{
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	gap: 4px;
+}
+.btn-donation-info svg{
+	height:16px;
+}
+#btn-donation-info-donate{
+	background-color:#ff008c;
+	color:white;
+	padding: 6px 18px;
+	border-radius: 8px;
+	text-decoration:none;
+}
+#btn-donation-info-donate:hover{
+	background-color:#c91176;
+}
+#btn-donation-info-dismiss{
+	color: #38467d;
+	text-decoration:none;
+}
+#btn-donation-info-dismiss:hover{
+	color:black;
+	text-decoration:underline;
+}
+
+
+
+
+
+
 
 #wrapper{
 	box-sizing:border-box;

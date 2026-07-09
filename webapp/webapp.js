@@ -16,7 +16,8 @@ const settings = {
 	language: typeof navigator.userLanguage === 'string' ? navigator.userLanguage.substr(0, 2) : 'en',
 	outputSuffix: true,
 	fixChecksum: false,
-	theme: 'default'
+	theme: 'default',
+	showDonationInfoOn:null
 };
 /* load settings from localStorage */
 if (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_STORAGE_SETTINGS_ID)) {
@@ -34,6 +35,9 @@ if (typeof localStorage !== 'undefined' && localStorage.getItem(LOCAL_STORAGE_SE
 
 		if (typeof loadedSettings.theme === 'string' && ['light'].indexOf(loadedSettings.theme) !== -1)
 			settings.theme = loadedSettings.theme;
+
+		if (typeof loadedSettings.showDonationInfoOn === 'number')
+			settings.showDonationInfoOn = loadedSettings.showDonationInfoOn;
 	} catch (err) {
 		console.error('Error while loading settings: ' + err.message);
 	}
@@ -118,6 +122,19 @@ window.addEventListener('load', function (evt) {
 			document.getElementById('patch-builder-container').style.display = 'none';
 			document.getElementById('switch-create').className = 'switch disabled';
 		}
+	});
+
+	/* show donation info */
+	if(settings.showDonationInfoOn === null || Date.now() > settings.showDonationInfoOn){
+		document.getElementById('donation-info').style.display = 'block';
+	}
+
+	['donate','dismiss'].forEach(function(id){
+		document.getElementById('btn-donation-info-' + id).addEventListener('click', function () {
+			document.getElementById('donation-info').style.display = 'none';
+			settings.showDonationInfoOn = Date.now() + 30 * 24 * 60 * 60 * 1000;
+			saveSettings();
+		});
 	});
 
 	try {
