@@ -501,7 +501,7 @@ const RomPatcherWeb = (function () {
 				}
 			}
 			if (!scriptPath)
-				scriptPath = './rom-patcher-js/';
+				scriptPath = ROM_PATCHER_JS_PATH;
 		}
 		return scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1);
 	}
