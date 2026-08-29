@@ -167,7 +167,6 @@ const MODIFIED_TEST_DATA = (new Uint8Array([
 		const originalFile = new BinFile(TEST_DATA);
 		const modifiedFile = new BinFile(MODIFIED_TEST_DATA);
 		const patch = RomPatcher.createPatch(originalFile, modifiedFile, patchFormat);
-		const patchedFile = RomPatcher.applyPatch(originalFile, patch, { requireValidation: true });
 
 		if (patchFormat === 'bps') {
 			if (patch.patchChecksum !== patch.calculateFileChecksum())
@@ -176,8 +175,15 @@ const MODIFIED_TEST_DATA = (new Uint8Array([
 				throw new Error('invalid BPS crc32');
 		}
 
+		const patchedFile = RomPatcher.applyPatch(originalFile, patch, { requireValidation: true });
 		if (patchedFile.hashCRC32() !== modifiedFile.hashCRC32())
 			throw new Error('modified and patched files\' crc32 do not match');
+
+		const roundtrippedPatch = RomPatcher.parsePatchFile(patch.export('test.' + patchFormat));
+		const roundtrippedPatchedFile = RomPatcher.applyPatch(originalFile, roundtrippedPatch, { requireValidation: true });
+
+		if (roundtrippedPatchedFile.hashCRC32() !== modifiedFile.hashCRC32())
+			throw new Error('modified and patched files\' crc32 do not match after exporting/importing patch file');
 	})
 });
 
@@ -223,3 +229,39 @@ TEST_PATCHES.forEach(function (patchInfo) {
 });
 
 
+/*
+	Test an IPS patch that modifies 31488 bytes starting at 0x454F46.
+	This results in the sequence "EOF{" in the patch file which is the
+	same sequence as the IPS end-of-file marker with some extra EBP metadata.
+*/
+_test('IPS - test patching 31488 bytes at address 0x454F46 ("EOF{")', function () {
+	const fileSize = 0x454F46 + 31488;
+	const originalFile = new BinFile((new Uint8Array(fileSize)).buffer);
+	const modifiedFile = new BinFile(function() {
+		let b = new Uint8Array(fileSize);
+		b.fill(255, 0x454F46);
+		b[fileSize-1] = 254;  // make data non-uniform to avoid producing a RLE record
+		return b.buffer
+	}());
+
+	// create and apply patch
+	const patch = RomPatcher.createPatch(originalFile, modifiedFile, 'ips');
+	const patchedFile = RomPatcher.applyPatch(originalFile, patch);
+	if (patchedFile.hashCRC32() !== modifiedFile.hashCRC32())
+		throw new Error('modified and patched files\' crc32 do not match');
+
+	// roundtrip the patch through export/import before applying
+	const exportedPatch = patch.export('test.ips');
+	const expectedBytes = [
+		80, 65, 84, 67, 72, // "PATCH"
+		69, 79, 70,         // address 0x454F46 ("EOF" -> looks like the eof marker)
+		123, 0,             // length 31488 (0x7B00 -> "{\x00" -> looks like EBP metadata)
+	];
+	if (expectedBytes.some((b, i) => exportedPatch._u8array[i] !== b))
+		throw new Error('exported patch bytes do not match expected');
+
+	const roundtrippedPatch = RomPatcher.parsePatchFile(exportedPatch);
+	const roundtrippedPatchedFile = RomPatcher.applyPatch(originalFile, roundtrippedPatch);
+	if (roundtrippedPatchedFile.hashCRC32() !== modifiedFile.hashCRC32())
+		throw new Error('modified and patched files\' crc32 do not match after exporting/importing patch file');
+});
