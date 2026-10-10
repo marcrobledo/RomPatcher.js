@@ -107,14 +107,18 @@ BPS.fromFile=function(file){
 	var endActionsOffset=file.fileSize-12;
 	while(file.offset<endActionsOffset){
 		var data=file.readVLV();
-		var action={type: data & 3, length: (data >> 2)+1};
+		
+		var action={
+			type: data & 3, 
+			length: Math.floor(data / 4) + 1
+		};
 
 		if(action.type===BPS_ACTION_TARGET_READ){
 			action.bytes=file.readBytes(action.length);
 
 		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
 			var relativeOffset=file.readVLV();
-			action.relativeOffset=(relativeOffset & 1? -1 : +1) * (relativeOffset >> 1)
+			action.relativeOffset=(relativeOffset & 1? -1 : +1) * Math.floor(relativeOffset / 2)
 		}
 
 		patch.actions.push(action);
@@ -152,7 +156,7 @@ function BPS_readVLV(){
 function BPS_writeVLV(data){
 	while(true){
 		var x = data & 0x7f;
-		data >>= 7;
+		data = Math.floor(data / 128);
 		if(data === 0){
 			this.writeU8(0x80 | x);
 			break;
@@ -165,7 +169,7 @@ function BPS_getVLVLen(data){
 	var len=0;
 	while(true){
 		var x = data & 0x7f;
-		data >>= 7;
+		data = Math.floor(data / 128);
 		if(data === 0){
 			len++;
 			break;
@@ -185,12 +189,12 @@ BPS.prototype.export=function(fileName){
 	patchFileSize+=this.metaData.length;
 	for(var i=0; i<this.actions.length; i++){
 		var action=this.actions[i];
-		patchFileSize+=BPS_getVLVLen(((action.length-1)<<2) + action.type);
+		patchFileSize+=BPS_getVLVLen(((action.length-1)*4) + action.type);
 	
 		if(action.type===BPS_ACTION_TARGET_READ){
 			patchFileSize+=action.length;
 		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
-			patchFileSize+=BPS_getVLVLen((Math.abs(action.relativeOffset)<<1)+(action.relativeOffset<0?1:0));
+			patchFileSize+=BPS_getVLVLen((Math.abs(action.relativeOffset)*2)+(action.relativeOffset<0?1:0));
 		}
 	}
 	patchFileSize+=12;
@@ -208,12 +212,12 @@ BPS.prototype.export=function(fileName){
 
 	for(var i=0; i<this.actions.length; i++){
 		var action=this.actions[i];
-		patchFile.writeVLV(((action.length-1)<<2) + action.type);
+		patchFile.writeVLV(((action.length-1)*4) + action.type);
 	
 		if(action.type===BPS_ACTION_TARGET_READ){
 			patchFile.writeBytes(action.bytes);
 		}else if(action.type===BPS_ACTION_SOURCE_COPY || action.type===BPS_ACTION_TARGET_COPY){
-			patchFile.writeVLV((Math.abs(action.relativeOffset)<<1)+(action.relativeOffset<0?1:0));
+			patchFile.writeVLV((Math.abs(action.relativeOffset)*2)+(action.relativeOffset<0?1:0));
 		}
 	}
 	patchFile.writeU32(this.sourceChecksum);
