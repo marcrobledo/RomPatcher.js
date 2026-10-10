@@ -46,6 +46,7 @@ const { existsSync } = require('fs');
 const BinFile = require('./rom-patcher-js/modules/BinFile');
 const HashCalculator = require('./rom-patcher-js/modules/HashCalculator');
 const RomPatcher = require('./rom-patcher-js/RomPatcher');
+const BPS = require('./rom-patcher-js/modules/RomPatcher.format.bps');
 
 
 
@@ -179,6 +180,36 @@ const MODIFIED_TEST_DATA = (new Uint8Array([
 		if (patchedFile.hashCRC32() !== modifiedFile.hashCRC32())
 			throw new Error('modified and patched files\' crc32 do not match');
 	})
+});
+
+
+// values >= 2^31 used to overflow and hang BPS export (#59)
+_test('BPS export and parse large values', function () {
+	const MB = 1024 * 1024;
+
+	const patch = new BPS();
+	patch.sourceSize = 3000 * MB;
+	patch.targetSize = 0xffffffff;
+	patch.actions = [
+		{ type: 0, length: 600 * MB },
+		{ type: 2, length: 1, relativeOffset: 1500 * MB },
+		{ type: 3, length: 1, relativeOffset: -1500 * MB }
+	];
+	patch.patchChecksum = patch.calculateFileChecksum();
+
+	const parsedPatch = BPS.fromFile(patch.export());
+
+	if (parsedPatch.sourceSize !== patch.sourceSize || parsedPatch.targetSize !== patch.targetSize)
+		throw new Error('invalid source or target size');
+
+	patch.actions.forEach(function (action, i) {
+		const parsedAction = parsedPatch.actions[i];
+
+		if (parsedAction.type !== action.type || parsedAction.length !== action.length)
+			throw new Error('invalid action #' + i);
+		if (action.relativeOffset !== undefined && parsedAction.relativeOffset !== action.relativeOffset)
+			throw new Error('invalid relative offset in action #' + i);
+	});
 });
 
 
