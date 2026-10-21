@@ -1,21 +1,9 @@
-/* VCDIFF module for RomPatcher.js v20181021 - Marc Robledo 2018 - http://www.marcrobledo.com/license */
+/* VCDIFF module for RomPatcher.js v20261021 - Marc Robledo 2018-2026 - http://www.marcrobledo.com/license */
 /* File format specification: https://tools.ietf.org/html/rfc3284 */
-/*
-	Mostly based in:
-	https://github.com/vic-alexiev/TelerikAcademy/tree/master/C%23%20Fundamentals%20II/Homework%20Assignments/3.%20Methods/000.%20MiscUtil/Compression/Vcdiff
-	some code and ideas borrowed from:
-	https://hack64.net/jscripts/libpatch.js?6
-*/
-//const VCDIFF_MAGIC=0xd6c3c400;
+/* all pieces of code ported from other projects are mentioned below along their software licenses */
+
 const VCDIFF_MAGIC='\xd6\xc3\xc4';
-/*
-const XDELTA_014_MAGIC='%XDELTA';
-const XDELTA_018_MAGIC='%XDZ000';
-const XDELTA_020_MAGIC='%XDZ001';
-const XDELTA_100_MAGIC='%XDZ002';
-const XDELTA_104_MAGIC='%XDZ003';
-const XDELTA_110_MAGIC='%XDZ004';
-*/
+
 if(typeof module !== "undefined" && module.exports){
 	module.exports = VCDIFF;
 	BinFile = require("./BinFile");
@@ -38,12 +26,16 @@ VCDIFF.prototype.apply=function(romFile, validate){
 	parser.seek(4);
 	var headerIndicator=parser.readU8();
 
+	var secondaryDecompressor;
 	if(headerIndicator & VCD_DECOMPRESS){
 		//has secondary decompressor, read its id
 		var secondaryDecompressorId=parser.readU8();
+		secondaryDecompressor=XDELTA_COMPATIBLE_SECONDARY_DECOMPRESSORS.find(d => d.id===secondaryDecompressorId);
 
-		if(secondaryDecompressorId!==0)
-			throw new Error('not implemented: secondary decompressor');
+		if(secondaryDecompressor)
+			console.info('using '+secondaryDecompressor.name+' secondary decompressor')
+		else
+			throw new Error('not implemented: secondary decompressor (id='+secondaryDecompressorId+')');
 	}
 
 
@@ -84,17 +76,47 @@ VCDIFF.prototype.apply=function(romFile, validate){
 
 	while(!parser.isEOF()){
 		var winHeader = parser.decodeWindowHeader();
+		if(winHeader.deltaIndicator!==0 && !secondaryDecompressor){
+			throw new Error('invalid windowHeader.deltaIndicator:'+winHeader.deltaIndicator);
+		}
 
-		var addRunDataStream = new VCDIFF_Parser(this.file, parser.offset);
-		var instructionsStream = new VCDIFF_Parser(this.file, addRunDataStream.offset + winHeader.addRunDataLength);
-		var addressesStream = new VCDIFF_Parser(this.file, instructionsStream.offset + winHeader.instructionsLength);
+		var readSectionOffset = parser.offset;
+		/* parse run data section */
+		var addRunDataStream;
+		if(winHeader.deltaIndicator & VCD_DATACOMP){
+			/* secondary decompressor */
+			const decompressed = secondaryDecompressor.decodeSection(parser._u8array, readSectionOffset, winHeader.addRunDataLength);
+			addRunDataStream = new VCDIFF_Parser(new BinFile(decompressed));
+		}else{
+			addRunDataStream = new VCDIFF_Parser(this.file, readSectionOffset);
+		}
+		readSectionOffset += winHeader.addRunDataLength;
+		/* parse instruction section */
+		var instructionsStream;
+		if(winHeader.deltaIndicator & VCD_INSTCOMP){
+			/* secondary decompressor */
+			const decompressed = secondaryDecompressor.decodeSection(parser._u8array, readSectionOffset, winHeader.instructionsLength);
+			instructionsStream = new VCDIFF_Parser(new BinFile(decompressed));
+		}else{
+			instructionsStream = new VCDIFF_Parser(this.file, readSectionOffset);
+		}
+		readSectionOffset += winHeader.instructionsLength;
+		/* parse adress section */
+		var addressesStream;
+		if(winHeader.deltaIndicator & VCD_ADDRCOMP){
+			/* secondary decompressor */
+			const decompressed = secondaryDecompressor.decodeSection(parser._u8array, readSectionOffset, winHeader.addressesLength);
+			addressesStream = new VCDIFF_Parser(new BinFile(decompressed));
+		}else{
+			addressesStream = new VCDIFF_Parser(this.file, readSectionOffset);
+		}
 
 		var addRunDataIndex = 0;
 
 		cache.reset(addressesStream);
 
-		var addressesStreamEndOffset = addressesStream.offset;
-		while(instructionsStream.offset<addressesStreamEndOffset){
+		var instructionsStreamEndOffset = (winHeader.deltaIndicator & VCD_INSTCOMP) ? instructionsStream.fileSize : readSectionOffset;
+		while(instructionsStream.offset<instructionsStreamEndOffset){
 			/*
 			var instructionIndex=instructionsStream.readS8();
 			if(instructionIndex===-1){
@@ -224,7 +246,7 @@ VCDIFF_Parser.prototype.decodeWindowHeader=function(){
 	windowHeader.deltaLength = this.read7BitEncodedInt();
 	windowHeader.targetWindowLength = this.read7BitEncodedInt();
 	windowHeader.deltaIndicator = this.readU8(); // secondary compression: 1=VCD_DATACOMP,2=VCD_INSTCOMP,4=VCD_ADDRCOMP
-	if(windowHeader.deltaIndicator!==0){
+	if(windowHeader.deltaIndicator & ~(VCD_DATACOMP | VCD_INSTCOMP | VCD_ADDRCOMP)){
 		throw new Error('unimplemented windowHeader.deltaIndicator:'+windowHeader.deltaIndicator);
 	}
 	
@@ -262,6 +284,11 @@ const VCD_APPHEADER  = 0x04; // nonstandard?
 const VCD_SOURCE  = 0x01;
 const VCD_TARGET  = 0x02;
 const VCD_ADLER32 = 0x04;
+
+// deltaIndicator (secondary-compressed sections)
+const VCD_DATACOMP = 0x01;
+const VCD_INSTCOMP = 0x02;
+const VCD_ADDRCOMP = 0x04;
 
 
 
@@ -335,7 +362,7 @@ const VCD_DEFAULT_CODE_TABLE=(function(){
 
 /*
 	ported from https://github.com/vic-alexiev/TelerikAcademy/tree/master/C%23%20Fundamentals%20II/Homework%20Assignments/3.%20Methods/000.%20MiscUtil/Compression/Vcdiff
-	by Victor Alexiev (https://github.com/vic-alexiev)
+	by Victor Alexiev (https://github.com/vic-alexiev) released under MIT License (https://github.com/vic-alexiev/TelerikAcademy/blob/master/LICENSE)
 */
 const VCD_MODE_SELF=0;
 const VCD_MODE_HERE=1;
@@ -380,3 +407,258 @@ VCD_AdressCache.prototype.update=function(address){
 		this.same[address%(this.sameSize*256)]=address;
 	}
 }
+
+
+
+/* secondary decompressors */
+const XD3_decodeBits=function(stream, nBits) {
+	var value=0, vmask=1 << nBits;
+
+	while(true){
+		if(stream.curMask===0x100){
+			if(stream.pos >= stream.end)
+				throw new Error('secondary decoder end of input');
+			stream.curByte = stream.input[stream.pos++];
+			stream.curMask = 1;
+		}
+
+		vmask >>= 1;
+		if(stream.curByte & stream.curMask)
+			value |= vmask;
+		stream.curMask <<= 1;
+
+		if(vmask === 1)
+			return value;
+	}
+};
+
+const XDELTA3_DJW=(function(){
+	/*
+		ported from https://github.com/jmacd/xdelta/blob/main/xdelta3/xdelta3-djw.h
+		by Joshua MacDonald (https://github.com/jmacd) released under Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+	*/
+	
+	const ALPHABET_SIZE=256;
+	const MAX_CODELEN=20;
+	const TOTAL_CODES=22; // [RUN_0, RUN_1, 1-MAX_CODELEN]
+	const RUN_1=1;
+	const EXTRA_12OFFSET=7;
+	const EXTRA_CODE_BITS=4;
+	const CLCLEN_BITS=4;
+	const MAX_CLCLEN=15;
+	const GROUP_BITS=3;
+	const SECTORSZ_MULT=5;
+	const SECTORSZ_BITS=5;
+	const GBCLEN_BITS=3;
+	const MAX_GBCLEN=7;
+
+	// initial MTF order of code lengths (0, basic codes, extra codes)
+	const CLEN_MTF_INIT=[0, 4, 5, 6, 7, 8, 9, 10, 3, 11, 2, 12, 13, 1, 14, 15, 16, 17, 18, 19, 20];
+
+
+	// build canonical prefix code decoding tables
+	const _buildDecoder=function(clen, asize, absMax){
+		const nrClen = new Array(absMax + 1).fill(0);
+		for(var i=0; i<asize; i++){
+			if(clen[i] > absMax)
+				throw new Error('secondary decoder invalid code length');
+			nrClen[clen[i]]++;
+		}
+
+		var minLen = 1;
+		while(minLen <= absMax && !nrClen[minLen])
+			minLen++;
+		var maxLen = absMax;
+		while(maxLen > 0 && !nrClen[maxLen])
+			maxLen--;
+		if(minLen > maxLen)
+			throw new Error('secondary decoder invalid code');
+
+		const tmpBase = new Array(absMax + 2).fill(0);
+		const base = new Array(absMax + 2).fill(0);
+		const limit = new Array(absMax + 2).fill(0);
+		limit[minLen] = nrClen[minLen] - 1;
+		for(var i=minLen+1; i<=maxLen; i++){
+			var lastLimit = (limit[i - 1] + 1) << 1;
+			tmpBase[i] = tmpBase[i - 1] + nrClen[i - 1];
+			limit[i] = lastLimit + nrClen[i] - 1;
+			base[i] = lastLimit - tmpBase[i];
+		}
+
+		const inorder = new Uint8Array(asize);
+		for(var i=0; i<asize; i++){
+			if(clen[i] !== 0)
+				inorder[tmpBase[clen[i]]++] = i;
+		}
+
+		return {
+			inorder,
+			base,
+			limit,
+			minLen,
+			maxLen
+		};
+	};
+
+	const _decodeSymbol=function(stream, table, maxSym){
+		var code = 0, bits = 0;
+
+		while(true){
+			if(bits===table.maxLen)
+				throw new Error('secondary decoder invalid code');
+
+			if(stream.curMask===0x100){
+				if(stream.pos>=stream.end)
+					throw new Error('secondary decoder end of input');
+				stream.curByte = stream.input[stream.pos++];
+				stream.curMask = 1;
+			}
+
+			bits++;
+			code <<= 1;
+			if(stream.curByte & stream.curMask)
+				code |= 1;
+			stream.curMask <<= 1;
+
+			if(bits>=table.minLen && code<=table.limit[bits])
+				break;
+		}
+
+		if(table.base[bits]<=code){
+			var offset = code - table.base[bits];
+			if(offset<=maxSym && offset<table.inorder.length)
+				return table.inorder[offset];
+		}
+		throw new Error('secondary decoder invalid code');
+	};
+
+	// decode MTF + run-length (RUN_0/RUN_1 bijective base-2) encoded values
+	const _decodeRunMtf=function(stream, table, mtfvals, elts, skipOffset, values){
+		var n=0, rep=0, mtf=0, s=0;
+
+		while(n<elts){
+			// subsequent groups: zero code lengths are already known
+			if(skipOffset!==0 && n>=skipOffset && values[n-skipOffset]===0){
+				values[n++] = 0;
+				continue;
+			}
+
+			if(rep!==0){
+				values[n++] = mtfvals[0];
+				rep--;
+				continue;
+			}
+
+			if(mtf!==0){
+				var sym = mtfvals[mtf];
+				for(var k=mtf; k!==0; k--)
+					mtfvals[k] = mtfvals[k - 1];
+				mtfvals[0] = sym;
+				values[n++] = sym;
+				mtf = 0;
+				continue;
+			}
+
+			mtf = _decodeSymbol(stream, table, TOTAL_CODES);
+			if(mtf<=RUN_1){
+				rep = (mtf + 1) << s;
+				mtf = 0;
+				s++;
+			}else{
+				mtf--;
+				s = 0;
+			}
+		}
+
+		if(rep!==0)
+			throw new Error('secondary decoder invalid repeat code');
+	};
+
+	return {
+		id:0x01,
+		name:'DJW static/multi-table Huffman',
+
+		decodeSection:function(u8array, offset, length){
+			const stream = {
+				input:u8array,
+				pos:offset,
+				end:offset + length,
+				curByte:0,
+				curMask:0x100
+			};
+
+			// uncompressed size
+			var outputSize = 0, b;
+			do{
+				if(stream.pos>=stream.end)
+					throw new Error('secondary decoder end of input');
+				b = u8array[stream.pos++];
+				outputSize = (outputSize * 128) + (b & 0x7f);
+			}while(b & 0x80);
+			if(outputSize===0)
+				throw new Error('secondary decoder invalid output size');
+
+			const output = new Uint8Array(outputSize);
+
+			var groups = XD3_decodeBits(stream, GROUP_BITS) + 1;
+			var sectorSize = outputSize;
+			if(groups>1)
+				sectorSize = (XD3_decodeBits(stream, SECTORSZ_BITS) + 1) * SECTORSZ_MULT;
+			const sectors = 1 + Math.floor((outputSize - 1) / sectorSize);
+
+			// code lengths decoder
+			var numCodes = XD3_decodeBits(stream, EXTRA_CODE_BITS) + EXTRA_12OFFSET;
+			const clClen = new Uint8Array(TOTAL_CODES);
+			for(var i=0; i<numCodes; i++)
+				clClen[i] = XD3_decodeBits(stream, CLCLEN_BITS);
+			const clTable = _buildDecoder(clClen, TOTAL_CODES, MAX_CLCLEN);
+			const clMtf = Uint8Array.from(CLEN_MTF_INIT);
+
+			// code lengths of each group
+			const clen = new Uint8Array(ALPHABET_SIZE * groups);
+			_decodeRunMtf(stream, clTable, clMtf, clen.length, ALPHABET_SIZE, clen);
+
+			const tables = [];
+			for(var gp=0; gp<groups; gp++)
+				tables.push(_buildDecoder(clen.subarray(gp * ALPHABET_SIZE, (gp + 1) * ALPHABET_SIZE), ALPHABET_SIZE, MAX_CODELEN));
+
+			// group selector of each sector
+			var selGroup = null;
+			if(groups>1){
+				const selClen = new Uint8Array(groups + 1);
+				const selMtf = new Uint8Array(groups + 2);
+				for(var i=0; i<groups+1; i++) {
+					selClen[i] = XD3_decodeBits(stream, GBCLEN_BITS);
+					selMtf[i] = i;
+				}
+				const selTable = _buildDecoder(selClen, groups + 1, MAX_GBCLEN);
+				selGroup = new Uint8Array(sectors);
+				_decodeRunMtf(stream, selTable, selMtf, sectors, 0, selGroup);
+			}
+
+			// data
+			var outPos = 0;
+			for(var c=0; c<sectors; c++) {
+				var table = tables[0];
+				if(groups>1){
+					if(selGroup[c] >= groups)
+						throw new Error('secondary decoder invalid group');
+					table = tables[selGroup[c]];
+				}
+
+				var n = Math.min(sectorSize, outputSize - outPos);
+				while(n--)
+					output[outPos++] = _decodeSymbol(stream, table, ALPHABET_SIZE);
+			}
+
+			if(stream.pos!==stream.end)
+				throw new Error('secondary decoder finished with unused input');
+
+			return output;
+		}
+	}
+}());
+
+const XDELTA_COMPATIBLE_SECONDARY_DECOMPRESSORS=[
+	XDELTA3_DJW
+];
