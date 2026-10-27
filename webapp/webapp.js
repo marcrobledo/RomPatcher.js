@@ -2,10 +2,7 @@
 
 
 /* service worker */
-const FORCE_HTTPS = true;
-if (FORCE_HTTPS && location.protocol === 'http:')
-	location.href = window.location.href.replace('http:', 'https:');
-else if (location.protocol === 'https:' && 'serviceWorker' in navigator && window.location.hostname === 'www.marcrobledo.com')
+if (location.protocol === 'https:' && 'serviceWorker' in navigator && window.location.hostname === 'www.marcrobledo.com')
 	navigator.serviceWorker.register('/RomPatcher.js/_cache_service_worker.js', { scope: '/RomPatcher.js/' }); /* using absolute paths to avoid unexpected behaviour in GitHub Pages */
 
 

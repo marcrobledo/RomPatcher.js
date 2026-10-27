@@ -172,6 +172,13 @@ const RomPatcher = (function () {
 					options.outputSuffix = !!optionsParam.outputSuffix;
 			}
 
+			/* headered ROM that only matches its patch source without the header: remove it automatically */
+			if (options.requireValidation && !options.removeHeader && !options.addHeader) {
+				const headerInfo = RomPatcher.isRomHeadered(romFile);
+				if (headerInfo && !RomPatcher.validateRom(romFile, patch) && RomPatcher.validateRom(romFile, patch, headerInfo.size))
+					options.removeHeader = true;
+			}
+
 			var extractedHeader = false;
 			var fakeHeaderSize = 0;
 			if (options.removeHeader) {

@@ -71,6 +71,7 @@ const RomPatcherWeb = (function () {
 		onpatch: null
 	};
 	var romFile, patch;
+	var romHeaderAutoChecked = false; /* header option was ticked automatically for the current ROM */
 
 	const isBrowserSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent); /* Safari userAgent does not include word Chrome, Chrome includes both! */
 	const isBrowserMobile = /Mobile(\/\S+)? /.test(navigator.userAgent);
@@ -799,6 +800,7 @@ const RomPatcherWeb = (function () {
 
 
 			romFile = binFile;
+			romHeaderAutoChecked = false;
 
 
 
@@ -1114,6 +1116,12 @@ const RomPatcherWeb = (function () {
 					htmlElements.addClass('input-file-rom', 'valid');
 					htmlElements.removeClass('input-file-rom', 'invalid');
 					_setToastError();
+				} else if (!checksumStartOffset && !romHeaderAutoChecked && RomPatcher.isRomHeadered(romFile) && RomPatcher.validateRom(romFile, patch, RomPatcher.isRomHeadered(romFile).size)) {
+					/* mismatch only without the header: tick the header option once, the CRC worker validates again */
+					romHeaderAutoChecked = true;
+					htmlElements.setChecked('checkbox-alter-header', true);
+					RomPatcherWeb.calculateCurrentRomChecksums();
+					return true;
 				} else {
 					htmlElements.addClass('input-file-rom', 'invalid');
 					htmlElements.removeClass('input-file-rom', 'valid');

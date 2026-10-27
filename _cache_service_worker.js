@@ -6,7 +6,7 @@
 */
 
 var PRECACHE_ID = 'rom-patcher-js';
-var PRECACHE_VERSION = 'v35b';
+var PRECACHE_VERSION = 'v35d';
 var PRECACHE_URLS = [
 	'/RomPatcher.js/', '/RomPatcher.js/index.html',
 	'/RomPatcher.js/manifest.json',
